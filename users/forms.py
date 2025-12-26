@@ -4,7 +4,7 @@ from .models import User
 
 
 class SignUpForm(UserCreationForm):
-    email = forms.EmailField(required=True)
+    email = forms.EmailField(required=True) #いるのかな、この１行あとで消すかも
     
     class Meta:
         model = User
