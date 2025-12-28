@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title> {% block title %}ふりかえり財布{% endblock %}</title>
+</head>
+<body>
+
+    <header>
+        <h1>ふりかえり財布</h1>
+        
+        {% if user.is_authenticated %}
+        <p>ログイン中：{{ user.username }}</p>
+        <form method="post" action="{% url 'users:logout' %}">
+            {% csrf_token %}
+            <button type="submit">ログアウト</button>
+        </form>
+    {% endif %}
+    </header>
+
+
+    <hr>
+
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>
+</html>
