@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="auth">
+<h1>ふりかえり財布</h1>
+<p>
+    うまくできた日も、惜しかった日も<br>
+    全部気づきに変えていく。
+</p>
+
+{% if form.errors %}
+<p class="error">メールアドレスまたはパスワードが正しくありません</p>
+{% endif %}
+
+<form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+
+    <div class="field">
+        <label for="{{form.username.id_for_label }}">メールアドレス</label><br>
+        {{ form.username }}
+    </div>
+
+    <div class="field">
+        <label for="{{form.password.id_for_label }}">パスワード</label><br>
+        {{ form.password }}
+    </div>
+
+    <div class="actions">
+        <button type="submit">ログイン</button>
+    </div>
+    </form>
+
+    <p class='links'>
+        <a href="{% url 'signup' %}">アカウント登録</a>
+    </p>
+
+    <p class='links'>
+        <a href="{% url 'password_reset' %}">パスワードを忘れた方はこちら</a>
+    </p>
+</main>
+{% endblock %}
