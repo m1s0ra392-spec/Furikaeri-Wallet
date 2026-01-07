@@ -1,9 +1,12 @@
-<!--
-このファイルは使用しない
-ログイン画面は templates/registration/login.html を使用
--->
+
 
 {% extends "base.html" %}
+
+{% if password_reset_completed %}
+  <p style="color: red; font-size: 0.9em; text-align:center;">
+    パスワードを再設定しました。新しいパスワードでログインしてください。
+  </p>
+{% endif %}
 
 {% block title %}ログイン{% endblock %}
 
