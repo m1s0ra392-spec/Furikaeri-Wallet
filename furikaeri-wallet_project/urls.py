@@ -17,19 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from users.views import PasswordResetCompleteToLoginView
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),  
     # Django標準の認証URL（password_resetなど一式）
     
-     # ★ ここだけ上書き（完了後は users/login.html を表示）
+    # ★ 完了画面は login.html を再利用して赤字表示
     path(
         "accounts/password_reset/complete/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="users/login.html",
-            extra_context={"password_reset_completed": True},
-        ),
+        PasswordResetCompleteToLoginView.as_view(),
         name="password_reset_complete",
     ),
 
