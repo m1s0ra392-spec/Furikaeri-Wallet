@@ -2,6 +2,7 @@ from django.db import models
 from users.models import User
 
 
+#ER図：categories
 class RecordCategory(models.Model):
     TYPE_CHOICES = (
         (0, 'うまくいった'),
@@ -9,8 +10,8 @@ class RecordCategory(models.Model):
     )
 
     SYSTEM_DEFAULT_CHOICES = (
-        (0, 'ユーザー定義'),
-        (1, 'システム固定'),
+        (0, 'ユーザー定義'),  #その他以外のカテゴリ
+        (1, 'システム固定'),  #その他（削除不可）
     )
 
     user = models.ForeignKey(
@@ -31,6 +32,8 @@ class RecordCategory(models.Model):
         return self.name
 
 
+
+#ER図:records
 class Record(models.Model):
     user = models.ForeignKey(
         User,
@@ -49,4 +52,4 @@ class Record(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.date} - {self.amount}'
+        return f"{self.date} {self.category.name} {self.amount}"

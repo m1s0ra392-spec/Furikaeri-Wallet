@@ -34,4 +34,5 @@ urlpatterns = [
 
     
     path("users/", include("users.urls")),
+    path("records/", include("records.urls")),  
 ]
