@@ -1,7 +1,12 @@
-<!-- templates/records/record_form.html -->
 {% extends "base.html" %}
 
 {% block content %}
 <h1>記録を追加</h1>
-<p>ここにフォームを出します（次の工程で実装）</p>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">保存</button>
+</form>
+
 {% endblock %}
