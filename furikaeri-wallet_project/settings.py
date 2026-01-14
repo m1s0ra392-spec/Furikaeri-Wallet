@@ -119,9 +119,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 AUTH_USER_MODEL='users.User'
 
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/users/login/"
-LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/records/"     # ログイン後に飛ばしたい先（仮）ホームができたらホームへ
+LOGOUT_REDIRECT_URL = "/accounts/login/"  # ログアウト後
+LOGIN_URL = "/accounts/login/"
 
 
 # ===== 開発用メール設定（コンソールに出す） =====
