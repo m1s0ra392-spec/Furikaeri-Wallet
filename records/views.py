@@ -1,9 +1,10 @@
 import calendar
-from datetime import date,datetime
+from datetime import date,datetime,time
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required 
 from .forms import RecordForm
 from .models import Record  #record_listで使用
+from django.utils import timezone
 
 @login_required   
 def record_create(request):
@@ -42,7 +43,21 @@ def record_list(request):
     # 月のカレンダー（週単位の配列）
     cal = calendar.monthcalendar(year, month)
 
+    # 全件（未選択時の一覧用）
     records = Record.objects.filter(user=request.user)
+    
+     # 選択日の記録だけ
+    selected_records = None
+    if selected_date:
+        # created_at が DateTimeField の前提で「その日の範囲」で絞る
+        start = timezone.make_aware(datetime.combine(selected_date, time.min))
+        end = timezone.make_aware(datetime.combine(selected_date, time.max))
+
+        selected_records = (
+            Record.objects
+            .filter(user=request.user, created_at__range=(start, end))
+            .order_by("-created_at")
+        )
     return render(request, "records/record_list.html", {
         "records": records,
         "calendar": cal,

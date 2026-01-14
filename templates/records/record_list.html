@@ -5,7 +5,7 @@
 {% if selected_date %}
   <p>選択中：{{ selected_date|date:"Y-m-d" }}</p>
 {% endif %}
-
+<!-- カレンダー -->
 <h2>{{ year }}年 {{ month }}月</h2>
 
 <table border="1">
@@ -29,6 +29,35 @@
   {% endfor %}
 </table>
 
+<hr>
+<!-- その日の記録欄 -->
+{% if selected_date %}
+  <h2>{{ selected_date|date:"Y/m/d" }} の記録</h2>
+
+  {% if selected_records and selected_records.exists %}
+    <ul>
+      {% for record in selected_records %}
+        <li>
+          <a href="{% url 'records:record_update' record.pk %}"
+             style="display:block; text-decoration:none; color:inherit;">
+            <strong>{{ record.created_at|date:"H:i" }}</strong>
+            ｜{{ record.category.get_type_display }}
+            ｜{{ record.category.name }}
+            <br>
+            {{ record.memo }}
+          </a>
+
+          <a href="{% url 'records:record_delete' record.pk %}">🗑️</a>
+        </li>
+        <hr>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>この日の記録はありません。</p>
+  {% endif %}
+
+  <hr>
+{% endif %}
 <hr>
 
 <h2>記録一覧</h2>
