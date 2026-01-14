@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required 
 from .forms import RecordForm
-
+from .models import Record  #record_listで使用
 
 @login_required   
 def record_create(request):
@@ -16,3 +16,10 @@ def record_create(request):
         form = RecordForm()
 
     return render(request, "records/record_form.html", {"form": form})
+
+@login_required
+def record_list(request):
+    records = Record.objects.filter(user=request.user)
+    return render(request, "records/record_list.html", {
+        "records": records
+    })

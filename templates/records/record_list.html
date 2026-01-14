@@ -1,0 +1,13 @@
+<h1>記録一覧</h1>
+
+<ul>
+  {% for record in records %}
+    <li>
+      {{ record.date }}：
+      {{ record.amount }}円
+      （{{ record.category.name }}）
+    </li>
+  {% empty %}
+    <li>まだ記録がありません</li>
+  {% endfor %}
+</ul>

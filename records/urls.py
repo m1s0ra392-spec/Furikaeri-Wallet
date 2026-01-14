@@ -5,4 +5,5 @@ app_name = "records"
 
 urlpatterns = [
     path("new/", views.record_create, name="record_create"),
+    path("", views.record_list, name="list"),
 ]
