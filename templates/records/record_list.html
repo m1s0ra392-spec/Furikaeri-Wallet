@@ -1,17 +1,57 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{% if selected_date %}
+  <p>選択中：{{ selected_date|date:"Y-m-d" }}</p>
+{% endif %}
+
+<h2>{{ year }}年 {{ month }}月</h2>
+
+<table border="1">
+  <tr>
+    <th>月</th><th>火</th><th>水</th>
+    <th>木</th><th>金</th><th>土</th><th>日</th>
+  </tr>
+
+  {% for week in calendar %}
+    <tr>
+      {% for day in week %}
+        <td style="text-align:center; height:40px;">
+          {% if day != 0 %}
+            <a href="?date={{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
+            {{ day }}
+              </a>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</table>
+
+<hr>
+
 <h2>記録一覧</h2>
 
 {% if records %}
   <ul>
     {% for record in records %}
       <li>
-        <strong>{{ record.created_at|date:"Y/m/d" }}</strong>
-        ｜{{ record.category.get_type_display }}
-        ｜{{ record.category.name }}
-        <br>
-        {{ record.memo }}
+        <!-- ここをクリックすると編集画面へ -->
+        <a href="{% url 'records:record_update' record.pk %}"
+           style="display:block; text-decoration:none; color:inherit;">
+
+          <strong>{{ record.created_at|date:"Y/m/d" }}</strong>
+          ｜{{ record.category.get_type_display }}
+          ｜{{ record.category.name }}
+          <br>
+          {{ record.memo }}
+
+        </a>
+
+        <!-- ゴミ箱（削除）だけ別 -->
+        <a href="{% url 'records:record_delete' record.pk %}">🗑️</a>
+
       </li>
       <hr>
     {% endfor %}
