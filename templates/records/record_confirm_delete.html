@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>削除しますか？</h2>
+  <p>{{ record.created_at|date:"Y/m/d" }}｜{{ record.category.name }}｜{{ record.memo }}</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">削除</button>
+    <a href="{% url 'records:record_list' %}">キャンセル</a>
+  </form>
+{% endblock %}
