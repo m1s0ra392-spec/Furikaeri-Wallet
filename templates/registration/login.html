@@ -1,3 +1,5 @@
+
+
 {% extends "base.html" %}
 
 {% block content %}
@@ -9,14 +11,14 @@
 </p>
 
 {% if form.errors %}
-<p class="error">メールアドレスまたはパスワードが正しくありません</p>
+<p class="error">ユーザー名またはパスワードが正しくありません</p>
 {% endif %}
 
 <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
 
     <div class="field">
-        <label for="{{form.username.id_for_label }}">メールアドレス</label><br>
+        <label for="{{form.username.id_for_label }}">ユーザー名</label><br>
         {{ form.username }}
     </div>
 

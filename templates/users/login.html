@@ -1,3 +1,6 @@
+<!-- 1/16地点　使ってない -->
+
+
 {% extends "base.html" %}
 
 {% block title %}ログイン{% endblock %}
@@ -21,7 +24,7 @@
   {# ログイン失敗時のエラーメッセージ #}
   {% if form.errors %}
     <p class="error">
-      メールアドレスまたはパスワードが正しくありません
+      ユーザー名またはパスワードが正しくありません
     </p>
   {% endif %}
 
@@ -29,7 +32,7 @@
     {% csrf_token %}
 
     <div class="field">
-      <label for="{{ form.username.id_for_label }}">メールアドレス</label><br>
+      <label for="{{ form.username.id_for_label }}">ユーザー名</label><br>
       {{ form.username }}
     </div>
 
@@ -42,6 +45,9 @@
       <button type="submit">ログイン</button>
     </div>
   </form>
+
+  <!--デバッグ中のみのエラー表示-->
+{{ form.non_field_errors }}
 
   <p class="links">
     <a href="{% url 'users:signup' %}">アカウント登録</a>
