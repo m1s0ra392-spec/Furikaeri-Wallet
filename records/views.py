@@ -6,6 +6,7 @@ from .forms import RecordForm
 from .models import Record  #record_listで使用
 from django.utils import timezone
 
+#記録の追加
 @login_required   
 def record_create(request):
     if request.method == "POST":
@@ -42,6 +43,13 @@ def record_list(request):
 
     # 月のカレンダー（週単位の配列）
     cal = calendar.monthcalendar(year, month)
+    
+     # 月内の記録（カレンダーと同じ月を対象にするのが自然）
+    month_records = (
+        Record.objects
+        .filter(user=request.user, date__year=year, date__month=month)
+        .order_by("-date", "-created_at")
+    )
 
     # 全件（未選択時の一覧用）
     records = Record.objects.filter(user=request.user)
@@ -49,23 +57,23 @@ def record_list(request):
      # 選択日の記録だけ
     selected_records = None
     if selected_date:
-        # created_at が DateTimeField の前提で「その日の範囲」で絞る
-        start = timezone.make_aware(datetime.combine(selected_date, time.min))
-        end = timezone.make_aware(datetime.combine(selected_date, time.max))
 
         selected_records = (
             Record.objects
-            .filter(user=request.user, created_at__range=(start, end))
+            .filter(user=request.user, date=selected_date)
             .order_by("-created_at")
         )
     return render(request, "records/record_list.html", {
+        "selected_records": selected_records,
         "records": records,
         "calendar": cal,
         "year": year,
         "month": month,
         "selected_date": selected_date,
     })
-    
+
+
+#記録の編集   
 @login_required
 def record_update(request, pk):
     record = get_object_or_404(Record, pk=pk, user=request.user)
@@ -81,6 +89,7 @@ def record_update(request, pk):
     return render(request, "records/record_form.html", {"form": form})
 
 
+#記録の削除
 @login_required
 def record_delete(request, pk):
     record = get_object_or_404(Record, pk=pk, user=request.user)

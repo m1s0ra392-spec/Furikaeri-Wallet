@@ -34,13 +34,13 @@
 {% if selected_date %}
   <h2>{{ selected_date|date:"Y/m/d" }} の記録</h2>
 
-  {% if selected_records and selected_records.exists %}
+  {% if selected_records %}
     <ul>
       {% for record in selected_records %}
         <li>
           <a href="{% url 'records:record_update' record.pk %}"
              style="display:block; text-decoration:none; color:inherit;">
-            <strong>{{ record.created_at|date:"H:i" }}</strong>
+            <strong>{{ record.date|date:"Y/m/d" }}</strong>
             ｜{{ record.category.get_type_display }}
             ｜{{ record.category.name }}
             <br>
@@ -70,7 +70,7 @@
         <a href="{% url 'records:record_update' record.pk %}"
            style="display:block; text-decoration:none; color:inherit;">
 
-          <strong>{{ record.created_at|date:"Y/m/d" }}</strong>
+          <strong>{{ record.date|date:"Y/m/d" }}</strong>
           ｜{{ record.category.get_type_display }}
           ｜{{ record.category.name }}
           <br>
