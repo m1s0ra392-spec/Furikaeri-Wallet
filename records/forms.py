@@ -8,15 +8,18 @@ class RecordForm(forms.ModelForm):
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
         }
+        error_messages = {
+            "memo": {
+                "required": "内容を入力してください",
+                "max_length": "メモは200文字以内で入力してください",
+            }
+        }
     
     def clean_memo(self):
         memo = self.cleaned_data.get("memo", "")
 
         if memo.strip() == "":
             raise forms.ValidationError("内容を入力してください")
-
-        if len(memo) > 100:
-            raise forms.ValidationError("メモは100文字以内で入力してください")
 
         return memo
     

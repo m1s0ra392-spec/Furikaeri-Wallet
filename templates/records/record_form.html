@@ -4,20 +4,35 @@
 <h1>記録を追加</h1>
 
 
-{% if form.errors %}
-  <div>
-    {{ form.non_field_errors }}
-    {% for field in form %}
-      {{ field.errors }}
-    {% endfor %}
-  </div>
-{% endif %}
-
-
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
+  <p>※メモは200文字以内で入力してください</p>
   <button type="submit">保存</button>
 </form>
+
+
+
+
+<script>
+  //memoの入力自体を200字以上できる仕様にする（エラーで調整）
+document.addEventListener('DOMContentLoaded', () => {
+  const memoEl = document.querySelector('[name="memo"]');
+  if (!memoEl) return;
+
+  // ① 200字以上も入力できるようにする（maxlength を外す）
+  memoEl.removeAttribute('maxlength');
+
+  // ② ブラウザ標準吹き出しの文言だけカスタム（空欄のとき）
+  memoEl.addEventListener('invalid', () => {
+    memoEl.setCustomValidity('内容を入力してください');
+  });
+
+  memoEl.addEventListener('input', () => {
+    memoEl.setCustomValidity('');
+  });
+});
+</script>
+
 
 {% endblock %}
