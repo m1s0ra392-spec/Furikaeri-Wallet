@@ -47,7 +47,7 @@ class Record(models.Model):
     )
     date = models.DateField()
     amount = models.IntegerField()
-    memo = models.CharField(max_length=500, blank=True)
+    memo = models.CharField(max_length=200, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
