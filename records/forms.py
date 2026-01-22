@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from .models import Record
 
 class RecordForm(forms.ModelForm):
@@ -12,9 +13,28 @@ class RecordForm(forms.ModelForm):
             "memo": {
                 "required": "内容を入力してください",
                 "max_length": "メモは200文字以内で入力してください",
-            }
+            },
+            "date": {
+                "required": "日付を入力してください",
+            },
         }
+        
+    #日付のバリデーション
+    def clean_date(self):
+        date = self.cleaned_data.get("date")
+
+        if not date:
+            raise forms.ValidationError("日付を入力してください")
+
+        today = timezone.localdate()
+
+        if date > today:
+            raise forms.ValidationError("未来の日付は入力できません")
+
+        return date
     
+    
+    #メモのバリデーション
     def clean_memo(self):
         memo = self.cleaned_data.get("memo", "")
 
@@ -23,7 +43,8 @@ class RecordForm(forms.ModelForm):
 
         return memo
     
-    def clean_amount(self):
+    #金額のバリデーション
+    def clean_amount(self):  
         amount = self.cleaned_data.get("amount")
 
         # 未入力 or 0未満をNG
