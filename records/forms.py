@@ -8,6 +8,10 @@ class RecordForm(forms.ModelForm):
         fields = ["category", "amount", "date", "memo"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
+            "memo": forms.Textarea(attrs={
+                "placeholder": "※メモは200文字以内で入力してください",
+                "rows": 3,
+            }),
         }
         error_messages = {
             "memo": {

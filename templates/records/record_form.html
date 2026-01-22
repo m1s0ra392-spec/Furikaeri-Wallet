@@ -7,7 +7,6 @@
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
-  <p>※メモは200文字以内で入力してください</p>
   <button type="submit">保存</button>
 </form>
 
