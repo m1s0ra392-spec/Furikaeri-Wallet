@@ -1,11 +1,13 @@
 import calendar
-from datetime import date,datetime,time
+from datetime import date,datetime
 from django.db.models import Sum  
+from django.db.models.functions import TruncMonth
+from django.http import JsonResponse
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required 
+
 from .forms import RecordForm
 from .models import Record  
-from django.utils import timezone
 
 
 
@@ -143,3 +145,43 @@ def record_delete(request, pk):
 
     # いったん最小：確認画面テンプレ
     return render(request, "records/record_confirm_delete.html", {"record": record})
+
+
+#分析グラフ部分
+@login_required
+def analysis_year(request):
+    # 今年を対象（まずは固定でOK。あとで年選択にできる）
+    year = date.today().year
+
+    qs = (
+        Record.objects
+        .filter(user=request.user, date__year=year)
+        .annotate(month=TruncMonth("date"))
+        .values("month", "category__type")
+        .annotate(total=Sum("amount"))
+        .order_by("month")
+    )
+
+    # monthごとに「得/損」をまとめる箱を作る
+    monthly = {m: {"plus": 0, "minus": 0} for m in range(1, 13)}
+
+    for r in qs:
+        m = r["month"].month
+        t = r["category__type"]  # 0=得, 1=損 の想定
+        total = r["total"] or 0
+
+        if t == 0:
+            monthly[m]["plus"] = total
+        else:
+            monthly[m]["minus"] = total
+
+    # 確認用：いったんJSONで返す（ブラウザで見れる）
+    data = {
+        "year": year,
+        "monthly": monthly,
+    }
+
+    # ターミナルでも見たいならこれもOK（確認できたら消す）
+    print("analysis_year data:", data)
+
+    return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
