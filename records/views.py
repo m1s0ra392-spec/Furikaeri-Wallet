@@ -1,10 +1,53 @@
 import calendar
 from datetime import date,datetime,time
+from django.db.models import Sum  
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required 
 from .forms import RecordForm
-from .models import Record  #record_listで使用
+from .models import Record  
 from django.utils import timezone
+
+
+
+#ホーム画面
+@login_required
+def home(request):
+    today = date.today()
+    first_day = today.replace(day=1)
+
+    # 今月のレコード
+    monthly_records = Record.objects.filter(
+        user=request.user,
+        date__gte=first_day,
+        date__lte=today
+    )
+
+    # うまくいった金額（type=0）
+    success_total = (
+        monthly_records
+        .filter(category__type=0)
+        .aggregate(total=Sum("amount"))["total"]
+        or 0
+    )
+
+    # 惜しかった金額（type=1）
+    regret_total = (
+        monthly_records
+        .filter(category__type=1)
+        .aggregate(total=Sum("amount"))["total"]
+        or 0
+    )
+
+    # 今月のまとめ（差分でも合計でもOK）
+    monthly_total = success_total - regret_total
+
+    return render(request, "records/home.html", {
+        "success_total": success_total,
+        "regret_total": regret_total,
+        "monthly_total": monthly_total,
+        "year": today.year,
+        "month": today.month,
+    })
 
 #記録の追加
 @login_required   

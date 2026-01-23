@@ -1,0 +1,24 @@
+<!-- templates/records/home.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ year }}年{{ month }}月</h2>
+
+<div>
+  <h3>今月のまとめ</h3>
+  <p>合計：¥{{ monthly_total }}</p>
+
+  <p>🌱 うまくいった金額：¥{{ success_total }}</p>
+  <p>🍂 惜しかった金額：¥{{ regret_total }}</p>
+</div>
+
+{% if monthly_total > 0 %}
+  <p>今月はちょっと余裕あり！</p>
+{% else %}
+  <p>今月は少し使いすぎかも…</p>
+{% endif %}
+
+<a href="{% url 'records:record_create' %}">
+  <button>記録する</button>
+</a>
+{% endblock %}
