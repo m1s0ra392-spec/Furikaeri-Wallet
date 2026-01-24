@@ -147,7 +147,7 @@ def record_delete(request, pk):
     return render(request, "records/record_confirm_delete.html", {"record": record})
 
 
-#分析グラフ部分
+#年間分析グラフ部分
 @login_required
 def analysis_year(request):
     # 今年を対象（まずは固定でOK。あとで年選択にできる）
@@ -179,6 +179,33 @@ def analysis_year(request):
     data = {
         "year": year,
         "monthly": monthly,
+    }
+
+ # ===== 累計（plus - minus）を作る =====
+
+    labels = list(range(1, 13))  # 1〜12（int）
+
+    monthly_net = []
+    cumulative_net = []
+
+    running = 0  # 累計用の箱
+
+    for m in labels:
+        plus = monthly[m]["plus"]
+        minus = monthly[m]["minus"]
+
+        net = plus - minus      # その月の差額
+        running += net          # 年始からの累計
+
+        monthly_net.append(net)
+        cumulative_net.append(running)
+
+    # JSONで返す
+    data = {
+        "year": year,
+        "labels": labels,
+        "monthly_net": monthly_net,
+        "cumulative_net": cumulative_net,
     }
 
     # ターミナルでも見たいならこれもOK（確認できたら消す）
