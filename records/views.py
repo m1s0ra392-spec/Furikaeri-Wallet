@@ -1,17 +1,44 @@
 import calendar
 from datetime import date,datetime
 from django.db.models import Sum  
-from django.db.models.functions import TruncMonth
-from django.http import JsonResponse
+from django.db.models.functions import TruncMonth, Coalesce
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required 
+from django . http import JsonResponse
 
 from .forms import RecordForm
 from .models import Record  
 
 
+# ==============================
+# 分析画面で使う集計ロジック
+# （表示処理は持たない）
+# ==============================
 
-#ホーム画面
+def get_month_range(year: int, month: int):
+    start = date(year, month, 1)
+    if month == 12:
+        end = date(year + 1, 1, 1)
+    else:
+        end = date(year, month + 1, 1)
+    return start, end
+
+def monthly_category_summary(user, year: int, month: int):
+    start, end = get_month_range(year, month)
+
+    return (
+        Record.objects
+        .filter(user=user, date__gte=start, date__lt=end)
+        .values("category_id", "category__name", "category__type")  # 0=得, 1=損
+        .annotate(total=Coalesce(Sum("amount"), 0))
+        .order_by("category__type", "-total")
+    )
+
+
+# ==============================
+# ホーム画面
+# ==============================
+
 @login_required
 def home(request):
     today = date.today()
@@ -147,7 +174,13 @@ def record_delete(request, pk):
     return render(request, "records/record_confirm_delete.html", {"record": record})
 
 
-#年間分析グラフ部分
+
+# ==============================
+# 分析画面（年次・月次）
+# ==============================
+
+#年次分析
+
 @login_required
 def analysis_year(request):
     # 今年を対象（まずは固定でOK。あとで年選択にできる）
@@ -208,6 +241,29 @@ def analysis_year(request):
         "cumulative_net": cumulative_net,
     }
 
+
+#月次カテゴリ別分析
+
+@login_required
+def analysis_month(request):
+    today = date.today()
+    year = int(request.GET.get("year", today.year))
+    month = int(request.GET.get("month", today.month))
+
+    rows = monthly_category_summary(request.user, year, month)
+
+    # 使いやすい形に整形（得/損に分ける）
+    data = {"year": year, "month": month, "success": [], "regret": []}
+    for r in rows:
+        item = {"name": r["category__name"], "total": int(r["total"] or 0)}
+        if r["category__type"] == 0:
+            data["success"].append(item)
+        else:
+            data["regret"].append(item)
+
+    return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
+
+    
     # ターミナルでも見たいならこれもOK（確認できたら消す）
     print("analysis_year data:", data)
 

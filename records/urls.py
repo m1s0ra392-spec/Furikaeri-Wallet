@@ -9,5 +9,6 @@ urlpatterns = [
     path("list/", views.record_list, name="record_list"), #記録一覧（カレンダーの上から）
     path("<int:pk>/edit/", views.record_update, name="record_update"),#記録編集
     path("<int:pk>/delete/", views.record_delete, name="record_delete"),#記録削除
-    path("analysis/", views.analysis_year, name="analysis_year"),#分析画面
+    path("analysis/", views.analysis_year, name="analysis_year"),#分析画面（年間）
+    path("analysis/month/", views.analysis_month, name="analysis_month"),#分析画面（月次カテゴリ別）
 ]
