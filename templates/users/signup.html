@@ -13,6 +13,9 @@
 
       <div class="field">
         <label for="{{ form.username.id_for_label }}">ユーザー名</label><br>
+        {% for error in form.username.errors %}
+            <p class="error">{{ error }}</p>
+        {% endfor %}
         {{ form.username }}
       </div>
 
