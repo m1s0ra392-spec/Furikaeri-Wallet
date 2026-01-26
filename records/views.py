@@ -208,11 +208,6 @@ def analysis_year(request):
         else:
             monthly[m]["minus"] = total
 
-    # 確認用：いったんJSONで返す（ブラウザで見れる）
-    data = {
-        "year": year,
-        "monthly": monthly,
-    }
 
  # ===== 累計（plus - minus）を作る =====
 
@@ -241,6 +236,11 @@ def analysis_year(request):
         "cumulative_net": cumulative_net,
     }
 
+    # 確認したいなら一時的にOK（不要なら消す）
+    print("analysis_year data:", data)
+
+    return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
+
 
 #月次カテゴリ別分析
 
@@ -264,7 +264,3 @@ def analysis_month(request):
     return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
 
     
-    # ターミナルでも見たいならこれもOK（確認できたら消す）
-    print("analysis_year data:", data)
-
-    return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
