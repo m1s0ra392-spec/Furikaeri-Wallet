@@ -12,11 +12,17 @@
   <p>🍂 惜しかった金額：¥{{ regret_total }}</p>
 </div>
 
-{% if monthly_total > 0 %}
-  <p>今月はちょっと余裕あり！</p>
-{% else %}
-  <p>今月は少し使いすぎかも…</p>
+
+{# Advice 表示エリア #}
+{% if advice %}
+  <div class="advice-bubble">
+    {{ advice.message }}
+    {% else %}
+  <p>（adviceなし）</p>
+  </div>
 {% endif %}
+
+<br>
 
 <a href="{% url 'records:record_create' %}">
   <button>記録する</button>

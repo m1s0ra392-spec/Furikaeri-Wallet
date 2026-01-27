@@ -8,6 +8,9 @@ from django . http import JsonResponse
 
 from .forms import RecordForm
 from .models import Record  
+from .services import get_home_advice
+
+
 
 
 # ==============================
@@ -69,6 +72,10 @@ def home(request):
 
     # 今月のまとめ（差分でも合計でもOK）
     monthly_total = success_total - regret_total
+    
+    
+    #advice_messageの取得
+    advice = get_home_advice(request.user, today=today)
 
     return render(request, "records/home.html", {
         "success_total": success_total,
@@ -76,7 +83,13 @@ def home(request):
         "monthly_total": monthly_total,
         "year": today.year,
         "month": today.month,
+        "advice": advice,
     })
+
+
+# ==============================
+# 記録（新規入力・編集・削除）
+# ==============================
 
 #記録の追加
 @login_required   

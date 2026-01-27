@@ -1,5 +1,7 @@
 from django.contrib import admin
 from .models import RecordCategory, Record
+from .models import AdviceMessage
+
 
 
 @admin.register(RecordCategory)
@@ -17,3 +19,10 @@ class RecordAdmin(admin.ModelAdmin):
     search_fields = ("memo", "category__name", "user__email", "user__username")
     date_hierarchy = "date"
     ordering = ("-date", "-created_at")
+    
+    
+@admin.register(AdviceMessage)
+class AdviceMessageAdmin(admin.ModelAdmin):
+    list_display = ("id", "threshold_min", "threshold_max", "needs_calculation", "max_reward_amount", "updated_at")
+    list_filter = ("needs_calculation",)
+    search_fields = ("message_content",)

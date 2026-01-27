@@ -1,8 +1,13 @@
 from django.db import models
 from users.models import User
+from django.conf import settings #ユーザーモデルとの紐づけで利用（現在未使用）
+from django.db import models
 
 
-#ER図：categories
+# ==============================
+# ER図　record_categories
+# ==============================
+
 class RecordCategory(models.Model):
     TYPE_CHOICES = (
         (0, 'うまくいった'),
@@ -33,7 +38,11 @@ class RecordCategory(models.Model):
 
 
 
-#ER図:records
+
+# ==============================
+# ER図　records
+# ==============================
+
 class Record(models.Model):
     user = models.ForeignKey(
         User,
@@ -53,3 +62,29 @@ class Record(models.Model):
 
     def __str__(self):
         return f"{self.date} {self.category.name} {self.amount}"
+    
+    
+# ==============================
+# ER図　advice_messages
+# ==============================
+
+class AdviceMessage(models.Model):
+    threshold_min = models.IntegerField()
+    threshold_max = models.IntegerField(null=True, blank=True)  # NULLなら上限なし
+    message_content = models.TextField()
+
+    # 0:そのまま表示 / 1:計算(例: 30%ルール)を適用
+    needs_calculation = models.BooleanField(default=False)
+
+    # 還元提案の上限（needs_calculation=True の時に使う）
+    max_reward_amount = models.IntegerField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["threshold_min"]
+
+    def __str__(self):
+        mx = self.threshold_max if self.threshold_max is not None else "∞"
+        return f"{self.threshold_min}〜{mx}"
