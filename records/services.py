@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import date
 from django.db.models import Sum
 from .models import Record, AdviceMessage
+import random
+from django.db.models import Q
 
 
 # ==============================
@@ -38,26 +40,23 @@ def _calc_monthly_diff(user, today: date) -> int:
 def get_home_advice(user, today: date | None = None) -> AdviceResult | None:
     today = today or date.today()
     diff = _calc_monthly_diff(user, today)
+    
+    # ★ diff が範囲内の候補を全部集める（maxがNULL=上限なしも含める）
+    candidates = AdviceMessage.objects.filter(
+    threshold_min__lte=diff
+    ).filter(
+    Q(threshold_max__gte=diff) | Q(threshold_max__isnull=True)
+)
 
-    # diff が範囲内のものを1件取る
-    advice = (
-        AdviceMessage.objects
-        .filter(threshold_min__lte=diff)
-        .filter(threshold_max__gte=diff)  # threshold_max が NULL のものが落ちるので後でORする
-        .first()
-    )
+    if not candidates.exists():
+        return None  # まだDBが空 or 条件に当てはまるものがない
 
-    if advice is None:
-        advice = (
-            AdviceMessage.objects
-            .filter(threshold_min__lte=diff, threshold_max__isnull=True)
-            .order_by("threshold_min")
-            .first()
-        )
-
-    if advice is None:
-        return None  # まだDBが空なら何も出さない
-
+    # ★ 複数候補があればランダムで1件
+    ids = list(candidates.values_list("id", flat=True))
+    picked_id = random.choice(ids)
+    advice = candidates.get(id=picked_id)
+    
+    
     reward_amount = None
     if advice.needs_calculation:
         # 例：余裕(diff)の30%を還元提案。ただし diff<=0 なら 0扱い
