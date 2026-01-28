@@ -20,5 +20,5 @@ urlpatterns = [
     
     path("users/", include("users.urls")),
     path("records/", include(("records.urls", "records"), namespace="records")),
-
+    path("board/", include("board.urls")),
 ]

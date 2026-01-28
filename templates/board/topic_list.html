@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>ふりかえり広場</h1>
+
+  {% if topics %}
+    <ul>
+      {% for topic in topics %}
+        <li style="margin-bottom: 12px;">
+          <div>
+            <strong>{{ topic.title }}</strong>
+          </div>
+          <div>
+            {{ topic.get_board_category_display }}
+            ｜{{ topic.user.username }}
+            ｜{{ topic.created_at|date:"Y/m/d" }}
+          </div>
+          <div>
+            {{ topic.text|linebreaksbr }}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>公開中のトピックがまだありません。</p>
+  {% endif %}
+{% endblock %}
