@@ -3,6 +3,38 @@
 {% block content %}
   <h1>ふりかえり広場</h1>
 
+  <!-- カテゴリタブ -->
+  <div style="display:flex; gap:8px; margin:12px 0;">
+  {% for value, label in categories %}
+    <a href="{% url 'board:topic_list' %}?category={{ value }}"
+       style="padding:6px 10px; border:1px solid #ccc; border-radius:16px;
+              text-decoration:none;
+              {% if selected_category == value|stringformat:'s' %}font-weight:bold;{% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+</div>
+
+
+<!--人気・新着並び替え-->
+{% if not is_category_page %}
+  <div style="display:flex; gap:8px; margin:12px 0;">
+    <a href="{% url 'board:topic_list' %}?sort=popular"
+       style="padding:6px 10px; border:1px solid #ccc; border-radius:16px;
+              text-decoration:none;
+              {% if sort == 'popular' %}font-weight:bold;{% endif %}">
+      人気
+    </a>
+    <a href="{% url 'board:topic_list' %}?sort=new"
+       style="padding:6px 10px; border:1px solid #ccc; border-radius:16px;
+              text-decoration:none;
+              {% if sort == 'new' %}font-weight:bold;{% endif %}">
+      新着
+    </a>
+  </div>
+{% endif %}
+
+
   {% if topics %}
     <ul>
       {% for topic in topics %}
