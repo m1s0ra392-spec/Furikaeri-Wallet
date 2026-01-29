@@ -1,9 +1,15 @@
+
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.shortcuts import render
 
 from .models import Topic
+from .forms import TopicForm
 
+# ==============================
+# 掲示板トップ　トピックの選定
+# ==============================
 
 @login_required
 def topic_list(request):
@@ -44,3 +50,25 @@ def topic_list(request):
         "is_category_page": is_category_page,
     }
     return render(request, "board/topic_list.html", context)
+
+
+
+# ==============================
+# トピック作成ビュー
+# ==============================
+
+@login_required
+def topic_create(request):
+    if request.method == "POST":
+        form = TopicForm(request.POST)
+        if form.is_valid():
+            topic = form.save(commit=False)
+            topic.user = request.user
+            topic.save()
+            return redirect("board:topic_list")  # 一旦一覧へ（のちに確認画面→トピック内容画面へ）
+    else:
+        form = TopicForm()
+
+    return render(request, "board/topic_form.html", {
+        "form": form
+    })
