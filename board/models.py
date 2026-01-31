@@ -120,4 +120,4 @@ class Comment(models.Model):
     ]
 
     def __str__(self):
-        return f"Comment({self.id}) on Topic({self.topic_id})"
+        return f"#{self.sequence} {self.text[:20]}"

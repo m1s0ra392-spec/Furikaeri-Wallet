@@ -3,6 +3,12 @@
 {% block content %}
   <h1>ふりかえり広場</h1>
 
+  <!-- トピック作成（仮） -->
+   <p>
+    <a href="{% url 'board:topic_create' %}">トピックを作成</a>
+  </p>
+
+
   <!-- カテゴリタブ -->
   <div style="display:flex; gap:8px; margin:12px 0;">
   {% for value, label in categories %}
@@ -36,23 +42,16 @@
 
 
   {% if topics %}
-    <ul>
-      {% for topic in topics %}
-        <li style="margin-bottom: 12px;">
-          <div>
-            <strong>{{ topic.title }}</strong>
-          </div>
-          <div>
-            {{ topic.get_board_category_display }}
-            ｜{{ topic.user.username }}
-            ｜{{ topic.created_at|date:"Y/m/d" }}
-          </div>
-          <div>
-            {{ topic.text|linebreaksbr }}
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
+ <ul>
+  {% for topic in topics %}
+    <li>
+      <a href="{% url 'board:topic_detail' topic.id %}">
+        {{ topic.title }}
+      </a>
+      <div>{{ topic.category.get_type_display }}｜{{ topic.created_at|date:"Y/m/d" }}</div>
+    </li>
+  {% endfor %}
+</ul>
   {% else %}
     <p>公開中のトピックがまだありません。</p>
   {% endif %}

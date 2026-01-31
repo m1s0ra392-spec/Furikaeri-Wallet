@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .page-title { font-size: 20px; margin: 10px 0 14px; }
+
+  .crumbs { font-size: 12px; color: #666; margin-bottom: 16px; }
+  .crumbs a { color: #666; text-decoration: none; }
+  .crumbs a:hover { text-decoration: underline; }
+
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 14px;
+    max-width: 520px;
+  }
+
+  .section-title { font-weight: 700; margin-bottom: 10px; }
+
+  .row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 8px 0 10px;
+  }
+
+  .row label { font-size: 12px; color: #555; }
+
+  .reply-input {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+
+  .help { font-size: 11px; color: #888; }
+
+  .textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    resize: vertical;
+  }
+
+  .error { color: #c00; font-size: 12px; margin-top: 6px; }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #2f6f47;
+    background: #2f6f47;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  .btn.sub {
+    background: #fff;
+    color: #2f6f47;
+  }
+
+  .note { font-size: 12px; color: #666; margin-top: 8px; }
+</style>
+
+<h1 class="page-title">コメント入力画面</h1>
+
+<div class="crumbs">
+  <a href="{% url 'board:topic_list' %}">掲示板top</a>
+  &nbsp;>&nbsp;
+  <a href="{% url 'board:topic_detail' topic.id %}">{{ topic.title }}</a>
+  &nbsp;>&nbsp;
+  コメント投稿
+</div>
+
+<div class="card">
+  <div class="section-title">コメント投稿</div>
+
+  <form method="post" id="commentForm">
+    {% csrf_token %}
+
+    <div class="row">
+      <label for="{{ form.text.id_for_label }}">コメントを書く</label>
+
+      <label for="{{ form.reply_to.id_for_label }}" style="margin-left:auto;">
+        返信したいコメントの番号（任意）
+      </label>
+      {{ form.reply_to }}
+      <span class="help">※番号を入れると本文の先頭に「>>番号」を自動で付けます</span>
+    </div>
+
+    {% for error in form.reply_to.errors %}
+      <div class="error">{{ error }}</div>
+    {% endfor %}
+
+    {{ form.text }}
+
+    {% for error in form.text.errors %}
+      <div class="error">{{ error }}</div>
+    {% endfor %}
+
+    <div class="note">※コメントは1000文字以内で入力してください</div>
+
+    <div class="btn-row">
+      <!-- “確認画面へ移動”は後で実装できるように、今は投稿ボタンとして置く -->
+      <button class="btn" type="submit" name="action" value="post">コメントを投稿する</button>
+
+      <!-- 下書き保存（まだ未実装なら、とりあえずボタンだけ置いてOK） -->
+      <button class="btn sub" type="submit" name="action" value="draft">下書き保存</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // 返信番号が入っていたら、本文先頭に >>番号 を付ける（重複はしない）
+  document.getElementById("commentForm").addEventListener("submit", function () {
+    const reply = document.getElementById("{{ form.reply_to.id_for_label }}");
+    const text = document.getElementById("{{ form.text.id_for_label }}");
+    if (!reply || !text) return;
+
+    const n = (reply.value || "").trim();
+    if (!n) return;
+
+    const prefix = ">>" + n;
+    const text = text.value || "";
+
+    // 既に先頭に付いてたら何もしない
+    if (text.trimStart().startsWith(prefix)) return;
+
+    text.value = prefix + "\n" + text;
+  });
+</script>
+{% endblock %}
