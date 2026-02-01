@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+
+{#トピック本文#}
 {% block content %}
   <h1>{{ topic.title }}</h1>
 
@@ -18,6 +20,43 @@
       コメントを書く
     </a>
   </p>
+
+  {# コメント一覧 #}
+  <h2>コメント</h2>
+
+  {% if comment_tree %}
+    <ul style="list-style:none; padding-left:0;">
+      {% for item in comment_tree %}
+        {% with c=item.parent %}
+          <li style="padding:10px 0; border-bottom:1px solid #eee;">
+            <div>
+              <strong>#{{ c.sequence }}</strong>
+              {{ c.text }}
+              <span style="color:#666; font-size:12px;">
+                （{{ c.user.username }} / {{ c.created_at|date:"Y-m-d H:i" }}）
+              </span>
+            </div>
+
+            {% if item.replies %}
+              <div style="margin-top:8px; margin-left:24px;">
+                {% for r in item.replies %}
+                  <div style="padding:6px 0;">
+                    <strong>#{{ r.sequence }}</strong>
+                    {{ r.text }}
+                    <span style="color:#666; font-size:12px;">
+                      （{{ r.user.username }} / {{ r.created_at|date:"Y-m-d H:i" }}）
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </li>
+        {% endwith %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>まだコメントがありません。</p>
+  {% endif %}
 
   <p>
     <a href="{% url 'board:topic_list' %}">← 一覧へ戻る</a>

@@ -3,9 +3,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max
 from django.shortcuts import render
+from collections import defaultdict
 
 from .models import Topic, Comment
 from .forms import TopicForm, CommentForm
+
 
 # ==============================
 # 掲示板トップ　トピックの選定
@@ -81,8 +83,39 @@ def topic_create(request):
 @login_required
 def topic_detail(request, topic_id):
     topic = get_object_or_404(Topic, pk=topic_id)
-    return render(request, "board/topic_detail.html", {"topic": topic})
- 
+    
+    # ① topic内コメントを sequence順で全部取得（1回だけ）
+    comments = (
+        Comment.objects
+        .filter(topic=topic)
+        .select_related("user", "parent_comment")
+        .order_by("sequence")
+    )
+    
+    
+    #親コメントごとに replies をくっつけたリスト
+    parents = []
+    replies_map = defaultdict(list)
+
+    for c in comments:
+        if c.parent_comment_id is None:
+            parents.append(c)
+        else:
+            replies_map[c.parent_comment_id].append(c)
+
+    comment_tree = []
+    for p in parents:
+        comment_tree.append({
+            "parent": p,
+            "replies": replies_map.get(p.id, []),
+        })
+
+    return render(request, "board/topic_detail.html", {
+        "topic": topic,
+        "comment_tree": comment_tree,
+    })
+
+
  
 # ==============================
 # コメント作成ビュー
@@ -98,6 +131,17 @@ def comment_create(request, topic_id):
             comment = form.save(commit=False)
             comment.topic = topic
             comment.user = request.user 
+            
+            
+            # 返信番号（任意）→ parent に変換
+            reply_to_seq = form.cleaned_data.get("reply_to")   #返信番号を取り出す
+            if reply_to_seq:    #返信番号が入っていれば処理する、空欄ならば通常コメント
+                parent = Comment.objects.filter(topic=topic, sequence=reply_to_seq).first()
+                if not parent:  #存在しない返信番号の反映を防ぐ
+                    form.add_error("reply_to", f"#{reply_to_seq} のコメントが見つかりません")
+                    return render(request, "board/comment_form.html", {"form": form, "topic": topic})
+                comment.parent_comment = parent
+                
 
             # sequence 自動採番（topic内でMax+1）
             max_sequence = (
@@ -108,14 +152,6 @@ def comment_create(request, topic_id):
 
             comment.sequence = (max_sequence or 0) + 1
             
-            # 返信番号（任意）→ parent に変換
-            reply_to_seq = form.cleaned_data.get("reply_to")   #返信番号を取り出す
-            if reply_to_seq:    #返信番号が入っていれば処理する、空欄ならば通常コメント
-                parent = Comment.objects.filter(topic=topic, sequence=reply_to_seq).first()
-                if not parent:  #存在しない返信番号の反映を防ぐ
-                    form.add_error("reply_to", f"#{reply_to_seq} のコメントが見つかりません")
-                    return render(request, "board/comment_form.html", {"form": form, "topic": topic})
-                comment.parent = parent
 
             comment.save()
             return redirect("board:topic_detail", topic_id=topic.id)
