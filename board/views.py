@@ -56,7 +56,29 @@ def topic_list(request):
 
 
 # ==============================
-# トピック作成ビュー
+# トピック詳細ビュー
+# ==============================
+
+@login_required
+def topic_detail(request, topic_id):
+    topic = get_object_or_404(Topic, pk=topic_id)
+
+    comments = (
+        Comment.objects
+        .filter(topic=topic, status=Comment.STATUS_PUBLISHED)
+        .select_related("user", "parent_comment")
+        .order_by("sequence")
+    )
+
+    return render(request, "board/topic_detail.html", {
+        "topic": topic,
+        "comments": comments,
+    })
+
+
+
+# ==============================
+# 掲示板トップ　トピックの選定
 # ==============================
 
 @login_required
@@ -67,56 +89,15 @@ def topic_create(request):
             topic = form.save(commit=False)
             topic.user = request.user
             topic.save()
-            return redirect("board:topic_list")  # 一旦一覧へ（のちに確認画面→トピック内容画面へ）
+            return redirect("board:topic_detail", topic_id=topic.id)
     else:
         form = TopicForm()
 
     return render(request, "board/topic_form.html", {
-        "form": form
-    })
-    
- 
-# ==============================
-# トピック詳細
-# ==============================
-
-@login_required
-def topic_detail(request, topic_id):
-    topic = get_object_or_404(Topic, pk=topic_id)
-    
-    # ① topic内コメントを sequence順で全部取得（1回だけ）
-    comments = (
-        Comment.objects
-        .filter(topic=topic)
-        .select_related("user", "parent_comment")
-        .order_by("sequence")
-    )
-    
-    
-    #親コメントごとに replies をくっつけたリスト
-    parents = []
-    replies_map = defaultdict(list)
-
-    for c in comments:
-        if c.parent_comment_id is None:
-            parents.append(c)
-        else:
-            replies_map[c.parent_comment_id].append(c)
-
-    comment_tree = []
-    for p in parents:
-        comment_tree.append({
-            "parent": p,
-            "replies": replies_map.get(p.id, []),
-        })
-
-    return render(request, "board/topic_detail.html", {
-        "topic": topic,
-        "comment_tree": comment_tree,
+        "form": form,
     })
 
 
- 
 # ==============================
 # コメント作成ビュー
 # ==============================
