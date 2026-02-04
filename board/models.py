@@ -121,3 +121,64 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"#{self.sequence} {self.text[:20]}"
+    
+    
+    
+# ==============================
+# topic_likesテーブル
+# ==============================
+
+class TopicLike(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="topic_likes",
+    )
+    topic = models.ForeignKey(
+        "board.Topic",  # 同ファイル内なら "Topic" でもOK
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)  
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(                #同じユーザーが同じ対象に複数いいねできない
+                fields=["user", "topic"],
+                name="unique_user_topic_like",
+            )
+        ]
+
+    def __str__(self):
+        return f"TopicLike(user={self.user_id}, topic={self.topic_id})"
+    
+    
+# ==============================
+# comment_likesテーブル
+# ==============================
+
+class CommentLike(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="comment_likes",
+    )
+    comment = models.ForeignKey(
+        "board.Comment",
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)  
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(                   #同じユーザーが同じ対象に複数いいねできない
+                fields=["user", "comment"],
+                name="unique_user_comment_like",     
+            )
+        ]
+
+    def __str__(self):
+        return f"CommentLike(user={self.user_id}, comment={self.comment_id})"
