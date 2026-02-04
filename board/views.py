@@ -73,10 +73,10 @@ def topic_detail(request, topic_id):
 
     comments = (
         Comment.objects
-        .filter(topic=topic, status=Comment.STATUS_PUBLISHED)
+        .filter(topic=topic, status=Comment.Comment.Status.PUBLIC)
         .select_related("user", "parent_comment")
         .annotate(
-        like_count=Count("likes", distinct=True),  # related_name="likes" をモデルで付けてる前提
+        like_count=Count("likes", distinct=True),  
         is_liked=Exists(
             CommentLike.objects.filter(comment=OuterRef("pk"), user=request.user)
         ),

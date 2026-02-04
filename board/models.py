@@ -63,12 +63,9 @@ class Topic(models.Model):
 # ==============================
 
 class Comment(models.Model):
-    STATUS_DRAFT = 0
-    STATUS_PUBLISHED = 1
-    STATUS_CHOICES = (
-        (STATUS_DRAFT, "下書き"),
-        (STATUS_PUBLISHED, "公開"),
-    )
+    class Status(models.IntegerChoices):
+        DRAFT = 0, "下書き"
+        PUBLIC = 1, "公開"
 
     topic = models.ForeignKey(
         Topic,
@@ -81,8 +78,9 @@ class Comment(models.Model):
         related_name="board_comments",
     )
     text = models.CharField(max_length=1000)
+
+    sequence = models.PositiveIntegerField()  # トピック内のコメントの通し番号
     
-    sequence = models.PositiveIntegerField()#トピック内のコメントの通し番号
 
     # 返信（親コメント）。NULL許容＝親なし（通常コメント）
     parent_comment = models.ForeignKey(
@@ -93,7 +91,7 @@ class Comment(models.Model):
         related_name="replies",
     )
 
-    status = models.IntegerField(choices=STATUS_CHOICES, default=STATUS_PUBLISHED)
+    status = models.IntegerField(choices=Status.choices, default=Status.PUBLIC)
     
     # 論理削除（表示だけ「削除されました」にする）
     is_deleted = models.BooleanField(default=False)
