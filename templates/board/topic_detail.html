@@ -13,8 +13,19 @@
     <p>{{ topic.text|linebreaksbr }}</p>
   {% endif %}
 
+
+{#　トピックのいいね　#}
+<form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
+  {% csrf_token %}
+  <button type="submit" style="border:none;background:transparent;cursor:pointer;font-size:18px;">
+    {% if is_topic_liked %}❤️{% else %}🤍{% endif %}
+  </button>
+</form>
+<span>{{ topic_like_count }}</span>
+
   <hr>
 
+ {#　コメントリンク　#} 
   <p>
     <a href="{% url 'board:comment_create' topic.id %}">
       コメントを書く
@@ -31,6 +42,18 @@
       #{{ c.sequence }}（{{ c.user.username }} / {{ c.created_at|date:"Y-m-d H:i" }}）
     </div>
 
+  {#　コメントのいいね　#}
+  <div style="margin-top:4px;">
+      <form method="post" action="{% url 'board:comment_like_toggle' c.id %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" style="border:none;background:transparent;cursor:pointer;">
+          {% if c.is_liked %}❤️{% else %}🤍{% endif %}
+        </button>
+      </form>
+      <span style="font-size:12px; color:#666;">{{ c.like_count }}</span>
+    </div>
+
+  {#　親子コメント　#}
     {% if c.parent_comment %}
       <div style="margin-top:4px;">
         <a href="#comment-{{ c.parent_comment.sequence }}"
@@ -53,6 +76,7 @@
   <p>コメントはまだありません。</p>
 {% endfor %}
 
+{#一覧へ　リンク#}
   <p>
     <a href="{% url 'board:topic_list' %}">← 一覧へ戻る</a>
   </p>

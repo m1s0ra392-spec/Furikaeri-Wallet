@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Exists, OuterRef
 from django.shortcuts import render
 from collections import defaultdict
 from django.views.decorators.http import require_POST
@@ -23,7 +23,12 @@ def topic_list(request):
         Topic.objects
         .filter(status=Topic.Status.PUBLIC)
         .select_related("user")
-    )
+        .annotate(
+            like_count=Count("likes", distinct=True),
+            is_liked=Exists(
+                TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
+        ),
+    ))
 
     is_category_page = category in {"0", "1", "2"}
 
@@ -36,12 +41,9 @@ def topic_list(request):
     # --- トップ（全カテゴリ横断の並び替え） ---
     else:
         if sort == "new":
-            qs = qs.order_by("-created_at")
+            qs = qs.order_by("-created_at")   #新着順
         else:
-            # popular（いいね数順）は Like モデルができたらここを本実装する
-            # いまは仮で新着順でもOK。Like導入後に↓を有効化するイメージ。
-            # qs = qs.annotate(like_count=Count("likes")).order_by("-like_count", "-created_at")
-            qs = qs.order_by("-created_at")
+            qs = qs.order_by("-created_at")   #いいね順
 
         qs = qs[:20]  # ★トップは最大20件
 
@@ -63,16 +65,29 @@ def topic_list(request):
 @login_required
 def topic_detail(request, topic_id):
     topic = get_object_or_404(Topic, pk=topic_id)
+    # topic のいいね数
+    topic_like_count = TopicLike.objects.filter(topic=topic).count()
+
+    # 自分がこのトピックをいいねしてるか
+    is_topic_liked = TopicLike.objects.filter(topic=topic, user=request.user).exists()
 
     comments = (
         Comment.objects
         .filter(topic=topic, status=Comment.STATUS_PUBLISHED)
         .select_related("user", "parent_comment")
+        .annotate(
+        like_count=Count("likes", distinct=True),  # related_name="likes" をモデルで付けてる前提
+        is_liked=Exists(
+            CommentLike.objects.filter(comment=OuterRef("pk"), user=request.user)
+        ),
+    )
         .order_by("sequence")
     )
 
     return render(request, "board/topic_detail.html", {
         "topic": topic,
+        "topic_like_count": topic_like_count,
+        "is_topic_liked": is_topic_liked,
         "comments": comments,
     })
 

@@ -49,6 +49,16 @@
         {{ topic.title }}
       </a>
       <div>{{ topic.category.get_type_display }}｜{{ topic.created_at|date:"Y/m/d" }}</div>
+
+    {#  いいね表示　#}
+    <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
+      {% csrf_token %}
+    <button type="submit" style="border:none;background:transparent;cursor:pointer;">
+    {% if topic.is_liked %}❤️{% else %}🤍{% endif %}
+    </button>
+  </form>
+  <span style="font-size:12px; color:#666;">{{ t.like_count }}</span>
+    
     </li>
   {% endfor %}
 </ul>
