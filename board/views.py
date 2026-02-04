@@ -4,8 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max
 from django.shortcuts import render
 from collections import defaultdict
+from django.views.decorators.http import require_POST
 
-from .models import Topic, Comment
+from .models import Topic, Comment, TopicLike, CommentLike
 from .forms import TopicForm, CommentForm
 
 
@@ -143,3 +144,43 @@ def comment_create(request, topic_id):
         "form": form,
         "topic": topic,
     })  
+    
+
+
+# ==============================
+# いいねの追加・解除
+# ==============================
+
+@require_POST
+@login_required
+def topic_like_toggle(request, topic_id):
+    topic = get_object_or_404(Topic, pk=topic_id)
+
+    like, created = TopicLike.objects.get_or_create(
+        user=request.user,
+        topic=topic,
+    )
+
+    if not created:
+        # 既にあった = いいね取り消し
+        like.delete()
+
+    # 押した元のページへ戻す（HTTP_REFERERが無い場合の保険で詳細へ）
+    return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), topic_id=topic.id)
+
+
+@require_POST
+@login_required
+def comment_like_toggle(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+
+    like, created = CommentLike.objects.get_or_create(
+        user=request.user,
+        comment=comment,
+    )
+
+    if not created:
+        like.delete()
+
+    # コメントは基本トピック詳細に戻すのが自然
+    return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), topic_id=comment.topic_id)
