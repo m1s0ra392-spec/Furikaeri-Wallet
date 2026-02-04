@@ -12,7 +12,7 @@ class Topic(models.Model):
         KUHUU = 1, "日々のひと工夫"
         MANABI = 2, "失敗からの学び"
 
-    class Status(models.IntegerChoices):
+    class TopicStatus(models.IntegerChoices):
         DRAFT = 0, "下書き"
         PUBLIC = 1, "公開"
         
@@ -30,8 +30,8 @@ class Topic(models.Model):
     )
     board_category = models.IntegerField(choices=BoardCategory.choices)
     title = models.CharField(max_length=50)
-    text = models.CharField(max_length=1000)
-    status = models.IntegerField(choices=Status.choices, default=Status.DRAFT)
+    text = models.TextField() #formで文字数調整
+    status = models.IntegerField(choices=TopicStatus.choices, default=TopicStatus.DRAFT)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -63,7 +63,7 @@ class Topic(models.Model):
 # ==============================
 
 class Comment(models.Model):
-    class Status(models.IntegerChoices):
+    class CommnetStatus(models.IntegerChoices):
         DRAFT = 0, "下書き"
         PUBLIC = 1, "公開"
 
@@ -77,7 +77,7 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         related_name="board_comments",
     )
-    text = models.CharField(max_length=1000)
+    text = text = models.TextField()   #文字数はFormで調整
 
     sequence = models.PositiveIntegerField()  # トピック内のコメントの通し番号
     
@@ -91,7 +91,7 @@ class Comment(models.Model):
         related_name="replies",
     )
 
-    status = models.IntegerField(choices=Status.choices, default=Status.PUBLIC)
+    status = models.IntegerField(choices=CommnetStatus.choices, default=CommnetStatus.DRAFT)
     
     # 論理削除（表示だけ「削除されました」にする）
     is_deleted = models.BooleanField(default=False)
