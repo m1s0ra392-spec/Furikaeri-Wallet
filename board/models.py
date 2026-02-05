@@ -63,7 +63,7 @@ class Topic(models.Model):
 # ==============================
 
 class Comment(models.Model):
-    class CommnetStatus(models.IntegerChoices):
+    class CommentStatus(models.IntegerChoices):
         DRAFT = 0, "下書き"
         PUBLIC = 1, "公開"
 
@@ -91,7 +91,7 @@ class Comment(models.Model):
         related_name="replies",
     )
 
-    status = models.IntegerField(choices=CommnetStatus.choices, default=CommnetStatus.DRAFT)
+    status = models.IntegerField(choices=CommentStatus.choices, default=CommentStatus.DRAFT)
     
     # 論理削除（表示だけ「削除されました」にする）
     is_deleted = models.BooleanField(default=False)

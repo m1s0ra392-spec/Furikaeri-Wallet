@@ -21,7 +21,7 @@ def topic_list(request):
 
     qs = (
         Topic.objects
-        .filter(status=Topic.Status.PUBLIC)
+        .filter(status=Topic.TopicStatus.PUBLIC)
         .select_related("user")
         .annotate(
             like_count=Count("likes", distinct=True),
@@ -73,7 +73,7 @@ def topic_detail(request, topic_id):
 
     comments = (
         Comment.objects
-        .filter(topic=topic, status=Comment.Status.PUBLIC)
+        .filter(topic=topic, status=Comment.CommentStatus.PUBLIC)
         .select_related("user", "parent_comment")
         .annotate(
         like_count=Count("likes", distinct=True),  
@@ -129,6 +129,12 @@ def comment_create(request, topic_id):
             comment.topic = topic
             comment.user = request.user 
             
+            # ★押したボタンでステータス決定
+            action = request.POST.get("action")
+            if action == "post":
+                comment.status = Comment.CommentStatus.PUBLIC
+            else:
+                comment.status = Comment.CommentStatus.DRAFT
             
             # 返信番号（任意）→ parent に変換
             reply_to_seq = form.cleaned_data.get("reply_to")   #返信番号を取り出す

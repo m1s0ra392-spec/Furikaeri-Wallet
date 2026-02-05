@@ -22,6 +22,13 @@ class TopicForm(forms.ModelForm):
 
 
 class CommentForm(forms.ModelForm):
+    # 返信番号（DBには保存しない入力欄）
+    reply_to = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label="返信したいコメントの番号（任意）",
+    )
+
     class Meta:
         model = Comment
         fields = ["text"]
