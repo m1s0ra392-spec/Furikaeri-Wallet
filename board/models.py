@@ -35,6 +35,13 @@ class Topic(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    tags = models.ManyToManyField(
+    "Tag",
+    through="TopicTag",
+    related_name="topics",
+    blank=True,
+)
 
 # 削除要請情報（ユーザー入力必須は View/Form 側で担保）
     delete_request_status = models.IntegerField(
@@ -56,6 +63,7 @@ class Topic(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} ({self.get_board_category_display()})"
+    
   
     
 # ==============================
@@ -180,3 +188,57 @@ class CommentLike(models.Model):
 
     def __str__(self):
         return f"CommentLike(user={self.user_id}, comment={self.comment_id})"
+    
+
+# ==============================
+# tagsテーブル
+# ==============================
+
+class Tag(models.Model):
+    name = models.CharField(max_length=30, unique=True, db_index=True)
+    is_active = models.BooleanField(default=True)
+
+    # 統合先（NULLなら現役タグ）
+    merged_to_tag = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="merged_from_tags",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+    
+
+# ==============================
+# topic_tagsテーブル
+# ==============================
+
+class TopicTag(models.Model):
+    topic = models.ForeignKey(
+        "Topic",
+        on_delete=models.CASCADE,
+        related_name="topic_tags",
+        db_index=True,
+    )
+    tag = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        related_name="topic_tags",
+        db_index=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["topic", "tag"], name="uniq_topic_tag")
+        ]
+
+    def __str__(self):
+        return f"{self.topic_id}-{self.tag_id}"
