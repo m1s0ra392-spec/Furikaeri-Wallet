@@ -10,4 +10,5 @@ urlpatterns = [
     path("topics/<int:topic_id>/comments/new/", views.comment_create, name="comment_create"),#コメント作成
     path("topics/<int:topic_id>/like/", views.topic_like_toggle, name="topic_like_toggle"),#わたしのいいね（トピック）（仮）
     path("comments/<int:comment_id>/like/", views.comment_like_toggle, name="comment_like_toggle"),#わたしのいいね（コメント）（仮）
+    path("api/tags/", views.tag_search_api, name="tag_search_api"),#タグ検索
 ]

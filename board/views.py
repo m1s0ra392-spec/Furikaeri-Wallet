@@ -3,10 +3,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
 from django.shortcuts import render
-from collections import defaultdict
-from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_GET
 
-from .models import Topic, Comment, TopicLike, CommentLike
+from collections import defaultdict
+
+from .models import Topic, Comment, TopicLike, CommentLike, Tag
 from .forms import TopicForm, CommentForm
 
 
@@ -205,3 +207,31 @@ def comment_like_toggle(request, comment_id):
 
     # コメントは基本トピック詳細に戻すのが自然
     return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), topic_id=comment.topic_id)
+
+
+# ==============================
+# タグ検索
+# ==============================
+
+@login_required
+@require_GET
+def tag_search_api(request):
+    """
+    入力文字列 q をもとに既存タグ候補を返すAPI
+    GET /board/api/tags/?q=xxx
+    戻り値: [{"id": 1, "name": "節約"}, ...]
+    """
+    q = (request.GET.get("q") or "").strip()
+
+    # 空なら空配列（候補を出さない）
+    if not q:
+        return JsonResponse([], safe=False)
+
+    qs = (
+        Tag.objects
+        .filter(name__istartswith=q)
+        .order_by("name")
+        .values("id", "name")[:10]
+    )
+
+    return JsonResponse(list(qs), safe=False)

@@ -1,11 +1,89 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>トピックを作成</h1>
 
-<form method="post">
+<h2 style="margin:16px 0 8px;">トピック投稿</h2>
+
+<form method="post" novalidate>
   {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">投稿する</button>
+
+  {# --- カテゴリ --- #}
+  <div style="margin:12px 0;">
+    <div style="font-size:13px; color:#555; margin-bottom:6px;">カテゴリ</div>
+
+    {# board_category が RadioSelect なら横並びにしやすい #}
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      {{ form.board_category }}
+    </div>
+
+    {% if form.board_category.errors %}
+      <div style="color:#c00; font-size:12px; margin-top:6px;">
+        {{ form.board_category.errors }}
+      </div>
+    {% endif %}
+  </div>
+
+  {# --- タイトル --- #}
+  <div style="margin:12px 0;">
+    <div style="font-size:13px; color:#555; margin-bottom:6px;">タイトル</div>
+    {{ form.title }}
+    {% if form.title.errors %}
+      <div style="color:#c00; font-size:12px; margin-top:6px;">
+        {{ form.title.errors }}
+      </div>
+    {% endif %}
+  </div>
+
+  {# --- 本文（1000字） --- #}
+  <div style="margin:12px 0;">
+    <div style="font-size:13px; color:#555; margin-bottom:6px;">内容を書く</div>
+    {{ form.text }}
+
+    <div style="font-size:12px; color:#888; margin-top:6px;">
+      ※1000文字以内で入力してください
+    </div>
+
+    {% if form.text.errors %}
+      <div style="color:#c00; font-size:12px; margin-top:6px;">
+        {{ form.text.errors }}
+      </div>
+    {% endif %}
+  </div>
+
+  {# --- status は表示しない（ボタンで決める） --- #}
+  {{ form.status.as_hidden }}
+
+  {# --- ボタン（actionで分岐させる前提） --- #}
+  <div style="display:flex; gap:10px; margin-top:18px;">
+    <button type="submit"
+            name="action" value="confirm"
+            style="flex:1; padding:12px; border:none; border-radius:6px; background:#2f6f5e; color:#fff; font-weight:bold;">
+      トピックを投稿する
+    </button>
+
+    <button type="submit"
+            name="action" value="draft"
+            style="flex:1; padding:12px; border:2px solid #2f6f5e; border-radius:6px; background:#fff; color:#2f6f5e; font-weight:bold;">
+      下書き保存
+    </button>
+  </div>
+
 </form>
+
+<style>
+  input[type="text"], textarea, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+  }
+  textarea { min-height: 180px; }
+
+  /* RadioSelectがul/liになることが多いので整える */
+  ul { list-style: none; padding-left: 0; margin: 0; display:flex; gap:12px; flex-wrap:wrap; }
+  li { margin: 0; }
+  label { cursor: pointer; }
+</style>
+
 {% endblock %}
