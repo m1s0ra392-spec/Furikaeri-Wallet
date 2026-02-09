@@ -50,6 +50,38 @@
     {% endif %}
   </div>
 
+  {# --- タグ追加ボタン＆入力欄（最初は非表示） --- #}
+<div style="margin:12px 0;">
+  <button type="button"
+          id="toggle-tag"
+          style="padding:10px 14px; border:1px solid #c8c1b8; border-radius:6px; background:#eee6db; cursor:pointer;">
+    タグを追加（任意）
+  </button>
+
+  <div id="tag-area" style="display:none; margin-top:10px;">
+    <input type="text"
+           name="tags"
+           placeholder="例：節約, 工夫, 失敗 など（カンマ区切り）"
+           style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+    <div style="font-size:12px; color:#888; margin-top:6px;">
+      ※タグは任意です（後で候補表示にも対応できます）
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const btn = document.getElementById("toggle-tag");
+    const area = document.getElementById("tag-area");
+    if (!btn || !area) return;
+
+    btn.addEventListener("click", () => {
+      const isHidden = area.style.display === "none";
+      area.style.display = isHidden ? "block" : "none";
+    });
+  })();
+</script>
+
   {# --- status は表示しない（ボタンで決める） --- #}
   {{ form.status.as_hidden }}
 
