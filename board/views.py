@@ -103,18 +103,25 @@ def topic_detail(request, topic_id):
 def topic_create(request):
     if request.method == "POST":
         form = TopicForm(request.POST)
+        action = request.POST.get("action")  # confirm / draft
+
         if form.is_valid():
             topic = form.save(commit=False)
-            topic.user = request.user
-            topic.save()
-            return redirect("board:topic_detail", topic_id=topic.id)
+            topic.user = request.user  # user紐付けがあるなら
+
+            if action == "draft":
+                topic.status = Topic.Status.DRAFT   # ←あなたのchoices名に合わせて
+                topic.save()
+                return redirect("board:topic_edit", topic.id)  # 下書き編集画面など
+            else:
+                topic.status = Topic.Status.PUBLIC  # ←ここが重要（投稿は公開にする）
+                topic.save()
+                return redirect("board:topic_confirm", topic.id)  # 確認画面など（今ないなら詳細へ）
+
     else:
         form = TopicForm()
 
-    return render(request, "board/topic_form.html", {
-        "form": form,
-    })
-
+    return render(request, "topics/topic_form.html", {"form": form})
 
 # ==============================
 # コメント作成ビュー
