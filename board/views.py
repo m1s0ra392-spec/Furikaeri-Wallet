@@ -121,7 +121,7 @@ def topic_create(request):
     else:
         form = TopicForm()
 
-    return render(request, "topics/topic_form.html", {"form": form})
+    return render(request, "board/topic_form.html", {"form": form})
 
 
 # ==============================
@@ -133,7 +133,7 @@ def topic_confirm(request, pk):
     topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
     # GETだけでOK（まずは）
-    return render(request, "topics/topic_confirm.html", {
+    return render(request, "board/topic_confirm.html", {
         "topic": topic
     })
     
@@ -148,18 +148,14 @@ def comment_create(request, topic_id):
 
     if request.method == "POST":
         form = CommentForm(request.POST)
+        action = request.POST.get("action")  #"post" or "draft"
+        
         if form.is_valid():
             comment = form.save(commit=False)
             comment.topic = topic
             comment.user = request.user 
             
-            # ★押したボタンでステータス決定
-            action = request.POST.get("action")
-            if action == "post":
-                comment.status = Comment.CommentStatus.PUBLIC
-            else:
-                comment.status = Comment.CommentStatus.DRAFT
-            
+
             # 返信番号（任意）→ parent に変換
             reply_to_seq = form.cleaned_data.get("reply_to")   #返信番号を取り出す
             if reply_to_seq:    #返信番号が入っていれば処理する、空欄ならば通常コメント
@@ -170,7 +166,7 @@ def comment_create(request, topic_id):
                 comment.parent_comment = parent
                 
 
-            # sequence 自動採番（topic内でMax+1）
+            # sequence 自動採番（topic内でMax+1）※新規作成時に限り
             max_sequence = (
                 Comment.objects
                 .filter(topic=topic)
@@ -179,9 +175,16 @@ def comment_create(request, topic_id):
 
             comment.sequence = (max_sequence or 0) + 1
             
-
+            #コメント投稿前に確認挟む
+            comment.status = Comment.CommentStatus.DRAFT
             comment.save()
-            return redirect("board:topic_detail", topic_id=topic.id)
+
+            if action == "post":
+                return redirect("board:comment_confirm", comment_id=comment.id)
+
+            # action == "draft"
+            return redirect("board:comment_edit", comment_id=comment.id)
+        
     else:
         form = CommentForm()
 
@@ -189,7 +192,17 @@ def comment_create(request, topic_id):
         "form": form,
         "topic": topic,
     })  
-    
+
+
+# ==============================
+# コメント確認
+# ==============================
+
+@login_required
+def comment_confirm(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id, user=request.user)
+    return render(request, "board/comment_confirm.html", {"comment": comment})
+
 
 
 # ==============================
