@@ -96,7 +96,7 @@ def topic_detail(request, topic_id):
 
 
 # ==============================
-# 掲示板トップ　トピックの選定
+# トピック作成
 # ==============================
 
 @login_required
@@ -107,24 +107,39 @@ def topic_create(request):
 
         if form.is_valid():
             topic = form.save(commit=False)
-            topic.user = request.user  # user紐付けがあるなら
+            topic.user = request.user  # user紐付け
 
             if action == "draft":
-                topic.status = Topic.Status.DRAFT   # ←あなたのchoices名に合わせて
+                topic.status = Topic.TopicStatus.DRAFT   
                 topic.save()
                 return redirect("board:topic_edit", topic.id)  # 下書き編集画面など
             else:
-                topic.status = Topic.Status.PUBLIC  # ←ここが重要（投稿は公開にする）
+                topic.status = Topic.TopicStatus.PUBLIC  # 投稿は公開にする
                 topic.save()
-                return redirect("board:topic_confirm", topic.id)  # 確認画面など（今ないなら詳細へ）
+                return redirect("board:topic_confirm", topic.id)  
 
     else:
         form = TopicForm()
 
     return render(request, "topics/topic_form.html", {"form": form})
 
+
 # ==============================
-# コメント作成ビュー
+# トピック投稿前確認
+# ==============================
+
+@login_required
+def topic_confirm(request, pk):
+    topic = get_object_or_404(Topic, pk=pk, user=request.user)
+
+    # GETだけでOK（まずは）
+    return render(request, "topics/topic_confirm.html", {
+        "topic": topic
+    })
+    
+
+# ==============================
+# コメント作成
 # ==============================
     
 @login_required    

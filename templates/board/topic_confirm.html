@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>トピック投稿</h2>
+<p>こちらの内容でよろしいですか？</p>
+
+<div style="margin:16px 0;">
+  <div><strong>カテゴリ</strong></div>
+  <div>{{ topic.get_board_category_display }}</div>
+</div>
+
+<div style="margin:16px 0;">
+  <div><strong>タイトル</strong></div>
+  <div>{{ topic.title }}</div>
+</div>
+
+<div style="margin:16px 0;">
+  <div><strong>内容</strong></div>
+  <div style="white-space:pre-wrap;">{{ topic.body }}</div>
+</div>
+
+<div style="display:flex; gap:12px; margin-top:24px;">
+  <a href="{% url 'board:topic_detail' topic.id %}"
+     style="padding:10px 16px; background:#5f8f6b; color:#fff; text-decoration:none;">
+    投稿する
+  </a>
+
+  <a href="{% url 'board:topic_edit' topic.id %}"
+     style="padding:10px 16px; background:#ddd; text-decoration:none;">
+    戻る
+  </a>
+</div>
+
+{% endblock %}
