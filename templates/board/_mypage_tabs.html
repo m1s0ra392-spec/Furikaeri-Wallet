@@ -1,0 +1,26 @@
+
+<div style="display:flex; gap:8px; margin:12px 0; flex-wrap:wrap;">
+  <a href="{% url 'board:mypage_likes' %}"
+     style="padding:8px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;
+     {% if tab == 'likes' %}font-weight:bold; background:#f3f3f3;{% endif %}">
+    私のいいね
+  </a>
+
+  <a href="{% url 'board:mypage_topics' %}"
+     style="padding:8px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;
+     {% if tab == 'topics' %}font-weight:bold; background:#f3f3f3;{% endif %}">
+    私のトピック
+  </a>
+
+  <a href="{% url 'board:mypage_comments' %}"
+     style="padding:8px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;
+     {% if tab == 'comments' %}font-weight:bold; background:#f3f3f3;{% endif %}">
+    私のコメント
+  </a>
+
+  <a href="{% url 'board:mypage_drafts' %}"
+     style="padding:8px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;
+     {% if tab == 'drafts' %}font-weight:bold; background:#f3f3f3;{% endif %}">
+    下書き一覧
+  </a>
+</div>

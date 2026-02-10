@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 style="margin:16px 0 8px;">掲示板マイページ</h2>
+{% include "board/_mypage_tabs.html" %}
+
+<h3 style="margin:16px 0 8px;">いいねしたトピック</h3>
+{% if liked_topics %}
+  <ul style="padding-left:16px;">
+    {% for t in liked_topics %}
+      <li style="margin:10px 0;">
+        <a href="{% url 'board:topic_detail' t.id %}">{{ t.title }}</a>
+        <div style="font-size:12px; color:#666;">
+          {{ t.created_at|date:"Y/m/d" }}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div style="color:#666; font-size:13px;">まだトピックにいいねがありません。</div>
+{% endif %}
+
+<h3 style="margin:16px 0 8px;">いいねしたコメント</h3>
+{% if liked_comments %}
+  <ul style="padding-left:16px;">
+    {% for c in liked_comments %}
+      <li style="margin:10px 0;">
+        <a href="{% url 'board:topic_detail' c.topic_id %}">
+          {{ c.topic.title }}
+        </a>
+        <div style="font-size:13px; margin-top:4px;">
+          {{ c.text|truncatechars:30 }}
+        </div>
+        <div style="font-size:12px; color:#666;">
+          {{ c.created_at|date:"Y/m/d" }}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <div style="color:#666; font-size:13px;">まだコメントにいいねがありません。</div>
+{% endif %}
+
+{% endblock %}

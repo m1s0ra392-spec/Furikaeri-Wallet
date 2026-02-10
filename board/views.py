@@ -270,3 +270,57 @@ def tag_search_api(request):
     )
 
     return JsonResponse(list(qs), safe=False)
+
+
+
+# ==============================
+# 掲示板マイページ
+# ==============================
+
+@login_required
+def mypage_index(request):
+    # 最初のページは「私のいいね」
+    return redirect("board:mypage_likes")
+
+
+#「わたしのいいね」
+@login_required
+def mypage_likes(request):
+    user = request.user
+
+    # いいねしたトピック（新しい順）
+    liked_topics = (
+        Topic.objects.filter(topiclike__user=user)
+        .select_related("user")
+        .order_by("-topiclike__created_at")
+    )
+
+    # いいねしたコメント（新しい順）
+    liked_comments = (
+        Comment.objects.filter(commentlike__user=user)
+        .select_related("user", "topic")
+        .order_by("-commentlike__created_at")
+    )
+
+    return render(request, "board/mypage_likes.html", {
+        "tab": "likes",
+        "liked_topics": liked_topics,
+        "liked_comments": liked_comments,
+    })
+
+
+
+#わたしのトピック（仮）
+@login_required
+def mypage_topics(request):
+    return render(request, "board/mypage_topics.html", {"tab": "topics"})
+
+#わたしのコメント（仮）
+@login_required
+def mypage_comments(request):
+    return render(request, "board/mypage_comments.html", {"tab": "comments"})
+
+#下書き一覧（仮）
+@login_required
+def mypage_drafts(request):
+    return render(request, "board/mypage_drafts.html", {"tab": "drafts"})
