@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST, require_GET
 
 from collections import defaultdict
@@ -137,6 +137,34 @@ def topic_confirm(request, pk):
         "topic": topic
     })
     
+
+# ==============================
+# トピック編集
+# ==============================
+
+@login_required
+def topic_edit(request, topic_id):
+    topic = get_object_or_404(Topic, id=topic_id)
+
+    # 他人の投稿を編集できないようにする
+    if topic.user_id != request.user.id:
+        return HttpResponseForbidden("権限がありません")
+
+    if request.method == "POST":
+        form = TopicForm(request.POST, instance=topic)
+        if form.is_valid():
+            topic = form.save(commit=False)
+            topic.user = request.user  # 念のため固定
+            topic.save()
+            return redirect("board:topic_detail", topic_id=topic.id)
+    else:
+        form = TopicForm(instance=topic)
+
+    return render(request, "board/topic_form.html", {
+        "form": form,
+        "is_edit": True,
+        "topic": topic,
+    })
 
 # ==============================
 # コメント作成
@@ -311,10 +339,19 @@ def mypage_likes(request):
     })
 
 
-#わたしのトピック（仮）
+#「私のトピック」
 @login_required
 def mypage_topics(request):
-    return render(request, "board/mypage_topics.html", {"tab": "topics"})
+    topics = (
+        Topic.objects
+        .filter(user=request.user, status=Topic.TopicStatus.PUBLIC)  # 投稿済み＝公開
+        .order_by("-created_at")
+    )
+
+    return render(request, "board/mypage_topics.html", {
+        "topics": topics,
+    })
+    
 
 #わたしのコメント（仮）
 @login_required
