@@ -288,18 +288,20 @@ def mypage_index(request):
 def mypage_likes(request):
     user = request.user
 
-    # いいねしたトピック（新しい順）
+    # いいねしたトピック（いいね日時の新しい順）
     liked_topics = (
-        Topic.objects.filter(topiclike__user=user)
+        Topic.objects.filter(likes__user=user)  
         .select_related("user")
-        .order_by("-topiclike__created_at")
+        .order_by("-likes__created_at")
+        .distinct() #重複対策
     )
 
-    # いいねしたコメント（新しい順）
+    # いいねしたコメント（いいね日時の新しい順）
     liked_comments = (
-        Comment.objects.filter(commentlike__user=user)
+        Comment.objects.filter(likes__user=user)  
         .select_related("user", "topic")
-        .order_by("-commentlike__created_at")
+        .order_by("-likes__created_at")
+        .distinct() #重複対策
     )
 
     return render(request, "board/mypage_likes.html", {
@@ -307,7 +309,6 @@ def mypage_likes(request):
         "liked_topics": liked_topics,
         "liked_comments": liked_comments,
     })
-
 
 
 #わたしのトピック（仮）
