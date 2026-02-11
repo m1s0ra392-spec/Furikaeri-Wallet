@@ -1,6 +1,35 @@
 {% extends "base.html" %}
+
 {% block content %}
-<h2 style="margin:16px 0 8px;">掲示板マイページ</h2>
-{% include "board/_mypage_tabs.html" %}
-<div style="color:#666;">（準備中）私のコメント</div>
+  <h2 style="margin:16px 0 12px;">私のコメント</h2>
+
+  {% if comments %}
+    <ul style="list-style:none; padding:0; margin:0;">
+      {% for c in comments %}
+        <li style="padding:12px; border:1px solid #ddd; border-radius:12px; margin-bottom:10px;">
+          <div style="font-size:12px; color:#666; margin-bottom:6px;">
+            {{ c.created_at|date:"Y/m/d H:i" }}
+          </div>
+
+          <div style="margin-bottom:10px; white-space:pre-wrap;">
+            {{ c.text }}
+          </div>
+
+          <div style="font-size:12px; color:#666; margin-bottom:8px;">
+            元トピック：
+            <a href="{% url 'board:topic_detail' c.topic.id %}" style="text-decoration:none;">
+              {{ c.topic.title }}
+            </a>
+          </div>
+
+          <a href="{% url 'board:topic_detail' c.topic.id %}"
+             style="display:inline-block; padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
+            トピックへ
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p style="color:#666;">まだコメントはありません。</p>
+  {% endif %}
 {% endblock %}

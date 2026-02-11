@@ -340,6 +340,7 @@ def mypage_likes(request):
 
 
 #「私のトピック」
+
 @login_required
 def mypage_topics(request):
     topics = (
@@ -353,11 +354,21 @@ def mypage_topics(request):
     })
     
 
-#わたしのコメント（仮）
+#「私のコメント」
+
 @login_required
 def mypage_comments(request):
-    return render(request, "board/mypage_comments.html", {"tab": "comments"})
+    comments = (
+        Comment.objects
+        .filter(user=request.user)
+        .select_related("topic")   # topic を一緒に取ってDB回数減らす
+        .order_by("-created_at")
+    )
 
+    return render(request, "board/mypage_comments.html", {
+        "comments": comments,
+    })
+    
 #下書き一覧（仮）
 @login_required
 def mypage_drafts(request):
