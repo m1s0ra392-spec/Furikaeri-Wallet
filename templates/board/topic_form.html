@@ -2,7 +2,13 @@
 
 {% block content %}
 
-<h2 style="margin:16px 0 8px;">トピック投稿</h2>
+ {# --- 見出し分岐（最終削除） --- #}
+<h2 style="margin:16px 0 8px;">
+  {% if mode == "create" %}トピック投稿
+  {% elif mode == "draft_edit" %}トピック編集（下書き）
+  {% else %}トピック編集
+  {% endif %}
+</h2>
 
 <form method="post" novalidate>
   {% csrf_token %}
@@ -71,21 +77,77 @@
 
   {# --- ボタン（actionで分岐させる前提） --- #}
   <div style="display:flex; gap:10px; margin-top:18px;">
-    <button type="submit"
-            name="action" value="confirm"
-            style="flex:1; padding:12px; border:none; border-radius:6px; background:#2f6f5e; color:#fff; font-weight:bold;">
-      トピックを投稿する
-    </button>
 
+  <button type="submit"
+          name="action" value="confirm"
+          style="flex:1; padding:12px; border:none; border-radius:6px; background:#2f6f5e; color:#fff; font-weight:bold;">
+    {{ primary_label }}
+  </button>
+
+  {% if show_draft_button %}
     <button type="submit"
             name="action" value="draft"
             style="flex:1; padding:12px; border:2px solid #2f6f5e; border-radius:6px; background:#fff; color:#2f6f5e; font-weight:bold;">
       下書き保存
     </button>
-  </div>
+  {% endif %}
+
+  {% if show_delete_request %}
+    <button type="button"
+            onclick="openDeleteRequestModal()"
+            style="flex:1; padding:12px; border:none; border-radius:6px; background:#d66a5e; color:#fff; font-weight:bold;">
+      削除を要請する
+    </button>
+  {% endif %}
+
+</div>
 
 </form>
 
+{% if show_delete_request %}
+  <!-- 削除要請モーダル -->
+  <div id="deleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;">
+    <div style="width:min(92vw, 420px); margin:60px auto; background:#fff; border-radius:10px; overflow:hidden;">
+
+      <div style="padding:12px 14px; border-bottom:1px solid #eee; font-weight:bold;">
+        本当に削除を要請しますか？
+      </div>
+
+      <div style="padding:14px;">
+        <div style="font-size:12px; color:#666; margin-bottom:10px;">
+          （管理人に送信され、承認されると削除されます）
+        </div>
+
+        <form method="post" action="{% url 'board:topic_delete_request' topic.id %}">
+          {% csrf_token %}
+          <input type="text" name="reason" placeholder="削除の理由（必須）"
+                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" onclick="closeDeleteRequestModal()"
+                    style="flex:1; padding:10px; border:1px solid #bbb; border-radius:8px; background:#eee;">
+              いいえ
+            </button>
+            <button type="submit"
+                    style="flex:1; padding:10px; border:none; border-radius:8px; background:#d66a5e; color:#fff; font-weight:bold;">
+              はい
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function openDeleteRequestModal() {
+      document.getElementById("deleteModal").style.display = "block";
+    }
+    function closeDeleteRequestModal() {
+      document.getElementById("deleteModal").style.display = "none";
+    }
+  </script>
+  {% endif %}
 
 <!-- タグモーダル -->
 <div id="tag-modal-overlay"
@@ -296,5 +358,6 @@
   });
 })();
 </script>
+
 
 {% endblock %}
