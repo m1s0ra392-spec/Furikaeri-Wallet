@@ -1,6 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h2 style="margin:16px 0 8px;">掲示板マイページ</h2>
 {% include "board/_mypage_tabs.html" %}
-<div style="color:#666;">（準備中）下書き一覧</div>
+
+<h3 style="margin-top:16px;">■ 下書きトピック</h3>
+
+{% for topic in draft_topics %}
+  <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+    <div>
+      {{ topic.title }}
+      <a href="{% url 'board:draft_topic_edit' topic.id %}">
+        ✏️
+      </a>
+    </div>
+    <div style="font-size:12px; color:#666;">
+      {{ topic.updated_at|date:"Y年n月j日" }}
+    </div>
+  </div>
+{% empty %}
+  <div style="color:#999;">下書きトピックはありません</div>
+{% endfor %}
+
+
+<h3 style="margin-top:24px;">■ 下書きコメント</h3>
+
+{% for comment in draft_comments %}
+  <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+    <div>
+      {{ comment.text|truncatechars:30 }}
+      <a href="{% url 'board:draft_comment_edit' comment.id %}">
+        ✏️
+      </a>
+    </div>
+    <div style="font-size:12px; color:#666;">
+      {{ comment.updated_at|date:"Y年n月j日" }}
+    </div>
+  </div>
+{% empty %}
+  <div style="color:#999;">下書きコメントはありません</div>
+{% endfor %}
+
 {% endblock %}

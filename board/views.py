@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
 
 from collections import defaultdict
@@ -369,7 +369,33 @@ def mypage_comments(request):
         "comments": comments,
     })
     
-#下書き一覧（仮）
+    
+#「下書き一覧」
+
 @login_required
 def mypage_drafts(request):
-    return render(request, "board/mypage_drafts.html", {"tab": "drafts"})
+    draft_topics = Topic.objects.filter(
+        user=request.user,
+        status=Topic.TopicStatus.DRAFT
+    ).order_by("-updated_at")
+
+    draft_comments = Comment.objects.filter(
+        user=request.user,
+        status=Comment.CommentStatus.DRAFT
+    ).order_by("-updated_at")
+
+    return render(request, "board/mypage_drafts.html", {
+        "tab": "drafts",
+        "draft_topics": draft_topics,
+        "draft_comments": draft_comments,
+    })
+    
+
+#「編集画面（仮）」
+@login_required
+def draft_topic_edit_dummy(request, pk):
+    return HttpResponse("仮：トピック編集画面")
+
+@login_required
+def draft_comment_edit_dummy(request, pk):
+    return HttpResponse("仮：コメント編集画面")

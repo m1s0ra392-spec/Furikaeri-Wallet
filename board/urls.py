@@ -25,4 +25,8 @@ urlpatterns = [
     path("mypage/topics/", views.mypage_topics, name="mypage_topics"),#私のトピック
     path("mypage/comments/", views.mypage_comments, name="mypage_comments"),#私のコメント
     path("mypage/drafts/", views.mypage_drafts, name="mypage_drafts"),#下書き一覧
+    
+    path("draft/topic/<int:pk>/", views.draft_topic_edit_dummy, name="draft_topic_edit"),#トピック編集
+    path("draft/comment/<int:pk>/", views.draft_comment_edit_dummy, name="draft_comment_edit"),#コメント編集
+    
 ]
