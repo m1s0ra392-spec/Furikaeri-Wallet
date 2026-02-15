@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
 
 from collections import defaultdict
@@ -144,25 +144,53 @@ def topic_confirm(request, pk):
 
 @login_required
 def topic_edit(request, topic_id):
-    topic = get_object_or_404(Topic, id=topic_id)
-
-    # 他人の投稿を編集できないようにする
-    if topic.user_id != request.user.id:
-        return HttpResponseForbidden("権限がありません")
+    # ここで本人の投稿しか取れない
+    topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
 
     if request.method == "POST":
         form = TopicForm(request.POST, instance=topic)
         if form.is_valid():
             topic = form.save(commit=False)
-            topic.user = request.user  # 念のため固定
+            topic.status = Topic.TopicStatus.PUBLIC 
             topic.save()
-            return redirect("board:topic_detail", topic_id=topic.id)
+            return redirect("board:topic_detail", topic_id=topic.id)  
     else:
         form = TopicForm(instance=topic)
 
     return render(request, "board/topic_form.html", {
         "form": form,
-        "is_edit": True,
+        "topic": topic,
+        "mode": "edit",
+        "primary_label": "トピックを更新する",
+        "show_draft_button": False,
+        "show_delete_request": True,
+    })
+
+# ==============================
+# トピック編集（削除要請）
+# ==============================
+
+@login_required
+def topic_delete_request(request, topic_id):
+    topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
+
+    if request.method == "POST":
+        reason = request.POST.get("reason", "").strip()
+
+        # 仮：理由必須だけチェック（保存はまだしない）
+        if not reason:
+            return render(request, "board/topic_delete_confirm.html", {
+                "topic": topic,
+                "error": "削除の理由は必須です。",
+            })
+
+        # 仮：送信完了ページへ
+        return render(request, "board/topic_delete_requested.html", {
+            "topic": topic,
+        })
+
+    # GET：確認ページ
+    return render(request, "board/topic_delete_confirm.html", {
         "topic": topic,
     })
 
