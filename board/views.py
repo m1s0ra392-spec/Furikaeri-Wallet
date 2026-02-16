@@ -2,7 +2,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
-from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
 
@@ -139,7 +138,59 @@ def topic_confirm(request, pk):
     
 
 # ==============================
-# トピック編集
+# 下書きトピック編集（②）
+# ==============================
+
+@login_required
+def topic_draft_edit(request, pk):
+    # 本人の「下書き」だけ取る
+    topic = get_object_or_404(
+        Topic,
+        pk=pk,
+        user=request.user,
+        status=Topic.TopicStatus.DRAFT, 
+    )
+
+    if request.method == "POST":
+        form = TopicForm(request.POST, instance=topic)
+        action = request.POST.get("action")  # "draft" or "post" を想定
+
+        if form.is_valid():
+            topic = form.save(commit=False)
+            topic.user = request.user  # 念のため固定
+
+            if action == "draft":
+                # 下書きとして更新（この画面に戻す）
+                topic.status = Topic.TopicStatus.DRAFT
+                topic.save()
+                return redirect("board:topic_draft_edit", pk=topic.id)
+
+            # いったん「確認画面へ」ルートにしたい場合：
+            # topic.status = Topic.TopicStatus.PUBLIC
+            # topic.save()
+            # return redirect("board:topic_confirm", topic_id=topic.id)
+
+            # もし現時点で確認画面が未実装なら仮で詳細へでもOK：
+            topic.status = Topic.TopicStatus.PUBLIC
+            topic.save()
+            return redirect("board:topic_detail", topic_id=topic.id)
+
+    else:
+        form = TopicForm(instance=topic)
+
+    return render(request, "board/topic_form.html", {
+        "form": form,
+        "topic": topic,
+        "mode": "draft_edit",
+        "primary_label": "下書きを更新する",
+        "show_draft_button": True,     # 下書きボタンを出したい
+        "show_delete_request": False,  # 下書きは削除申請なし（おすすめ）
+    })
+    
+
+
+# ==============================
+# トピック編集(作成済み)
 # ==============================
 
 @login_required
