@@ -10,7 +10,7 @@ urlpatterns = [
     path("topics/<int:pk>/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認
     path("topics/<int:topic_id>/", views.topic_detail, name="topic_detail"), #トピック詳細
     path("topics/<int:topic_id>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
-    path("drafts/<int:pk>/edit/", views.topic_draft_edit, name="topic_draft_edit"),#トピック編集（下書き）
+    path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
     path("topics/<int:topic_id>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト（仮）
     
     path("topics/<int:topic_id>/comments/new/", views.comment_create, name="comment_create"),#コメント作成

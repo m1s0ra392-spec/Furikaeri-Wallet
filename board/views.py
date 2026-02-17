@@ -142,7 +142,7 @@ def topic_confirm(request, pk):
 # ==============================
 
 @login_required
-def topic_draft_edit(request, pk):
+def draft_topic_edit(request, pk):
     # 本人の「下書き」だけ取る
     topic = get_object_or_404(
         Topic,
