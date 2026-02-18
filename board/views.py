@@ -64,8 +64,8 @@ def topic_list(request):
 # ==============================
 
 @login_required
-def topic_detail(request, topic_id):
-    topic = get_object_or_404(Topic, pk=topic_id)
+def topic_detail(request, pk):
+    topic = get_object_or_404(Topic, pk=pk)
     # topic のいいね数
     topic_like_count = TopicLike.objects.filter(topic=topic).count()
 
@@ -200,9 +200,9 @@ def draft_topic_edit(request, pk):
 # ==============================
 
 @login_required
-def topic_edit(request, topic_id):
+def topic_edit(request, pk):
     # ここで本人の投稿しか取れない
-    topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
+    topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
     if request.method == "POST":
         form = TopicForm(request.POST, instance=topic)
@@ -210,7 +210,7 @@ def topic_edit(request, topic_id):
             topic = form.save(commit=False)
             topic.status = Topic.TopicStatus.PUBLIC 
             topic.save()
-            return redirect("board:topic_detail", topic_id=topic.id)  
+            return redirect("board:topic_detail", pk=topic.id)  
     else:
         form = TopicForm(instance=topic)
 
@@ -228,8 +228,8 @@ def topic_edit(request, topic_id):
 # ==============================
 
 @login_required
-def topic_delete_request(request, topic_id):
-    topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
+def topic_delete_request(request, pk):
+    topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
     if request.method == "POST":
         reason = request.POST.get("reason", "").strip()
@@ -256,8 +256,8 @@ def topic_delete_request(request, topic_id):
 # ==============================
     
 @login_required    
-def comment_create(request, topic_id):
-    topic = get_object_or_404(Topic, pk=topic_id)
+def comment_create(request, pk):
+    topic = get_object_or_404(Topic, pk=pk)
 
     if request.method == "POST":
         form = CommentForm(request.POST)
@@ -293,10 +293,10 @@ def comment_create(request, topic_id):
             comment.save()
 
             if action == "post":
-                return redirect("board:comment_confirm", comment_id=comment.id)
+                return redirect("board:comment_confirm", pk=comment.id)
 
             # action == "draft"
-            return redirect("board:comment_edit", comment_id=comment.id)
+            return redirect("board:comment_edit", pk=comment.id)
         
     else:
         form = CommentForm()
@@ -312,8 +312,8 @@ def comment_create(request, topic_id):
 # ==============================
 
 @login_required
-def comment_confirm(request, comment_id):
-    comment = get_object_or_404(Comment, pk=comment_id, user=request.user)
+def comment_confirm(request, pk):
+    comment = get_object_or_404(Comment, pk=pk, user=request.user)
     return render(request, "board/comment_confirm.html", {"comment": comment})
 
 
@@ -324,8 +324,8 @@ def comment_confirm(request, comment_id):
 
 @require_POST
 @login_required
-def topic_like_toggle(request, topic_id):
-    topic = get_object_or_404(Topic, pk=topic_id)
+def topic_like_toggle(request, pk):
+    topic = get_object_or_404(Topic, pk=pk)
 
     like, created = TopicLike.objects.get_or_create(
         user=request.user,
@@ -337,13 +337,13 @@ def topic_like_toggle(request, topic_id):
         like.delete()
 
     # 押した元のページへ戻す（HTTP_REFERERが無い場合の保険で詳細へ）
-    return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), topic_id=topic.id)
+    return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), pk=topic.id)
 
 
 @require_POST
 @login_required
-def comment_like_toggle(request, comment_id):
-    comment = get_object_or_404(Comment, pk=comment_id)
+def comment_like_toggle(request, pk):
+    comment = get_object_or_404(Comment, pk=pk)
 
     like, created = CommentLike.objects.get_or_create(
         user=request.user,
@@ -354,7 +354,7 @@ def comment_like_toggle(request, comment_id):
         like.delete()
 
     # コメントは基本トピック詳細に戻すのが自然
-    return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), topic_id=comment.topic_id)
+    return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), pk=comment.pk)
 
 
 # ==============================
