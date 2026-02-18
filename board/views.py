@@ -102,25 +102,33 @@ def topic_detail(request, topic_id):
 def topic_create(request):
     if request.method == "POST":
         form = TopicForm(request.POST)
-        action = request.POST.get("action")  # confirm / draft
+        action = request.POST.get("action")  # "post" / "draft"
 
         if form.is_valid():
             topic = form.save(commit=False)
-            topic.user = request.user  # user紐付け
-
+            topic.user = request.user
+            
+            #マイページの下書き一覧へ遷移
             if action == "draft":
-                topic.status = Topic.TopicStatus.DRAFT   
+                topic.status = Topic.TopicStatus.DRAFT
                 topic.save()
-                return redirect("board:topic_edit", topic.id)  # 下書き編集画面など
-            else:
-                topic.status = Topic.TopicStatus.PUBLIC  # 投稿は公開にする
-                topic.save()
-                return redirect("board:topic_confirm", topic.id)  
+                return redirect("board:mypage_drafts") #マイページの下書き一覧へ遷移
+
+            # 投稿 → 確認画面へ
+            topic.status = Topic.TopicStatus.PUBLIC
+            topic.save()
+            return redirect("board:topic_confirm", pk=topic.id)# 投稿 → 確認画面へ
 
     else:
         form = TopicForm()
 
-    return render(request, "board/topic_form.html", {"form": form})
+    return render(request, "board/topic_form.html", {
+        "form": form,
+        "mode": "create",
+        "primary_label": "トピックを投稿する",
+        "show_draft_button": True,     # ★新規作成で下書きボタン表示
+        "show_delete_request": False,  # 新規では削除申請なし
+    })
 
 
 # ==============================
@@ -129,7 +137,12 @@ def topic_create(request):
 
 @login_required
 def topic_confirm(request, pk):
-    topic = get_object_or_404(Topic, pk=pk, user=request.user)
+    topic = get_object_or_404(
+        Topic,
+        pk=pk,
+        user=request.user,
+        status=Topic.TopicStatus.PUBLIC, 
+    )
 
     # GETだけでOK（まずは）
     return render(request, "board/topic_confirm.html", {
@@ -138,7 +151,7 @@ def topic_confirm(request, pk):
     
 
 # ==============================
-# 下書きトピック編集（②）
+# 下書きトピック編集
 # ==============================
 
 @login_required
@@ -160,20 +173,13 @@ def draft_topic_edit(request, pk):
             topic.user = request.user  # 念のため固定
 
             if action == "draft":
-                # 下書きとして更新（この画面に戻す）
                 topic.status = Topic.TopicStatus.DRAFT
                 topic.save()
-                return redirect("board:topic_draft_edit", pk=topic.id)
-
-            # いったん「確認画面へ」ルートにしたい場合：
-            # topic.status = Topic.TopicStatus.PUBLIC
-            # topic.save()
-            # return redirect("board:topic_confirm", topic_id=topic.id)
-
-            # もし現時点で確認画面が未実装なら仮で詳細へでもOK：
+                return redirect("board:mypage_drafts")
+            
             topic.status = Topic.TopicStatus.PUBLIC
             topic.save()
-            return redirect("board:topic_detail", topic_id=topic.id)
+            return redirect("board:topic_confirm", pk=topic.id)
 
     else:
         form = TopicForm(instance=topic)
@@ -182,7 +188,7 @@ def draft_topic_edit(request, pk):
         "form": form,
         "topic": topic,
         "mode": "draft_edit",
-        "primary_label": "下書きを更新する",
+        "primary_label": "トピックを投稿する",
         "show_draft_button": True,     # 下書きボタンを出したい
         "show_delete_request": False,  # 下書きは削除申請なし（おすすめ）
     })
@@ -470,10 +476,6 @@ def mypage_drafts(request):
     })
     
 
-#「編集画面（仮）」
-@login_required
-def draft_topic_edit_dummy(request, pk):
-    return HttpResponse("仮：トピック編集画面")
 
 @login_required
 def draft_comment_edit_dummy(request, pk):

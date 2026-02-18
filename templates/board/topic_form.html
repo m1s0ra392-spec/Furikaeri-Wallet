@@ -4,9 +4,10 @@
 
  {# --- 見出し分岐（最終削除） --- #}
 <h2 style="margin:16px 0 8px;">
-  {% if mode == "create" %}トピック投稿
-  {% elif mode == "draft_edit" %}トピック編集（下書き）
-  {% else %}トピック編集
+  {% if mode == "create" or mode == "draft_edit" %}
+    トピック投稿
+  {% else %}
+    トピック編集
   {% endif %}
 </h2>
 
