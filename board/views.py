@@ -108,16 +108,17 @@ def topic_create(request):
             topic = form.save(commit=False)
             topic.user = request.user
             
-            #マイページの下書き一覧へ遷移
             if action == "draft":
                 topic.status = Topic.TopicStatus.DRAFT
-                topic.save()
-                return redirect("board:mypage_drafts") #マイページの下書き一覧へ遷移
-
-            # 投稿 → 確認画面へ
-            topic.status = Topic.TopicStatus.PUBLIC
+            else:
+                topic.status = Topic.TopicStatus.PUBLIC
+                
             topic.save()
-            return redirect("board:topic_confirm", pk=topic.id)# 投稿 → 確認画面へ
+            form.save_m2m()  #タグの保存
+
+            if action == "draft":
+                return redirect("board:mypage_drafts")
+            return redirect("board:topic_confirm", pk=topic.id) 
 
     else:
         form = TopicForm()
@@ -175,10 +176,12 @@ def draft_topic_edit(request, pk):
             if action == "draft":
                 topic.status = Topic.TopicStatus.DRAFT
                 topic.save()
+                form.save_m2m()
                 return redirect("board:mypage_drafts")
             
             topic.status = Topic.TopicStatus.PUBLIC
             topic.save()
+            form.save_m2m()
             return redirect("board:topic_confirm", pk=topic.id)
 
     else:
@@ -210,6 +213,7 @@ def topic_edit(request, pk):
             topic = form.save(commit=False)
             topic.status = Topic.TopicStatus.PUBLIC 
             topic.save()
+            form.save_m2m()
             return redirect("board:topic_detail", pk=topic.id)  
     else:
         form = TopicForm(instance=topic)

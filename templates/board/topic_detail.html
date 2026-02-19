@@ -13,6 +13,14 @@
     <p>{{ topic.text|linebreaksbr }}</p>
   {% endif %}
 
+{#　トピックタグ　#}
+{% if topic.tags.all %}
+  <div style="margin-top:8px; font-size:12px;">
+    {% for tag in topic.tags.all %}
+      #{{ tag.name }}
+    {% endfor %}
+  </div>
+{% endif %}
 
 {#　トピックのいいね　#}
 <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
