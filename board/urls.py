@@ -14,8 +14,8 @@ urlpatterns = [
     path("topics/<int:pk>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト（仮）
     
     path("topics/<int:pk>/comments/new/", views.comment_create, name="comment_create"),#コメント作成
-    path("comments/<int:pk>/confirm/", views.comment_confirm, name="comment_confirm"),#コメント確認
-     path("draft/comment/<int:pk>/", views.draft_comment_edit_dummy, name="draft_comment_edit"),#コメント編集（下書き）
+    path("comments/<int:pk>/comments/confirm/", views.comment_confirm, name="comment_confirm"),#コメント確認
+    path("draft/comment/<int:pk>/", views.draft_comment_edit_dummy, name="draft_comment_edit"),#コメント編集（下書き）
     
     
     path("topics/<int:pk>/like/", views.topic_like_toggle, name="topic_like_toggle"),#トピックのいいね

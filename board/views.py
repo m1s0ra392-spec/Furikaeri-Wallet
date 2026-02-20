@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
 from django.http import JsonResponse, HttpResponse
+from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
 
 from collections import defaultdict
@@ -319,9 +320,45 @@ def comment_create(request, pk):
 
 @login_required
 def comment_confirm(request, pk):
-    comment = get_object_or_404(Comment, pk=pk, user=request.user)
-    return render(request, "board/comment_confirm.html", {"comment": comment})
+    topic = get_object_or_404(Topic, pk=pk)
 
+    if request.method != "POST":
+        return redirect("board:comment_create", pk=topic.pk)
+
+    action = request.POST.get("action")  # confirm / back / post
+    form = CommentForm(request.POST)
+
+    if not form.is_valid():
+        return render(request, "board/comment_form.html", {
+            "topic": topic,
+            "form": form,
+        })
+
+    # ✅ 追加：確認画面を表示
+    if action == "confirm":
+        return render(request, "board/comment_confirm.html", {
+            "topic": topic,
+            "form": form,
+        })
+
+    # ✅ 戻る：入力画面へ（入力保持）
+    if action == "back":
+        return render(request, "board/comment_form.html", {
+            "topic": topic,
+            "form": form,
+        })
+
+    # ✅ 投稿：保存して詳細へ
+    if action == "post":
+        comment = form.save(commit=False)
+        comment.topic = topic
+        comment.user = request.user
+        comment.status = Comment.CommentStatus.PUBLIC
+        comment.save()
+        messages.success(request, "コメントを投稿しました。")
+        return redirect("board:topic_detail", pk=topic.pk)
+
+    return redirect("board:comment_create", pk=topic.pk)
 
 
 # ==============================
