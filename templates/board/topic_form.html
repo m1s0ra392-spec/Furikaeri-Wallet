@@ -67,8 +67,8 @@
   <!-- 選択済みタグがここに表示される -->
   <div id="selected-tags-on-form" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
 
-  <!-- 送信用：選択したタグidをカンマで詰める -->
-  <input type="hidden" name="selected_tag_ids" id="selected-tag-ids" value="">
+  <!-- 送信用：選択したタグidを tags として複数送る（Django標準に合わせる） -->
+ <div id="tag-hidden-container"></div>
 </div>
 
 
@@ -228,7 +228,8 @@
 
   const selectedOnForm = document.getElementById("selected-tags-on-form");
   const selectedInModal = document.getElementById("selected-tags-in-modal");
-  const hidden = document.getElementById("selected-tag-ids");
+  const hiddenContainer = document.getElementById("tag-hidden-container");
+  
 
   // 今日は「既存タグを選ぶ」まで。選択状態はここで管理
   const selected = new Map(); // id -> name
@@ -248,7 +249,18 @@
   }
 
   function renderHidden() {
-    hidden.value = Array.from(selected.keys()).join(",");
+    hiddenContainer.innerHTML = "";
+
+    for (const rawId of selected.keys()) {
+      const id = Number(rawId);
+      if (!Number.isFinite(id)) continue;
+
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "tags";
+      input.value = String(id);
+      hiddenContainer.appendChild(input);
+    }
   }
 
   function makeChip({ id, name, removable = false }) {

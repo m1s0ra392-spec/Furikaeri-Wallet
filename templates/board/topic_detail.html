@@ -6,7 +6,7 @@
   <h1>{{ topic.title }}</h1>
 
   <p style="font-size: 12px; color: #666;">
-    {{ topic.category.get_type_display }} | {{ topic.created_at|date:"Y/m/d" }}
+    {{ topic.get_board_category_display }} | （{{ topic.user.username }} / {{ topic.created_at|date:"Y-m-d H:i" }}）
   </p>
 
   {% if topic.text %}

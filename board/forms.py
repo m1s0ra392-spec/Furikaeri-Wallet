@@ -4,7 +4,7 @@ from .models import Topic, Comment
 class TopicForm(forms.ModelForm):
     class Meta:
         model = Topic
-        fields = ["board_category", "title", "text", "status"]
+        fields = ["board_category", "title", "text", "tags","status"]
         widgets = {
             "text": forms.Textarea(attrs={"maxlength": "1000"}),  # UI補助
         }

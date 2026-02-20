@@ -105,6 +105,8 @@ def topic_create(request):
         action = request.POST.get("action")  # "post" / "draft"
 
         if form.is_valid():
+            print("POST tags:", request.POST.getlist("tags"))
+            print("cleaned tags:", [t.id for t in form.cleaned_data.get("tags")])
             topic = form.save(commit=False)
             topic.user = request.user
             
