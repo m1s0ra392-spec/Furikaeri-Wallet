@@ -303,7 +303,7 @@ def comment_create(request, pk):
                 return redirect("board:comment_confirm", pk=comment.id)
 
             # action == "draft"
-            return redirect("board:comment_edit", pk=comment.id)
+           # return redirect("board:comment_edit", pk=comment.id)
         
     else:
         form = CommentForm()
@@ -354,6 +354,11 @@ def comment_confirm(request, pk):
         comment.topic = topic
         comment.user = request.user
         comment.status = Comment.CommentStatus.PUBLIC
+        
+        # ✅ sequence を採番（topic内で連番）
+        last_seq = Comment.objects.filter(topic=topic).aggregate(Max("sequence"))["sequence__max"]
+        comment.sequence = (last_seq or 0) + 1
+    
         comment.save()
         messages.success(request, "コメントを投稿しました。")
         return redirect("board:topic_detail", pk=topic.pk)

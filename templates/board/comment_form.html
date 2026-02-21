@@ -84,7 +84,7 @@
 <div class="card">
   <div class="section-title">コメント投稿</div>
 
-  <form method="post" id="commentForm">
+  <form method="post" id="commentForm" action="{% url 'board:comment_confirm' topic.pk %}">
     {% csrf_token %}
 
     <div class="row">
