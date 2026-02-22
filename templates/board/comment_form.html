@@ -71,20 +71,27 @@
   .note { font-size: 12px; color: #666; margin-top: 8px; }
 </style>
 
-<h1 class="page-title">コメント入力画面</h1>
+<h1 class="page-title">{% if mode == "edit" %}コメント編集画面{% else %}コメント入力画面{% endif %}</h1>
 
 <div class="crumbs">
   <a href="{% url 'board:topic_list' %}">掲示板top</a>
   &nbsp;>&nbsp;
   <a href="{% url 'board:topic_detail' topic.id %}">{{ topic.title }}</a>
   &nbsp;>&nbsp;
-  コメント投稿
+  {% if mode == "edit" %}コメント編集{% else %}コメント投稿{% endif %}
 </div>
 
 <div class="card">
-  <div class="section-title">コメント投稿</div>
+  <div class="section-title">
+    {% if mode == "edit" %}コメント編集{% else %}コメント投稿{% endif %}
+  </div>
 
-  <form method="post" id="commentForm" action="{% url 'board:comment_confirm' topic.pk %}">
+  <form method="post" id="commentForm"
+  action="{% if mode == 'edit' %}
+            {% url 'board:comment_confirm_edit' comment.pk %}
+          {% else %}
+            {% url 'board:comment_confirm_create' topic.pk %}
+          {% endif %}">
     {% csrf_token %}
 
     <div class="row">
@@ -110,7 +117,9 @@
     <div class="note">※コメントは1000文字以内で入力してください</div>
 
     <div class="btn-row">
-     <button class="btn" type="submit" name="action" value="confirm">確認画面へ</button>
+     <button class="btn" type="submit" name="action" value="confirm">
+  {% if mode == "edit" %}更新内容を確認{% else %}確認画面へ{% endif %}
+</button>
 
       <!-- 下書き保存（まだ未実装なら、とりあえずボタンだけ置いてOK） -->
       <button class="btn sub" type="submit" name="action" value="draft">下書き保存</button>

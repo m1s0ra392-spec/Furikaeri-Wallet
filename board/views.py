@@ -367,6 +367,25 @@ def comment_confirm(request, pk):
 
 
 # ==============================
+#　コメント編集
+# ==============================
+
+@login_required
+def comment_edit(request, pk):
+    comment = get_object_or_404(Comment, pk=pk, user=request.user)
+
+    form = CommentForm(instance=comment)
+
+    return render(request, "board/comment_form.html", {
+        "form": form,
+        "topic": comment.topic,   # テンプレで「どのトピックのコメントか」出したい時用
+        "mode": "edit",
+        "primary_label": "コメントを更新する",
+        "show_draft_button": False,  # ひとまずトピックと合わせて制御（必要なら後でON）
+        "comment": comment,          # 既存値表示などに使う
+    })
+
+# ==============================
 # いいねの追加・解除
 # ==============================
 
