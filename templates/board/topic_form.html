@@ -11,7 +11,7 @@
   {% endif %}
 </h2>
 
-<form method="post" novalidate>
+<form method="post" novalidate action="{% url 'board:topic_confirm' %}">
   {% csrf_token %}
 
   {# --- カテゴリ --- #}

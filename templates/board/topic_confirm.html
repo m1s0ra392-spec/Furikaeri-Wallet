@@ -6,29 +6,44 @@
 
 <div style="margin:16px 0;">
   <div><strong>カテゴリ</strong></div>
-  <div>{{ topic.get_board_category_display }}</div>
+  <div>{{ category_label }}</div>
 </div>
 
 <div style="margin:16px 0;">
   <div><strong>タイトル</strong></div>
-  <div>{{ topic.title }}</div>
+  <div>{{ form.title.value }}</div>
 </div>
 
 <div style="margin:16px 0;">
   <div><strong>内容</strong></div>
-  <div style="white-space:pre-wrap;">{{ topic.body }}</div>
+  <div style="white-space:pre-wrap;">{{ form.text.value }}</div>
 </div>
 
-<div style="display:flex; gap:12px; margin-top:24px;">
-  <a href="{% url 'board:topic_detail' topic.id %}"
-     style="padding:10px 16px; background:#5f8f6b; color:#fff; text-decoration:none;">
-    投稿する
-  </a>
+<form method="post" action="{% url 'board:topic_confirm' %}">
+  {% csrf_token %}
 
-  <a href="{% url 'board:topic_edit' topic.id %}"
-     style="padding:10px 16px; background:#ddd; text-decoration:none;">
-    戻る
-  </a>
-</div>
+  <!-- 入力値の持ち越し（超重要） -->
+  <input type="hidden" name="board_category" value="{{ form.board_category.value|default_if_none:'' }}">
+  <input type="hidden" name="title" value="{{ form.title.value|default_if_none:'' }}">
+  <input type="hidden" name="text" value="{{ form.text.value|default_if_none:'' }}">
+
+  <!-- タグ持ち越し（複数） -->
+  {% for t in form.tags.value %}
+    <input type="hidden" name="tags" value="{{ t }}">
+  {% endfor %}
+
+  <div style="display:flex; gap:12px; margin-top:24px;">
+
+    <button type="submit" name="action" value="post"
+      style="padding:10px 16px; background:#5f8f6b; color:#fff; border:none;">
+      投稿する
+    </button>
+    <button type="submit" name="action" value="back"
+      style="padding:10px 16px; background:#ddd; border:none;">
+      戻る
+    </button>
+
+  </div>
+</form>
 
 {% endblock %}

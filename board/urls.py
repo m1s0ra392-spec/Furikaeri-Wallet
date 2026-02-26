@@ -11,7 +11,8 @@ urlpatterns = [
     
     #トピック
     path("new/", views.topic_create, name="topic_create"),#トピック作成
-    path("topics/<int:pk>/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認
+      #path("topics/<int:pk>/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認
+    path("topics/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認
     path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
     path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
     path("topics/<int:pk>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト

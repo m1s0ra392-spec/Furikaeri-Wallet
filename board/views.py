@@ -96,63 +96,83 @@ def topic_detail(request, pk):
 
 
 # ==============================
-# トピック作成
+# トピック作成　※入力するだけ　保存はしていない
 # ==============================
 
 @login_required
 def topic_create(request):
-    if request.method == "POST":
-        form = TopicForm(request.POST)
-        action = request.POST.get("action")  # "post" / "draft"
-
-        if form.is_valid():
-            print("POST tags:", request.POST.getlist("tags"))
-            print("cleaned tags:", [t.id for t in form.cleaned_data.get("tags")])
-            topic = form.save(commit=False)
-            topic.user = request.user
-            
-            if action == "draft":
-                topic.status = Topic.TopicStatus.DRAFT
-            else:
-                topic.status = Topic.TopicStatus.PUBLIC
-                
-            topic.save()
-            form.save_m2m()  #タグの保存
-
-            if action == "draft":
-                return redirect("board:mypage_drafts")
-            return redirect("board:topic_confirm", pk=topic.id) 
-
-    else:
-        form = TopicForm()
+    form = TopicForm()
 
     return render(request, "board/topic_form.html", {
         "form": form,
         "mode": "create",
-        "primary_label": "トピックを投稿する",
+        "primary_label": "確認画面へ",
         "show_draft_button": True,     # ★新規作成で下書きボタン表示
         "show_delete_request": False,  # 新規では削除申請なし
     })
 
 
 # ==============================
-# トピック投稿前確認
+# トピック投稿前確認 ※ここで保存する分岐
 # ==============================
 
 @login_required
-def topic_confirm(request, pk):
-    topic = get_object_or_404(
-        Topic,
-        pk=pk,
-        user=request.user,
-        status=Topic.TopicStatus.PUBLIC, 
-    )
+def topic_confirm(request):
+    if request.method != "POST":
+        return redirect("board:topic_create")
 
-    # GETだけでOK（まずは）
-    return render(request, "board/topic_confirm.html", {
-        "topic": topic
-    })
-    
+    action = request.POST.get("action")  # confirm / back / post / draft
+    form = TopicForm(request.POST)
+
+    if not form.is_valid():
+        return render(request, "board/topic_form.html", {
+            "form": form,
+            "mode": "create",
+            "primary_label": "確認画面へ",
+            "show_draft_button": True,
+            "show_delete_request": False,
+        })
+        
+    category_value = form.cleaned_data["board_category"]
+    category_label = Topic.BoardCategory(int(category_value)).label
+
+
+    #確認表示
+    if action == "confirm":
+        return render(request, "board/topic_confirm.html", {
+            "form": form,
+            "category_label": category_label,
+        })
+    #戻る（入力保持）
+    if action == "back":
+        return render(request, "board/topic_form.html", {
+            "form": form,
+            "mode": "create",
+            "primary_label": "確認画面へ",
+            "show_draft_button": True,
+            "show_delete_request": False,
+        })
+        
+    #下書き保存
+    if action == "draft":
+        topic = form.save(commit=False)
+        topic.user = request.user
+        topic.status = Topic.TopicStatus.DRAFT
+        topic.save()
+        form.save_m2m()
+        return redirect("board:mypage_drafts")
+
+    #投稿
+    if action == "post":
+        topic = form.save(commit=False)
+        topic.user = request.user
+        topic.status = Topic.TopicStatus.PUBLIC
+        topic.save()
+        form.save_m2m()
+        return redirect("board:topic_detail", pk=topic.pk)
+
+    return redirect("board:topic_create")
+
 
 # ==============================
 # 下書きトピック編集
