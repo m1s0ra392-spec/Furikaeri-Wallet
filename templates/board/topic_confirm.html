@@ -19,7 +19,17 @@
   <div style="white-space:pre-wrap;">{{ form.text.value }}</div>
 </div>
 
-<form method="post" action="{% url 'board:topic_confirm' %}">
+<form method="post" action="{% url 'board:topic_confirm' %}"><div style="margin:16px 0;">
+  <div><strong>タグ</strong></div>
+  <div>
+    {% if tags %}
+      {% for t in tags %}<span style="margin-right:8px;">#{{ t.name }}</span>{% endfor %}
+    {% else %}
+      （なし）
+    {% endif %}
+  </div>
+  
+</div>
   {% csrf_token %}
 
   <!-- 入力値の持ち越し（超重要） -->
