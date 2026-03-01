@@ -19,40 +19,32 @@
   <div style="white-space:pre-wrap;">{{ form.text.value }}</div>
 </div>
 
-<form method="post" action="{% url 'board:topic_confirm' %}"><div style="margin:16px 0;">
+<div style="margin:16px 0;">
   <div><strong>タグ</strong></div>
   <div>
     {% if tags %}
-      {% for t in tags %}<span style="margin-right:8px;">#{{ t.name }}</span>{% endfor %}
+      {% for t in tags %}
+        <span style="margin-right:8px;">#{{ t.name }}</span>
+      {% endfor %}
     {% else %}
       （なし）
     {% endif %}
   </div>
-  
 </div>
+
+<form method="post" action="{% url 'board:topic_confirm' %}">
   {% csrf_token %}
 
-  <!-- 入力値の持ち越し（超重要） -->
-  <input type="hidden" name="board_category" value="{{ form.board_category.value|default_if_none:'' }}">
-  <input type="hidden" name="title" value="{{ form.title.value|default_if_none:'' }}">
-  <input type="hidden" name="text" value="{{ form.text.value|default_if_none:'' }}">
-
-  <!-- タグ持ち越し（複数） -->
-  {% for t in form.tags.value %}
-    <input type="hidden" name="tags" value="{{ t }}">
-  {% endfor %}
-
   <div style="display:flex; gap:12px; margin-top:24px;">
-
     <button type="submit" name="action" value="post"
       style="padding:10px 16px; background:#5f8f6b; color:#fff; border:none;">
       投稿する
     </button>
+
     <button type="submit" name="action" value="back"
       style="padding:10px 16px; background:#ddd; border:none;">
       戻る
     </button>
-
   </div>
 </form>
 

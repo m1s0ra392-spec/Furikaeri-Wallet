@@ -5,6 +5,7 @@ from django.db.models import Count, Max, Exists, OuterRef
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
+from django.urls import reverse
 
 from collections import defaultdict
 
@@ -103,7 +104,15 @@ SESSION_KEY = "topic_confirm_data"
 
 @login_required
 def topic_create(request):
+     # ✅ confirmから戻ったときだけ入力保持したい
+    from_confirm = request.GET.get("from") == "confirm"
+
+    if not from_confirm:
+        # ✅ 新規作成でここに来たなら、保持データは消して真っさらにする
+        request.session.pop(SESSION_KEY, None)
+
     data = request.session.get(SESSION_KEY)
+
 
     if data:
         # セッションから復元（タグは文字列でもOK）
@@ -140,8 +149,7 @@ def topic_confirm(request):
         
         # 確認画面→戻る
         if action == "back":
-            # セッションは消さない（入力保持のため）
-            return redirect("board:topic_create")
+            return redirect(f'{reverse("board:topic_create")}?from=confirm')
         
         # --- 下書き保存は「入力画面で行いたい」ので、ここでは処理しない方針でもOK ---
         # もし topic_form.html が confirm に投げるなら、draft もここで拾う必要がある

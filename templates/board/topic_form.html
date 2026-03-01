@@ -4,15 +4,18 @@
 
  {# --- 見出し分岐（最終削除） --- #}
 <h2 style="margin:16px 0 8px;">
-  {% if mode == "create" or mode == "draft_edit" %}
+  {% if mode == "create" %}
     トピック投稿
   {% else %}
     トピック編集
   {% endif %}
 </h2>
 
-<form method="post" novalidate action="{% url 'board:topic_confirm' %}">
+<form id="topic-form" method="post" novalidate action="{% url 'board:topic_confirm' %}">
   {% csrf_token %}
+
+  {# ✅ どのボタンが押されたかを必ずPOSTに乗せる（入力値持ち越しではない） #}
+  <input type="hidden" name="action" id="action-field" value="">
 
   {# --- カテゴリ --- #}
   <div style="margin:12px 0;">
@@ -57,21 +60,19 @@
     {% endif %}
   </div>
 
- <!-- タグ選択（投稿画面側） -->
-<div style="margin-top:12px;">
-  <button type="button" id="open-tag-modal"
-          style="padding:8px 12px; border:1px solid #bbb; border-radius:6px; background:#eee; cursor:pointer;">
-    タグを追加（任意）
-  </button>
+  <!-- タグ選択（投稿画面側） -->
+  <div style="margin-top:12px;">
+    <button type="button" id="open-tag-modal"
+            style="padding:8px 12px; border:1px solid #bbb; border-radius:6px; background:#eee; cursor:pointer;">
+      タグを追加（任意）
+    </button>
 
-  <!-- 選択済みタグがここに表示される -->
-  <div id="selected-tags-on-form" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
+    <!-- 選択済みタグがここに表示される -->
+    <div id="selected-tags-on-form" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
 
-  <!-- 送信用：選択したタグidを tags として複数送る（Django標準に合わせる） -->
- <div id="tag-hidden-container"></div>
-</div>
-
-
+    <!-- 送信用：選択したタグidを tags として複数送る（Django標準に合わせる） -->
+    <div id="tag-hidden-container"></div>
+  </div>
 
   {# --- status は表示しない（ボタンで決める） --- #}
   {{ form.status.as_hidden }}
@@ -79,31 +80,59 @@
   {# --- ボタン（actionで分岐させる前提） --- #}
   <div style="display:flex; gap:10px; margin-top:18px;">
 
-  <button type="submit"
-          name="action" value="confirm"
-          style="flex:1; padding:12px; border:none; border-radius:6px; background:#2f6f5e; color:#fff; font-weight:bold;">
-    {{ primary_label }}
-  </button>
-
-  {% if show_draft_button %}
+    {# ✅ name/value を外して data-action にする #}
     <button type="submit"
-            name="action" value="draft"
-            style="flex:1; padding:12px; border:2px solid #2f6f5e; border-radius:6px; background:#fff; color:#2f6f5e; font-weight:bold;">
-      下書き保存
+            data-action="confirm"
+            style="flex:1; padding:12px; border:none; border-radius:6px; background:#2f6f5e; color:#fff; font-weight:bold;">
+      {{ primary_label }}
     </button>
-  {% endif %}
 
-  {% if show_delete_request %}
-    <button type="button"
-            onclick="openDeleteRequestModal()"
-            style="flex:1; padding:12px; border:none; border-radius:6px; background:#d66a5e; color:#fff; font-weight:bold;">
-      削除を要請する
-    </button>
-  {% endif %}
+    {% if show_draft_button %}
+      <button type="submit"
+              data-action="draft"
+              style="flex:1; padding:12px; border:2px solid #2f6f5e; border-radius:6px; background:#fff; color:#2f6f5e; font-weight:bold;">
+        下書き保存
+      </button>
+    {% endif %}
 
-</div>
+    {% if show_delete_request %}
+      <button type="button"
+              onclick="openDeleteRequestModal()"
+              style="flex:1; padding:12px; border:none; border-radius:6px; background:#d66a5e; color:#fff; font-weight:bold;">
+        削除を要請する
+      </button>
+    {% endif %}
+
+  </div>
 
 </form>
+
+{# ✅ どのボタンが押されたかを hidden に確定してから送信＆二重送信防止 #}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("topic-form");
+  if (!form) return;
+
+  const actionField = document.getElementById("action-field");
+  let clickedAction = null;
+
+  // どの submit ボタンが押されたかを記録して hidden に入れる
+  form.querySelectorAll('button[type="submit"][data-action]').forEach(btn => {
+    btn.addEventListener("click", () => {
+      clickedAction = btn.dataset.action;
+      actionField.value = clickedAction;
+    });
+  });
+
+  // 送信時に二重送信防止（ここなら action は確定済み）
+  form.addEventListener("submit", () => {
+    // clickedAction が取れないケース（Enter送信等）の保険：confirm扱い
+    if (!actionField.value) actionField.value = "confirm";
+    form.querySelectorAll('button[type="submit"]').forEach(btn => btn.disabled = true);
+  });
+});
+</script>
+
 
 {% if show_delete_request %}
   <!-- 削除要請モーダル -->
@@ -148,7 +177,7 @@
       document.getElementById("deleteModal").style.display = "none";
     }
   </script>
-  {% endif %}
+{% endif %}
 
 <!-- タグモーダル -->
 <div id="tag-modal-overlay"
@@ -197,7 +226,6 @@
   </div>
 </div>
 
-
 <style>
   input[type="text"], textarea, select {
     width: 100%;
@@ -214,7 +242,6 @@
   label { cursor: pointer; }
 </style>
 
-
 <!--タグモーダル用JS-->
 <script>
 (() => {
@@ -229,7 +256,6 @@
   const selectedOnForm = document.getElementById("selected-tags-on-form");
   const selectedInModal = document.getElementById("selected-tags-in-modal");
   const hiddenContainer = document.getElementById("tag-hidden-container");
-  
 
   // 今日は「既存タグを選ぶ」まで。選択状態はここで管理
   const selected = new Map(); // id -> name
@@ -308,7 +334,7 @@
     items.forEach(item => {
       const chip = makeChip({ id: item.id, name: item.name, removable: false });
 
-      // 選択状態に応じて見た目を変える（画像の「選択すると色が変わる」イメージ）
+      // 選択状態に応じて見た目を変える
       if (selected.has(item.id)) {
         chip.style.background = "#e8f4ea";
         chip.style.borderColor = "#8bbf95";
@@ -320,7 +346,7 @@
         } else {
           selected.set(item.id, item.name);
         }
-        renderSuggestions(items);     // 色反映
+        renderSuggestions(items);
         renderSelectedInModal();
         renderSelectedOnForm();
         renderHidden();
@@ -340,13 +366,11 @@
   openBtn.addEventListener("click", openModal);
   closeBtn.addEventListener("click", closeModal);
 
-  // overlayクリックで閉じる（中身クリックは無視）
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) closeModal();
   });
 
   applyBtn.addEventListener("click", () => {
-    // 仕様：「トピック内容に入力」ボタンで閉じる＆投稿画面に反映（すでに反映されてるけど、閉じる役）
     closeModal();
   });
 
@@ -365,12 +389,10 @@
     }, 200);
   });
 
-  // 「新規タグ＋」は今日は枠だけ（押しても何もしない）
   document.getElementById("new-tag-add").addEventListener("click", () => {
     alert("新規タグ作成は次のステップ（作成API）で実装します。今日は既存タグの選択まで！");
   });
 })();
 </script>
-
 
 {% endblock %}
