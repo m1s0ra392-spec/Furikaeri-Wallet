@@ -96,79 +96,77 @@ def topic_detail(request, pk):
 
 
 
-# ==============================
-# トピック作成　※入力するだけ　保存はしていない
-# ==============================
-
-SESSION_KEY = "topic_confirm_data"
+# ==================================================================
+# トピック作成（新規・編集のベース）　※入力するだけ　保存はしていない
+# ==================================================================
 
 @login_required
-def topic_create(request):
-     # ✅ confirmから戻ったときだけ入力保持したい
-    from_confirm = request.GET.get("from") == "confirm"
+def topic_save(request, pk=None):
+    
+    """
+    pk=None: 新規（初回だけ作る）
+    pkあり: 既存topicを更新（下書き→確認→投稿、編集→確認→投稿、等）
+    """
+    
+    topic = None
+    if pk is not None:
+        topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
-    if not from_confirm:
-        # ✅ 新規作成でここに来たなら、保持データは消して真っさらにする
-        request.session.pop(SESSION_KEY, None)
+    if request.method == "POST":
+        form = TopicForm(request.POST, instance=topic)  # ★更新
+        action = request.POST.get("action")  # "draft" / "post" / "confirm" 等
 
-    data = request.session.get(SESSION_KEY)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.user = request.user
 
+            # ★状態の切り替え：投稿ならPUBLIC、下書きならDRAFT
+            if action == "draft":
+                obj.status = Topic.TopicStatus.DRAFT
+            elif action == "post":
+                obj.status = Topic.TopicStatus.PUBLIC
+            else:
+                # confirm等は状態変えない(必要なら方針に合わせて)
+                if obj.pk is None:
+                    obj.status = Topic.TopicStatus.DRAFT
 
-    if data:
-        # セッションから復元（タグは文字列でもOK）
-        initial = {
-            "board_category": data.get("board_category", ""),
-            "title": data.get("title", ""),
-            "text": data.get("text", ""),
-            "tags": [str(t) for t in data.get("tags", [])],
-        }
-        form = TopicForm(initial=initial)
-        
+            obj.save()
+            form.save_m2m()
+
+            if action == "draft":
+                return redirect("board:mypage_drafts")
+            if action == "confirm":
+                return redirect("board:topic_confirm", pk=obj.pk)
+            if action == "post":
+                return redirect("board:topic_detail", pk=obj.pk)
+
     else:
-        form = TopicForm()
-            
+        form = TopicForm(instance=topic)
+
     return render(request, "board/topic_form.html", {
         "form": form,
-        "mode": "create",
+        "topic": topic,
+        "mode": "create" if pk is None else "edit",
         "primary_label": "確認画面へ",
-        "show_draft_button": True,     # ★新規作成で下書きボタン表示
-        "show_delete_request": False,  # 新規では削除申請なし
+        "show_draft_button": True,      # ★これ
+        "show_delete_request": False,   # 新規ならfalse
     })
-
 
 # ==============================
 # トピック投稿前確認 ※ここで保存する分岐
 # ==============================
 
+SESSION_KEY = "topic_confirm_data"
+SESSION_TOPIC_ID_KEY = "topic_confirm_topic_id"
+
 @login_required
 def topic_confirm(request):
-    # POST: 入力→確認 or 投稿確定
     if request.method == "POST":
         action = request.POST.get("action")
-        
-        
+
         # 確認画面→戻る
         if action == "back":
             return redirect(f'{reverse("board:topic_create")}?from=confirm')
-        
-        # --- 下書き保存は「入力画面で行いたい」ので、ここでは処理しない方針でもOK ---
-        # もし topic_form.html が confirm に投げるなら、draft もここで拾う必要がある
-        if action == "draft":
-            form = TopicForm(request.POST)
-            if form.is_valid():
-                topic = form.save(commit=False)
-                topic.user = request.user
-                topic.status = Topic.TopicStatus.DRAFT
-                topic.save()
-                form.save_m2m()
-                request.session.pop(SESSION_KEY, None)
-                return redirect("board:mypage_drafts")
-            return render(request, "board/topic_form.html", {
-                "form": form,
-                "mode": "create",
-                "primary_label": "確認画面へ",
-                "show_draft_button": True,
-            })
 
         # --- 入力 → 確認（POSTあり）---
         if action == "confirm":
@@ -181,69 +179,69 @@ def topic_confirm(request):
                     "show_draft_button": True,
                 })
 
-            # tagsは複数なので list で保存
-            board_category = form.cleaned_data["board_category"]
+            # ✅ 変更点：confirmの時点でTopicを「新規 or 更新」して pk を確保する
+            topic_id = request.session.get(SESSION_TOPIC_ID_KEY)
+
+            if topic_id:
+                topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
+                save_form = TopicForm(request.POST, instance=topic)  # ★更新
+            else:
+                save_form = form  # ★新規（この後saveする）
+
+            topic = save_form.save(commit=False)
+            topic.user = request.user
+            topic.status = Topic.TopicStatus.DRAFT  # ★confirm段階は下書き扱い（公開はpostで）
+            topic.save()
+            save_form.save_m2m()
+
+            request.session[SESSION_TOPIC_ID_KEY] = topic.id
+
+            # ※タグ不具合があるなら、ここで tags を SESSION_KEY に保存するのは後回しでもOK
+            # ただ「戻る時の入力保持」が必要なら残す
             request.session[SESSION_KEY] = {
-                "board_category": int(board_category),
-                "title": form.cleaned_data["title"],
-                "text": form.cleaned_data["text"],
-                "tags": [t.id for t in form.cleaned_data.get("tags")],
-                 "status": Topic.TopicStatus.PUBLIC, 
+                "board_category": int(topic.board_category),
+                "title": topic.title,
+                "text": topic.text,
+                "tags": [t.id for t in topic.tags.all()],
             }
-            # ✅ 事故防止：POSTのままrenderせず、GETへ逃がす（更新事故/再送信防止）
+
             request.session.modified = True
             return redirect("board:topic_confirm")
 
         # --- 投稿確定（confirm画面の「投稿する」）---
         if action == "post":
-            data = request.session.get(SESSION_KEY)
-            if not data:
+            topic_id = request.session.get(SESSION_TOPIC_ID_KEY)
+            if not topic_id:
                 return redirect("board:topic_create")
 
-            form = TopicForm(data)
-            if not form.is_valid():
-                # セッション壊れ等
-                return redirect("board:topic_create")
-
-            topic = form.save(commit=False)
-            topic.user = request.user
+            topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
             topic.status = Topic.TopicStatus.PUBLIC
             topic.save()
-            form.save_m2m()
 
+            # セッションに残っている「今回の投稿用データ」の掃除
+            request.session.pop(SESSION_TOPIC_ID_KEY, None)
             request.session.pop(SESSION_KEY, None)
+
             return redirect("board:topic_detail", pk=topic.id)
 
-        # action不明なら入力へ
-        return redirect("board:topic_create")
+        return redirect("board:topic_new")
 
-    # ==========
-    # GET: 確認表示
-    # ==========
-    data = request.session.get(SESSION_KEY)
-    print("GET confirm session data:", data)
-    
-    if not data:
-        print("NO SESSION DATA -> redirect create")
-        return redirect("board:topic_create")
-    
-    form = TopicForm(data)
-    print("GET confirm form valid:", form.is_valid())
-    print("GET confirm errors:", form.errors)
-    if not form.is_valid():
-        return redirect("board:topic_create")
+    # ========== GET: 確認表示 ==========
+    topic_id = request.session.get(SESSION_TOPIC_ID_KEY)
+    if not topic_id:
+        return redirect("board:topic_new")
 
-    # ✅ ①カテゴリID→ラベル
-    category_value = form.cleaned_data["board_category"]
-    category_label = Topic.BoardCategory(int(category_value)).label
+    topic = get_object_or_404(Topic, pk=topic_id, user=request.user)
+
+    form = TopicForm(instance=topic)
+    category_label = topic.get_board_category_display()
 
     return render(request, "board/topic_confirm.html", {
         "form": form,
         "category_label": category_label,
-        "tags": form.cleaned_data.get("tags"),
+        "tags": topic.tags.all(),
+        "topic": topic,
     })
-        
-    
 
 # ==============================
 # 下書きトピック編集

@@ -11,7 +11,8 @@
   {% endif %}
 </h2>
 
-<form id="topic-form" method="post" novalidate action="{% url 'board:topic_confirm' %}">
+<form method="post" novalidate
+      action="{% if topic %}{% url 'board:topic_confirm' topic.pk %}{% else %}{% url 'board:topic_new' %}{% endif %}">
   {% csrf_token %}
 
   {# ✅ どのボタンが押されたかを必ずPOSTに乗せる（入力値持ち越しではない） #}
