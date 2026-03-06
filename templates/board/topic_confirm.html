@@ -32,7 +32,7 @@
   </div>
 </div>
 
-<form method="post" action="{% url 'board:topic_confirm' %}">
+<form method="post" action="{% url 'board:topic_confirm' topic.pk  %}">
   {% csrf_token %}
 
   <div style="display:flex; gap:12px; margin-top:24px;">

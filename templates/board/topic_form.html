@@ -83,14 +83,14 @@
 
     {# ✅ name/value を外して data-action にする #}
     <button type="submit"
-            data-action="confirm"
+            name="action" value="confirm"
             style="flex:1; padding:12px; border:none; border-radius:6px; background:#2f6f5e; color:#fff; font-weight:bold;">
       {{ primary_label }}
     </button>
 
     {% if show_draft_button %}
       <button type="submit"
-              data-action="draft"
+              name="action" value="draft"
               style="flex:1; padding:12px; border:2px solid #2f6f5e; border-radius:6px; background:#fff; color:#2f6f5e; font-weight:bold;">
         下書き保存
       </button>

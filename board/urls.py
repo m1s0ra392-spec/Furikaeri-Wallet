@@ -13,9 +13,9 @@ urlpatterns = [
     path("new/", views.topic_save, name="topic_new"),#トピック作成
     path("topics/<int:pk>/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認(PKあり)
       #path("topics/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認
-    path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),#トピック編集（公開と下書きで１つにする予定）
-    #path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
-    #path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
+      #path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),#トピック編集（公開と下書きで１つにする予定）
+    path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
+    path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
     path("topics/<int:pk>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト
     
     
@@ -26,6 +26,10 @@ urlpatterns = [
     
     path("topics/<int:pk>/like/", views.topic_like_toggle, name="topic_like_toggle"),#トピックのいいね
     path("comments/<int:pk>/like/", views.comment_like_toggle, name="comment_like_toggle"),#コメントのいいね
+    
+    
+    
+    path("draft-comments/<int:pk>/edit/", views.draft_comment_edit, name="draft_comment_edit"),
     
     path("api/tags/", views.tag_search_api, name="tag_search_api"),#タグ検索
     
