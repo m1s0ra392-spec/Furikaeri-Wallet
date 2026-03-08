@@ -110,37 +110,35 @@ def topic_save(request, pk=None):
         print("action =", request.POST.get("action"))
         
         form = TopicForm(request.POST, instance=topic)
-        action = request.POST.get("action")  # "draft" / "post" / "confirm"
+        action = request.POST.get("action")  # "draft" / "confirm"
 
         if form.is_valid():
-            if action == "confirm":
-                # ✅ 保存しない（sessionへ）
-                data = request.POST.dict()  # 単純dict化（tags以外）
-                data["tags"] = request.POST.getlist("tags")  # 複数対応
-
-                request.session[SESSION_KEY] = data
-                request.session[SESSION_TOPIC_ID_KEY] = topic.pk if topic else None
-                request.session.modified = True
-                return redirect("board:topic_confirm")
-
-            # ✅ draft / post は保存してOK
             obj = form.save(commit=False)
             obj.user = request.user
 
             if action == "draft":
                 obj.status = Topic.TopicStatus.DRAFT
-            elif action == "post":
-                obj.status = Topic.TopicStatus.PUBLIC
-            else:
-                # 想定外のactionは入力画面に戻す（事故防止）
-                return redirect("board:topic_new")
-
-            obj.save()
-            form.save_m2m()
-
-            if action == "draft":
+                obj.save()
+                form.save_m2m()
                 return redirect("board:mypage_drafts")
-            return redirect("board:topic_detail", pk=obj.pk)
+
+            if action == "confirm":
+                # 新規でもpkを持たせるため、一旦DRAFTとして保存
+                if obj.pk is None:
+                    obj.status = Topic.TopicStatus.DRAFT
+                    obj.save()
+                    form.save_m2m()
+                else:
+                    obj.save()
+                    form.save_m2m()
+
+                return render(request, "board/topic_confirm.html", {
+                    "form": form,
+                    "topic": obj,
+                    "category_label": obj.get_board_category_display(),
+                    "tags": form.cleaned_data.get("tags", []),
+                    "mode": "create" if pk is None else "edit",
+                })
 
     else:
         form = TopicForm(instance=topic)
@@ -154,7 +152,6 @@ def topic_save(request, pk=None):
         "show_delete_request": False,
     })
 
-
 # ==============================
 # トピック投稿前確認
 # ==============================
@@ -166,7 +163,8 @@ def topic_confirm(request, pk):
     # POST（確認画面のボタン）
     if request.method == "POST":
         action = request.POST.get("action")
-
+        print("topic_confirm action =", action)
+        
         if action == "back":
             # 下書き編集に戻す（draft_topic_edit を使う方針なら）
             if topic.status == Topic.TopicStatus.DRAFT:
@@ -175,9 +173,23 @@ def topic_confirm(request, pk):
             return redirect("board:topic_edit", pk=topic.pk)
 
         if action == "post":
-            topic.status = Topic.TopicStatus.PUBLIC
-            topic.save(update_fields=["status"])
-            return redirect("board:topic_detail", pk=topic.pk)
+            form = TopicForm(request.POST, instance=topic)
+            
+            print("POST title =", request.POST.get("title"))
+            print("POST text =", request.POST.get("text"))
+            print("POST tags =", request.POST.getlist("tags"))
+
+            if form.is_valid():
+                obj = form.save(commit=False)
+                obj.user = request.user
+                obj.status = Topic.TopicStatus.PUBLIC
+                obj.save()
+                form.save_m2m()
+                return redirect("board:topic_detail", pk=obj.pk)
+            
+            print("form errors =", form.errors)
+
+        print("redirect confirm again")
 
         # action不明なら確認に戻す
         return redirect("board:topic_confirm", pk=topic.pk)
@@ -209,22 +221,25 @@ def draft_topic_edit(request, pk):
 
     if request.method == "POST":
         form = TopicForm(request.POST, instance=topic)
-        action = request.POST.get("action")  # "draft" or "post" を想定
+        action = request.POST.get("action")  # "draft" or "confirm" 
 
         if form.is_valid():
-            topic = form.save(commit=False)
-            topic.user = request.user  # 念のため固定
-
             if action == "draft":
-                topic.status = Topic.TopicStatus.DRAFT
-                topic.save()
+                obj = form.save(commit=False)
+                obj.user = request.user
+                obj.status = Topic.TopicStatus.DRAFT
+                obj.save()
                 form.save_m2m()
                 return redirect("board:mypage_drafts")
-            
-            topic.status = Topic.TopicStatus.PUBLIC
-            topic.save()
-            form.save_m2m()
-            return redirect("board:topic_confirm", pk=topic.id)
+
+            if action == "confirm":
+                return render(request, "board/topic_confirm.html", {
+                    "form": form,
+                    "topic": topic,
+                    "category_label": topic.get_board_category_display(),
+                    "tags": form.cleaned_data.get("tags", []),
+                    "mode": "draft_edit",
+                })
 
     else:
         form = TopicForm(instance=topic)
@@ -233,9 +248,9 @@ def draft_topic_edit(request, pk):
         "form": form,
         "topic": topic,
         "mode": "draft_edit",
-        "primary_label": "トピックを投稿する",
-        "show_draft_button": True,     # 下書きボタンを出したい
-        "show_delete_request": False,  # 下書きは削除申請なし（おすすめ）
+        "primary_label": "確認画面へ",
+        "show_draft_button": True,
+        "show_delete_request": False,
     })
     
 

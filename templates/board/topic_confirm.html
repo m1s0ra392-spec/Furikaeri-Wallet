@@ -32,20 +32,37 @@
   </div>
 </div>
 
-<form method="post" action="{% url 'board:topic_confirm' topic.pk  %}">
-  {% csrf_token %}
 
-  <div style="display:flex; gap:12px; margin-top:24px;">
-    <button type="submit" name="action" value="post"
+<div style="display:flex; gap:12px; margin-top:24px;">
+
+  <!-- 投稿する -->
+  <form method="post" action="{% url 'board:topic_confirm' topic.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="post">
+    <input type="hidden" name="board_category" value="{{ form.board_category.value }}">
+    <input type="hidden" name="title" value="{{ form.title.value }}">
+    <textarea name="text" style="display:none;">{{ form.text.value }}</textarea>
+    <input type="hidden" name="status" value="{{ topic.status }}">
+    {% for tag_id in form.tags.value %}
+      <input type="hidden" name="tags" value="{{ tag_id }}">
+    {% endfor %}
+
+    <button type="submit"
       style="padding:10px 16px; background:#5f8f6b; color:#fff; border:none;">
       投稿する
     </button>
+  </form>
 
-    <button type="submit" name="action" value="back"
+  <!-- 戻る -->
+  <form method="post" action="{% url 'board:topic_confirm' topic.pk %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="back">
+    <button type="submit"
       style="padding:10px 16px; background:#ddd; border:none;">
       戻る
     </button>
-  </div>
-</form>
+  </form>
+
+</div>
 
 {% endblock %}

@@ -11,12 +11,12 @@
   {% endif %}
 </h2>
 
-<form method="post" novalidate
-      action="{% if topic %}{% url 'board:topic_confirm' topic.pk %}{% else %}{% url 'board:topic_new' %}{% endif %}">
+<form id="topic-form" method="post" novalidate
+      action="{% if mode == 'draft_edit' %}{% url 'board:draft_topic_edit' topic.pk %}
+      {% elif topic %}{% url 'board:topic_edit' topic.pk %}
+      {% else %}{% url 'board:topic_new' %}{% endif %}">
   {% csrf_token %}
 
-  {# ✅ どのボタンが押されたかを必ずPOSTに乗せる（入力値持ち越しではない） #}
-  <input type="hidden" name="action" id="action-field" value="">
 
   {# --- カテゴリ --- #}
   <div style="margin:12px 0;">
@@ -108,31 +108,6 @@
 
 </form>
 
-{# ✅ どのボタンが押されたかを hidden に確定してから送信＆二重送信防止 #}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("topic-form");
-  if (!form) return;
-
-  const actionField = document.getElementById("action-field");
-  let clickedAction = null;
-
-  // どの submit ボタンが押されたかを記録して hidden に入れる
-  form.querySelectorAll('button[type="submit"][data-action]').forEach(btn => {
-    btn.addEventListener("click", () => {
-      clickedAction = btn.dataset.action;
-      actionField.value = clickedAction;
-    });
-  });
-
-  // 送信時に二重送信防止（ここなら action は確定済み）
-  form.addEventListener("submit", () => {
-    // clickedAction が取れないケース（Enter送信等）の保険：confirm扱い
-    if (!actionField.value) actionField.value = "confirm";
-    form.querySelectorAll('button[type="submit"]').forEach(btn => btn.disabled = true);
-  });
-});
-</script>
 
 
 {% if show_delete_request %}
