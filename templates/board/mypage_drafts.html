@@ -119,3 +119,97 @@
     document.getElementById("draftDeleteModal").style.display = "none";
   }
 </script>
+
+
+<h3 style="margin-top:16px;">■ 下書きコメント</h3>
+
+{% for comment in draft_comments %}
+  <div style="border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <a href="{% url 'board:comment_save_edit' topic_pk=comment.topic.pk pk=comment.pk %}"
+         style="text-decoration:none; color:inherit;">
+        <div style="font-size:12px; color:#999;">{{ comment.topic.title }}</div>
+        <div>{{ comment.text|truncatechars:20 }}
+        </div>
+        <div style="font-size:12px; color:#666;">{{ comment.updated_at|date:"Y年n月j日" }}</div>
+      </a>
+    </div>
+
+    <!-- ゴミ箱ボタン -->
+    <button type="button"
+            onclick="openCommentDeleteModal('{{ comment.pk }}')"
+            style="padding:6px 10px; border:none; background:transparent;
+                   cursor:pointer; font-size:18px;">
+      🗑️
+    </button>
+  </div>
+{% empty %}
+  <div style="color:#999;">下書きコメントはありません</div>
+{% endfor %}
+
+<!-- コメント削除確認モーダル -->
+<div id="commentDeleteModal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;">
+  <div style="width:min(90vw, 360px); margin:120px auto; background:#fff;
+              border-radius:10px; padding:24px; text-align:center;">
+
+    <div id="commentDeleteStep1">
+      <p style="margin-bottom:20px; font-weight:bold;">下書きを削除しますか？</p>
+      <div style="display:flex; gap:12px; justify-content:center;">
+        <button type="button" onclick="closeCommentDeleteModal()"
+                style="padding:10px 20px; border:1px solid #ccc; border-radius:8px;
+                       background:#fff; cursor:pointer;">
+          キャンセル
+        </button>
+        <button type="button" onclick="execCommentDelete()"
+                style="padding:10px 20px; border:none; border-radius:8px;
+                       background:#d66a5e; color:#fff; cursor:pointer; font-weight:bold;">
+          削除する
+        </button>
+      </div>
+    </div>
+
+    <div id="commentDeleteStep2" style="display:none;">
+      <p style="margin-bottom:20px; font-weight:bold;">削除しました</p>
+      <button type="button" onclick="closeAndReload()"
+              style="padding:10px 20px; border:1px solid #ccc; border-radius:8px;
+                     background:#fff; cursor:pointer;">
+        閉じる
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- コメント削除用フォーム（非表示） -->
+<form id="commentDeleteForm" method="post" action="" style="display:none;">
+  {% csrf_token %}
+</form>
+
+<script>
+  function openCommentDeleteModal(commentId) {
+    document.getElementById("commentDeleteForm").action =
+      "/board/comments/" + commentId + "/draft/delete/";
+    document.getElementById("commentDeleteStep1").style.display = "block";
+    document.getElementById("commentDeleteStep2").style.display = "none";
+    document.getElementById("commentDeleteModal").style.display = "block";
+  }
+
+  function closeCommentDeleteModal() {
+    document.getElementById("commentDeleteModal").style.display = "none";
+  }
+
+  function execCommentDelete() {
+    const form = document.getElementById("commentDeleteForm");
+    const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+
+    fetch(form.action, {
+      method: "POST",
+      headers: { "X-CSRFToken": csrfToken },
+    }).then(response => {
+      if (response.ok || response.redirected) {
+        document.getElementById("commentDeleteStep1").style.display = "none";
+        document.getElementById("commentDeleteStep2").style.display = "block";
+      }
+    });
+  }
+</script>

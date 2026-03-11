@@ -22,7 +22,7 @@
   <div class="muted" style="margin-top:10px;">コメント本文</div>
   <div class="box">{{ form.text.value }}</div>
 
-  <form method="post">
+  <form method="post" action="{% url 'board:comment_confirm' comment.pk %}">
     {% csrf_token %}
 
     {# 入力値を次のPOSTに持ち越す（超重要） #}

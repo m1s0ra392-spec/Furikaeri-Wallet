@@ -88,10 +88,13 @@
 
   <form method="post" id="commentForm"
   action="{% if mode == 'edit' %}
-            {% url 'board:comment_confirm_edit' comment.pk %}
-          {% else %}
-            {% url 'board:comment_confirm_create' topic.pk %}
-          {% endif %}">
+          {% url 'board:comment_edit' comment.pk %}
+        {% elif mode == 'draft_edit' %}
+          {% url 'board:comment_save_edit' topic_pk=topic.pk pk=comment.pk %}
+        {% else %}
+          {% url 'board:comment_save_new' topic_pk=topic.pk %}
+        {% endif %}">
+
     {% csrf_token %}
 
     <div class="row">
@@ -138,7 +141,11 @@
     if (!n) return;
 
     const prefix = ">>" + n;
-    const text = text.value || "";
+    const currentText = text.value || "";  
+
+if (currentText.trimStart().startsWith(prefix)) return;
+
+text.value = prefix + "\n" + currentText;
 
     // 既に先頭に付いてたら何もしない
     if (text.trimStart().startsWith(prefix)) return;

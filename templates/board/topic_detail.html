@@ -35,7 +35,7 @@
 
  {#　コメントリンク　#} 
   <p>
-    <a href="{% url 'board:comment_create' topic.id %}">
+    <a href="{% url 'board:comment_save_new' topic_pk=topic.pk %}">
       コメントを書く
     </a>
   </p>

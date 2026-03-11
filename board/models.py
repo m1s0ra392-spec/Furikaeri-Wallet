@@ -87,7 +87,7 @@ class Comment(models.Model):
     )
     text = text = models.TextField()   #文字数はFormで調整
 
-    sequence = models.PositiveIntegerField()  # トピック内のコメントの通し番号
+    sequence = models.PositiveIntegerField(default=0) # トピック内のコメントの通し番号
     
 
     # 返信（親コメント）。NULL許容＝親なし（通常コメント）

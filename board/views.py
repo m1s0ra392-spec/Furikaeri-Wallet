@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
 from django.urls import reverse
+from django.utils import timezone
 
 from collections import defaultdict
 
@@ -96,9 +97,9 @@ def topic_detail(request, pk):
 
 
 
-# ==================================================================
-# トピック作成（新規・編集のベース）　※入力するだけ　保存はしていない
-# ==================================================================
+# ==================================
+# トピック作成（新規・編集のベース）　
+# ==================================
 
 @login_required
 def topic_save(request, pk=None):
@@ -333,149 +334,248 @@ def topic_delete_request(request, pk):
         "topic": topic,
     })
 
+
+
 # ==============================
-# コメント作成
+# コメント新規作成（新規・下書き編集のベース）
 # ==============================
-    
-@login_required    
-def comment_create(request, pk):
-    topic = get_object_or_404(Topic, pk=pk)
+
+@login_required
+def comment_save(request, topic_pk, pk=None):
+    """
+    pk=None  → 新規作成
+    pk=あり  → 下書き編集
+    トピックの topic_save と同じ構造にしている
+    """
+    topic = get_object_or_404(Topic, pk=topic_pk)
+    comment = None
+
+    if pk is not None:
+        # 下書き編集：本人の下書きだけ取れる
+        comment = get_object_or_404(
+            Comment,
+            pk=pk,
+            user=request.user,
+            status=Comment.CommentStatus.DRAFT,
+        )
 
     if request.method == "POST":
-        form = CommentForm(request.POST)
-        action = request.POST.get("action")  #"post" or "draft"
-        
+        form = CommentForm(request.POST, instance=comment)
+        action = request.POST.get("action")  # "draft" / "confirm"
+
         if form.is_valid():
-            comment = form.save(commit=False)
-            comment.topic = topic
-            comment.user = request.user 
-            
+            obj = form.save(commit=False)
+            obj.topic = topic
+            obj.user = request.user
 
-            # 返信番号（任意）→ parent に変換
-            reply_to_seq = form.cleaned_data.get("reply_to")   #返信番号を取り出す
-            if reply_to_seq:    #返信番号が入っていれば処理する、空欄ならば通常コメント
-                parent = Comment.objects.filter(topic=topic, sequence=reply_to_seq).first()
-                if not parent:  #存在しない返信番号の反映を防ぐ
-                    form.add_error("reply_to", f"#{reply_to_seq} のコメントが見つかりません")
-                    return render(request, "board/comment_form.html", {"form": form, "topic": topic})
-                comment.parent_comment = parent
-                
+            # 返信番号 → parent_comment に変換
+            reply_to_seq = form.cleaned_data.get("reply_to")
+            if reply_to_seq:
+                parent = Comment.objects.filter(
+                    topic=topic, sequence=reply_to_seq
+                ).first()
+                if not parent:
+                    form.add_error(
+                        "reply_to",
+                        f"#{reply_to_seq} のコメントが見つかりません",
+                    )
+                    return render(request, "board/comment_form.html", {
+                        "form": form,
+                        "topic": topic,
+                        "comment": comment,
+                        "mode": "create" if pk is None else "draft_edit",
+                    })
+                obj.parent_comment = parent
 
-            # sequence 自動採番（topic内でMax+1）※新規作成時に限り
-            max_sequence = (
-                Comment.objects
-                .filter(topic=topic)
-                .aggregate(Max("sequence"))["sequence__max"]
-            )
+            # ── 下書き保存 ──────────────────────────
+            if action == "draft":
+                # sequence はまだ採番しない（公開時に採番）
+                if obj.pk is None:
+                    obj.sequence = 0  # 仮置き（公開時に上書きされる）
 
-            comment.sequence = (max_sequence or 0) + 1
-            
-            #コメント投稿前に確認挟む
-            comment.status = Comment.CommentStatus.DRAFT
-            comment.save()
+                obj.status = Comment.CommentStatus.DRAFT
+                obj.save()
+                return redirect("board:mypage_drafts")
 
-            if action == "post":
-                return redirect("board:comment_confirm", pk=comment.id)
+            # ── 確認画面へ ──────────────────────────
+            if action == "confirm":
+                # 新規の場合は一旦 DRAFT で保存してから確認画面へ
+                # （トピックの topic_save と同じ方式）
+                if obj.pk is None:
+                    obj.sequence = 0  # 仮置き
+                    obj.status = Comment.CommentStatus.DRAFT
+                    obj.save()
+                else:
+                    obj.save()
 
-            # action == "draft"
-           # return redirect("board:comment_edit", pk=comment.id)
-        
+                return render(request, "board/comment_confirm.html", {
+                    "form": form,
+                    "topic": topic,
+                    "comment": obj,
+                    "mode": "create" if pk is None else "draft_edit",
+                })
+
     else:
-        form = CommentForm()
+        form = CommentForm(instance=comment)
 
     return render(request, "board/comment_form.html", {
         "form": form,
         "topic": topic,
-    })  
+        "comment": comment,
+        "mode": "create" if pk is None else "draft_edit",
+        "show_draft_button": True,
+    })
 
 
 # ==============================
-# コメント確認
+# コメント投稿前確認
 # ==============================
 
 @login_required
 def comment_confirm(request, pk):
-    topic = get_object_or_404(Topic, pk=pk)
-
-    if request.method != "POST":
-        return redirect("board:comment_create", pk=topic.pk)
-
-    action = request.POST.get("action")  # confirm / back / post
-    form = CommentForm(request.POST)
-
-    if not form.is_valid():
-        return render(request, "board/comment_form.html", {
-            "topic": topic,
-            "form": form,
-        })
-
-    # ✅ 追加：確認画面を表示
-    if action == "confirm":
-        return render(request, "board/comment_confirm.html", {
-            "topic": topic,
-            "form": form,
-        })
-
-    # ✅ 戻る：入力画面へ（入力保持）
-    if action == "back":
-        return render(request, "board/comment_form.html", {
-            "topic": topic,
-            "form": form,
-        })
-
-    # ✅ 投稿：保存して詳細へ
-    if action == "post":
-        comment = form.save(commit=False)
-        comment.topic = topic
-        comment.user = request.user
-        comment.status = Comment.CommentStatus.PUBLIC
-        
-        # ✅ sequence を採番（topic内で連番）
-        last_seq = Comment.objects.filter(topic=topic).aggregate(Max("sequence"))["sequence__max"]
-        comment.sequence = (last_seq or 0) + 1
-    
-        comment.save()
-        messages.success(request, "コメントを投稿しました。")
-        return redirect("board:topic_detail", pk=topic.pk)
-
-    return redirect("board:comment_create", pk=topic.pk)
-
-
-# ==============================
-#　下書きコメント編集（最小）
-# ==============================
-
-@login_required
-def draft_comment_edit(request, pk):
+   
     comment = get_object_or_404(Comment, pk=pk, user=request.user)
+    topic = comment.topic
 
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ── 戻る ─────────────────────────────────
+        if action == "back":
+            if comment.status == Comment.CommentStatus.DRAFT:
+                # 下書き編集から来た場合
+                if comment.created_at != comment.updated_at:
+                    return redirect("board:comment_save_edit", topic_pk=topic.pk, pk=comment.pk)
+                # 新規から来た場合
+                return redirect("board:comment_save_new", topic_pk=topic.pk)
+            # 公開済みから来た場合
+            return redirect("board:comment_edit", pk=comment.pk)
+
+        # ── 投稿 ─────────────────────────────────
+        if action == "post":
+            form = CommentForm(request.POST, instance=comment)
+            if form.is_valid():
+                obj = form.save(commit=False)
+                obj.status = Comment.CommentStatus.PUBLIC
+
+                # 公開時に初めて sequence を採番
+                max_seq = Comment.objects.filter(
+                    topic=topic,
+                    status=Comment.CommentStatus.PUBLIC  # 公開済みだけでカウント
+                ).aggregate(Max("sequence"))["sequence__max"]
+                obj.sequence = (max_seq or 0) + 1
+
+                obj.save()
+                return redirect("board:topic_detail", pk=topic.pk)
+
+    # GET：確認表示
     form = CommentForm(instance=comment)
-
-    return render(request, "board/comment_form.html", {
+    return render(request, "board/comment_confirm.html", {
         "form": form,
+        "topic": topic,
         "comment": comment,
-        "mode": "edit",
     })
 
 
 # ==============================
-#　コメント編集
+# コメント編集（投稿済み）
 # ==============================
 
 @login_required
 def comment_edit(request, pk):
-    comment = get_object_or_404(Comment, pk=pk, user=request.user)
+    """
+    トピックの topic_edit と同じ構造。
+    投稿済みコメントの編集 → 確認画面 → 更新。
+    """
+    comment = get_object_or_404(
+        Comment,
+        pk=pk,
+        user=request.user,
+        status=Comment.CommentStatus.PUBLIC,
+    )
+    topic = comment.topic
 
-    form = CommentForm(instance=comment)
+    if request.method == "POST":
+        form = CommentForm(request.POST, instance=comment)
+        action = request.POST.get("action")
+
+        if form.is_valid():
+            obj = form.save(commit=False)
+
+            # ── 確認画面へ ──────────────────────────
+            if action == "confirm":
+                obj.save()
+                return render(request, "board/comment_confirm.html", {
+                    "form": form,
+                    "topic": topic,
+                    "comment": obj,
+                    "mode": "edit",
+                })
+
+    else:
+        form = CommentForm(instance=comment)
 
     return render(request, "board/comment_form.html", {
         "form": form,
-        "topic": comment.topic,   # テンプレで「どのトピックのコメントか」出したい時用
+        "topic": topic,
+        "comment": comment,
         "mode": "edit",
-        "primary_label": "コメントを更新する",
-        "show_draft_button": False,  # ひとまずトピックと合わせて制御（必要なら後でON）
-        "comment": comment,          # 既存値表示などに使う
+        "primary_label": "確認画面へ",
+        "show_draft_button": False,
+        "show_delete_button": True,   # ← 削除ボタンを表示
     })
+
+
+# ==============================
+# コメント削除（投稿済み・論理削除）
+# ==============================
+
+@login_required
+def comment_delete(request, pk):
+    """
+    トピックの下書き削除（draft_topic_delete）と同じ構造。
+    投稿済みは論理削除（is_deleted=True）にする。
+    他ユーザーのコメントへの返信が残るため物理削除ではなく論理削除。
+    """
+    comment = get_object_or_404(
+        Comment,
+        pk=pk,
+        user=request.user,
+        status=Comment.CommentStatus.PUBLIC,
+    )
+
+    if request.method == "POST":
+        comment.is_deleted = True
+        comment.deleted_at = timezone.now()
+        comment.deleted_by = request.user
+        comment.save()
+        return redirect("board:mypage_comments")
+
+    return redirect("board:mypage_comments")
+
+
+# ==============================
+# 下書きコメント削除（物理削除）
+# ==============================
+
+@login_required
+def draft_comment_delete(request, pk):
+    """
+    draft_topic_delete と完全に同じ構造。
+    下書きは他ユーザーに影響がないので物理削除でOK。
+    """
+    comment = get_object_or_404(
+        Comment,
+        pk=pk,
+        user=request.user,
+        status=Comment.CommentStatus.DRAFT,
+    )
+
+    if request.method == "POST":
+        comment.delete()
+        return redirect("board:mypage_drafts")
+
+    return redirect("board:mypage_drafts")
 
 # ==============================
 # いいねの追加・解除
@@ -635,7 +735,3 @@ def mypage_drafts(request):
     })
     
 
-
-@login_required
-def draft_comment_edit_dummy(request, pk):
-    return HttpResponse("仮：コメント編集画面")

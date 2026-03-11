@@ -12,26 +12,26 @@ urlpatterns = [
     #トピック
     path("new/", views.topic_save, name="topic_new"),#トピック作成
     path("topics/<int:pk>/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認(PKあり)
-      #path("topics/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認
-      #path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),#トピック編集（公開と下書きで１つにする予定）
+
     path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
     path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
     path("drafts/<int:pk>/delete/", views.draft_topic_delete, name="draft_topic_delete"),#下書きトピック削除
     path("topics/<int:pk>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト
+  
+  
+    # コメント（新規作成・下書き編集は comment_save に統合）
+    path("topics/<int:topic_pk>/comments/new/",views.comment_save,name="comment_save_new"),#コメント作成
+    path("topics/<int:topic_pk>/comments/<int:pk>/draft/edit/",views.comment_save,name="comment_save_edit"),#コメント編集（下書き）
+    path("comments/<int:pk>/confirm/",views.comment_confirm,name="comment_confirm"),#コメント確認
+    path("comments/<int:pk>/edit/",views.comment_edit,name="comment_edit"),#コメント編集（公開済み）
+    path("comments/<int:pk>/delete/",views.comment_delete,name="comment_delete"),#コメント削除
+    path("comments/<int:pk>/draft/delete/",views.draft_comment_delete,name="draft_comment_delete"),#下書きコメント削除
     
     
-    #コメント
-    path("topics/<int:pk>/comments/new/", views.comment_create, name="comment_create"),#コメント作成
-    path("comments/<int:pk>/edit/", views.comment_edit, name="comment_edit"),# コメント（公開・下書き共通で編集画面）
-    path("comments/<int:pk>/confirm/", views.comment_confirm, name="comment_confirm"),# コメント編集の確認（編集→confirm）
-    
+    #いいね
     path("topics/<int:pk>/like/", views.topic_like_toggle, name="topic_like_toggle"),#トピックのいいね
     path("comments/<int:pk>/like/", views.comment_like_toggle, name="comment_like_toggle"),#コメントのいいね
-    
-    
-    
-    path("draft-comments/<int:pk>/edit/", views.draft_comment_edit, name="draft_comment_edit"),
-    
+  
     path("api/tags/", views.tag_search_api, name="tag_search_api"),#タグ検索
     
     
