@@ -254,6 +254,27 @@ def draft_topic_edit(request, pk):
     })
     
 
+# ==============================
+# 下書きトピック削除
+# ==============================
+
+@login_required
+def draft_topic_delete(request, pk):
+    # 本人の「下書き」だけ取る（他人のや公開済みは触れない）
+    topic = get_object_or_404(
+        Topic,
+        pk=pk,
+        user=request.user,
+        status=Topic.TopicStatus.DRAFT,
+    )
+
+    if request.method == "POST":
+        topic.delete()
+        return redirect("board:mypage_drafts")
+
+    # GETで来た場合はそのまま下書き一覧へ（モーダルで確認するのでGETは使わない）
+    return redirect("board:mypage_drafts")
+
 
 # ==============================
 # トピック編集(作成済み)

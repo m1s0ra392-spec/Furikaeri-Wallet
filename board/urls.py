@@ -16,6 +16,7 @@ urlpatterns = [
       #path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),#トピック編集（公開と下書きで１つにする予定）
     path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
     path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
+    path("drafts/<int:pk>/delete/", views.draft_topic_delete, name="draft_topic_delete"),#下書きトピック削除
     path("topics/<int:pk>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト
     
     
