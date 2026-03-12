@@ -530,28 +530,23 @@ def comment_edit(request, pk):
 # コメント削除（投稿済み・論理削除）
 # ==============================
 
+@require_POST
 @login_required
 def comment_delete(request, pk):
     """
-    トピックの下書き削除（draft_topic_delete）と同じ構造。
-    投稿済みは論理削除（is_deleted=True）にする。
-    他ユーザーのコメントへの返信が残るため物理削除ではなく論理削除。
+    投稿済みコメントの論理削除。
+    他ユーザーの返信が残るため物理削除ではなく is_deleted=True にする。
     """
     comment = get_object_or_404(
         Comment,
         pk=pk,
         user=request.user,
-        status=Comment.CommentStatus.PUBLIC,
     )
-
-    if request.method == "POST":
-        comment.is_deleted = True
-        comment.deleted_at = timezone.now()
-        comment.deleted_by = request.user
-        comment.save()
-        return redirect("board:mypage_comments")
-
-    return redirect("board:mypage_comments")
+    comment.is_deleted = True
+    comment.deleted_at = timezone.now()
+    comment.deleted_by = request.user
+    comment.save()
+    return JsonResponse({"status": "ok"})
 
 
 # ==============================

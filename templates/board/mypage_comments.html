@@ -7,31 +7,22 @@
 <h2 style="margin:16px 0 12px;">私のコメント</h2>
 
 {% if comments %}
-  <ul style="list-style:none; padding:0; margin:0;">
-    {% for c in comments %}
-      <li style="padding:12px; border:1px solid #ddd; border-radius:12px; margin-bottom:10px;">
-
-        <div style="font-size:12px; color:#666; margin-bottom:6px;">
-          {{ c.created_at|date:"Y/m/d H:i" }}
-        </div>
-
-        <div style="margin-bottom:10px; white-space:pre-wrap;">
-          {% if c.is_deleted %}
-            <span style="color:#999;">削除されました</span>
-          {% else %}
-            {{ c.text }}
-          {% endif %}
-        </div>
-
-        <div style="font-size:12px; color:#666; margin-bottom:8px;">
-          元トピック：
-          <a href="{% url 'board:topic_detail' c.topic.id %}" style="text-decoration:none;">
-            {{ c.topic.title }}
+  {% for c in comments %}
+    <div style="border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between; align-items:center;">
+      
+      <div style="flex:1; min-width:0;">
+        {# 本文クリック → 編集画面へ（削除済みはリンクなし） #}
+        {% if c.is_deleted %}
+          <div style="color:#999;">削除されました</div>
+        {% else %}
+          <a href="{% url 'board:comment_edit' c.id %}"
+             style="text-decoration:none; color:inherit; display:block;">
+            {{ c.text|truncatechars:40 }}
           </a>
-        </div>
+        {% endif %}
 
-        {# ステータス表示 #}
-        <div style="font-size:12px; color:#888; margin-bottom:8px;">
+        <div style="font-size:12px; color:#666; margin-top:4px;">
+          {{ c.topic.title }} ｜
           {% if c.is_deleted %}
             削除済み
           {% elif c.status == 1 %}
@@ -39,32 +30,23 @@
           {% else %}
             下書き
           {% endif %}
+          ｜ {{ c.updated_at|date:"Y年n月j日" }}
         </div>
+      </div>
 
-        {# ボタン行 #}
-        <div style="display:flex; gap:8px; align-items:center;">
-          <a href="{% url 'board:topic_detail' c.topic.id %}"
-             style="padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
-            トピックへ
-          </a>
+      {# 右端：削除ボタン（削除済みは非表示） #}
+      {% if not c.is_deleted %}
+        <button
+          onclick="openDeleteModal({{ c.id }}, '{{ c.text|truncatechars:20|escapejs }}')"
+          style="margin-left:12px; padding:6px 8px; border:1px solid #ccc;
+                 border-radius:8px; background:white; cursor:pointer; flex-shrink:0;">
+          🗑️
+        </button>
+      {% endif %}
 
-          {% if not c.is_deleted %}
-            <a href="{% url 'board:comment_edit' c.id %}"
-               style="padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
-              編集
-            </a>
+    </div>
+  {% endfor %}
 
-            <button
-              onclick="openDeleteModal({{ c.id }}, '{{ c.text|truncatechars:20|escapejs }}')"
-              style="padding:6px 10px; border:1px solid #ccc; border-radius:10px; background:white; cursor:pointer;">
-              🗑️
-            </button>
-          {% endif %}
-        </div>
-
-      </li>
-    {% endfor %}
-  </ul>
 {% else %}
   <p style="color:#666;">まだコメントはありません。</p>
 {% endif %}
@@ -92,6 +74,14 @@
         キャンセル
       </button>
     </div>
+
+    <div id="closeAfterDelete" style="display:none; margin-top:12px;">
+      <button onclick="location.reload()"
+              style="width:100%; padding:10px; border:1px solid #ccc;
+                     border-radius:10px; cursor:pointer; background:white;">
+        閉じる
+      </button>
+    </div>
   </div>
 </div>
 
@@ -104,12 +94,13 @@
     document.getElementById("modalText").textContent = text;
     document.getElementById("deleteResult").style.display = "none";
     document.getElementById("modalButtons").style.display = "flex";
+    document.getElementById("closeAfterDelete").style.display = "none";
     const modal = document.getElementById("deleteModal");
     modal.style.display = "flex";
   }
 
   function closeModal() {
-    location.reload();  // 閉じるときにページリロード
+    location.href = "{% url 'board:mypage_comments' %}";
   }
 
   function doDelete() {
@@ -127,6 +118,7 @@
       if (data.status === "ok") {
         document.getElementById("modalButtons").style.display = "none";
         document.getElementById("deleteResult").style.display = "block";
+        document.getElementById("closeAfterDelete").style.display = "block";
       }
     });
   }

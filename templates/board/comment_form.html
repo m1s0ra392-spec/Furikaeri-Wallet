@@ -42,7 +42,7 @@
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 10px;
-    resize: vertical;
+    resize: vertical;n
   }
 
   .error { color: #c00; font-size: 12px; margin-top: 6px; }
@@ -120,37 +120,116 @@
     <div class="note">※コメントは1000文字以内で入力してください</div>
 
     <div class="btn-row">
-     <button class="btn" type="submit" name="action" value="confirm">
-  {% if mode == "edit" %}更新内容を確認{% else %}確認画面へ{% endif %}
-</button>
-
-      <!-- 下書き保存（まだ未実装なら、とりあえずボタンだけ置いてOK） -->
-      <button class="btn sub" type="submit" name="action" value="draft">下書き保存</button>
-    </div>
+  {% if mode == "edit" %}
+    {# 編集モード：更新ボタン + 削除を要請ボタン #}
+    <button class="btn" type="submit" name="action" value="confirm">
+      コメントを更新する
+    </button>
+    <button class="btn" type="button"
+            onclick="openDeleteModal({{ comment.id }}, '{{ comment.text|truncatechars:20|escapejs }}')"
+            style="background:#c0392b; border-color:#c0392b;">
+      削除する
+    </button>
+  {% else %}
+    {# 新規作成モード：今まで通り #}
+    <button class="btn" type="submit" name="action" value="confirm">
+      確認画面へ
+    </button>
+    <button class="btn sub" type="submit" name="action" value="draft">
+      下書き保存
+    </button>
+  {% endif %}
+      </div>{# btn-row #}
   </form>
+</div>{# card #}
+  
+{# 編集モード用：削除確認モーダル #}
+{% if mode == "edit" %}
+<div id="deleteModal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.4); z-index:999; justify-content:center; align-items:center;">
+  <div style="background:white; border-radius:12px; padding:24px; max-width:320px; width:90%;">
+    <p style="font-weight:bold; margin-bottom:8px;">このコメントを削除しますか？</p>
+    <p id="modalText" style="font-size:13px; color:#666; margin-bottom:16px;"></p>
+
+    <div id="deleteResult" style="display:none; color:#2f6f47; margin-bottom:12px;">削除しました</div>
+
+    <div id="modalButtons" style="display:flex; gap:10px;">
+      <button onclick="doDelete()"
+              style="flex:1; padding:10px; background:#c0392b; color:white;
+                     border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+        はい
+      </button>
+      <button onclick="closeDeleteModal()"
+              style="flex:1; padding:10px; background:white; color:#333;
+                     border:1px solid #ccc; border-radius:10px; cursor:pointer;">
+        いいえ
+      </button>
+    </div>
+
+    <div id="closeAfterDelete" style="display:none; margin-top:12px;">
+      <button onclick="location.href='{% url 'board:mypage_comments' %}'"
+              style="width:100%; padding:10px; border:1px solid #ccc;
+                     border-radius:10px; cursor:pointer; background:white;">
+        戻る
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
-  // 返信番号が入っていたら、本文先頭に >>番号 を付ける（重複はしない）
+  let targetCommentId = null;
+
+  function openDeleteModal(commentId, text) {
+    targetCommentId = commentId;
+    document.getElementById("modalText").textContent = text;
+    document.getElementById("deleteResult").style.display = "none";
+    document.getElementById("modalButtons").style.display = "flex";
+    document.getElementById("closeAfterDelete").style.display = "none";
+    document.getElementById("deleteModal").style.display = "flex";
+  }
+
+  function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none";
+  }
+
+  function doDelete() {
+    if (!targetCommentId) return;
+    fetch(`/board/comments/${targetCommentId}/delete/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json",
+      },
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "ok") {
+        document.getElementById("modalButtons").style.display = "none";
+        document.getElementById("deleteResult").style.display = "block";
+        document.getElementById("closeAfterDelete").style.display = "block";
+      }
+    });
+  }
+</script>
+{% endif %}
+
+<script>
+  {# 返信番号JS（新規作成モードのみ有効） #}
   document.getElementById("commentForm").addEventListener("submit", function () {
     const reply = document.getElementById("{{ form.reply_to.id_for_label }}");
-    const text = document.getElementById("{{ form.text.id_for_label }}");
-    if (!reply || !text) return;
+    const textEl = document.getElementById("{{ form.text.id_for_label }}");
+    if (!reply || !textEl) return;
 
     const n = (reply.value || "").trim();
     if (!n) return;
 
     const prefix = ">>" + n;
-    const currentText = text.value || "";  
+    const currentText = textEl.value || "";
 
-if (currentText.trimStart().startsWith(prefix)) return;
-
-text.value = prefix + "\n" + currentText;
-
-    // 既に先頭に付いてたら何もしない
-    if (text.trimStart().startsWith(prefix)) return;
-
-    text.value = prefix + "\n" + text;
+    if (currentText.trimStart().startsWith(prefix)) return;
+    textEl.value = prefix + "\n" + currentText;
   });
 </script>
+
 {% endblock %}
