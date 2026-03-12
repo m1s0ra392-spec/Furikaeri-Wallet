@@ -4,35 +4,132 @@
 <h2 style="margin:16px 0 8px;">掲示板マイページ</h2>
 {% include "board/_mypage_tabs.html" %}
 
-  <h2 style="margin:16px 0 12px;">私のコメント</h2>
+<h2 style="margin:16px 0 12px;">私のコメント</h2>
 
-  {% if comments %}
-    <ul style="list-style:none; padding:0; margin:0;">
-      {% for c in comments %}
-        <li style="padding:12px; border:1px solid #ddd; border-radius:12px; margin-bottom:10px;">
-          <div style="font-size:12px; color:#666; margin-bottom:6px;">
-            {{ c.created_at|date:"Y/m/d H:i" }}
-          </div>
+{% if comments %}
+  <ul style="list-style:none; padding:0; margin:0;">
+    {% for c in comments %}
+      <li style="padding:12px; border:1px solid #ddd; border-radius:12px; margin-bottom:10px;">
 
-          <div style="margin-bottom:10px; white-space:pre-wrap;">
+        <div style="font-size:12px; color:#666; margin-bottom:6px;">
+          {{ c.created_at|date:"Y/m/d H:i" }}
+        </div>
+
+        <div style="margin-bottom:10px; white-space:pre-wrap;">
+          {% if c.is_deleted %}
+            <span style="color:#999;">削除されました</span>
+          {% else %}
             {{ c.text }}
-          </div>
+          {% endif %}
+        </div>
 
-          <div style="font-size:12px; color:#666; margin-bottom:8px;">
-            元トピック：
-            <a href="{% url 'board:topic_detail' c.topic.id %}" style="text-decoration:none;">
-              {{ c.topic.title }}
-            </a>
-          </div>
+        <div style="font-size:12px; color:#666; margin-bottom:8px;">
+          元トピック：
+          <a href="{% url 'board:topic_detail' c.topic.id %}" style="text-decoration:none;">
+            {{ c.topic.title }}
+          </a>
+        </div>
 
+        {# ステータス表示 #}
+        <div style="font-size:12px; color:#888; margin-bottom:8px;">
+          {% if c.is_deleted %}
+            削除済み
+          {% elif c.status == 1 %}
+            公開中
+          {% else %}
+            下書き
+          {% endif %}
+        </div>
+
+        {# ボタン行 #}
+        <div style="display:flex; gap:8px; align-items:center;">
           <a href="{% url 'board:topic_detail' c.topic.id %}"
-             style="display:inline-block; padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
+             style="padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
             トピックへ
           </a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p style="color:#666;">まだコメントはありません。</p>
-  {% endif %}
+
+          {% if not c.is_deleted %}
+            <a href="{% url 'board:comment_edit' c.id %}"
+               style="padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
+              編集
+            </a>
+
+            <button
+              onclick="openDeleteModal({{ c.id }}, '{{ c.text|truncatechars:20|escapejs }}')"
+              style="padding:6px 10px; border:1px solid #ccc; border-radius:10px; background:white; cursor:pointer;">
+              🗑️
+            </button>
+          {% endif %}
+        </div>
+
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p style="color:#666;">まだコメントはありません。</p>
+{% endif %}
+
+
+{# ===== 削除確認モーダル ===== #}
+<div id="deleteModal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.4); z-index:999; justify-content:center; align-items:center;">
+  <div style="background:white; border-radius:12px; padding:24px; max-width:320px; width:90%;">
+    <p style="font-weight:bold; margin-bottom:8px;">このコメントを削除しますか？</p>
+    <p id="modalText" style="font-size:13px; color:#666; margin-bottom:16px;"></p>
+
+    <div id="deleteResult" style="display:none; color:#2f6f47; margin-bottom:12px;">削除しました</div>
+
+    <div id="modalButtons" style="display:flex; gap:10px;">
+      <button onclick="doDelete()"
+              style="flex:1; padding:10px; background:#c0392b; color:white;
+                     border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+        削除する
+      </button>
+      <button onclick="closeModal()"
+              style="flex:1; padding:10px; background:white; color:#333;
+                     border:1px solid #ccc; border-radius:10px; cursor:pointer;">
+        キャンセル
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  let targetCommentId = null;
+
+  function openDeleteModal(commentId, text) {
+    targetCommentId = commentId;
+    document.getElementById("modalText").textContent = text;
+    document.getElementById("deleteResult").style.display = "none";
+    document.getElementById("modalButtons").style.display = "flex";
+    const modal = document.getElementById("deleteModal");
+    modal.style.display = "flex";
+  }
+
+  function closeModal() {
+    location.reload();  // 閉じるときにページリロード
+  }
+
+  function doDelete() {
+    if (!targetCommentId) return;
+
+    fetch(`/board/comments/${targetCommentId}/delete/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json",
+      },
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "ok") {
+        document.getElementById("modalButtons").style.display = "none";
+        document.getElementById("deleteResult").style.display = "block";
+      }
+    });
+  }
+</script>
+
 {% endblock %}
