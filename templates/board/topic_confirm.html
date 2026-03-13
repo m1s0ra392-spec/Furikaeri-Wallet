@@ -49,7 +49,7 @@
 
     <button type="submit"
       style="padding:10px 16px; background:#5f8f6b; color:#fff; border:none;">
-      投稿する
+      {% if mode == "edit" %}トピックを更新する{% else %}投稿する{% endif %}
     </button>
   </form>
 

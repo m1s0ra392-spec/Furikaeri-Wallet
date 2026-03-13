@@ -283,17 +283,25 @@ def draft_topic_delete(request, pk):
 
 @login_required
 def topic_edit(request, pk):
-    # ここで本人の投稿しか取れない
     topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
     if request.method == "POST":
         form = TopicForm(request.POST, instance=topic)
+        action = request.POST.get("action")  # ★追加：ボタンの種類を受け取る
+
         if form.is_valid():
-            topic = form.save(commit=False)
-            topic.status = Topic.TopicStatus.PUBLIC 
-            topic.save()
-            form.save_m2m()
-            return redirect("board:topic_detail", pk=topic.id)  
+            # ★追加：「確認する」ボタンが押されたら確認画面へ
+            if action == "confirm":
+                obj = form.save(commit=False)
+                obj.save()
+                form.save_m2m()
+                return render(request, "board/topic_confirm.html", {
+                    "form": form,
+                    "topic": obj,
+                    "category_label": obj.get_board_category_display(),
+                    "tags": form.cleaned_data.get("tags", []),
+                    "mode": "edit",  # ★確認画面に「編集モード」を伝える
+                })
     else:
         form = TopicForm(instance=topic)
 
@@ -301,7 +309,7 @@ def topic_edit(request, pk):
         "form": form,
         "topic": topic,
         "mode": "edit",
-        "primary_label": "トピックを更新する",
+        "primary_label": "確認する",  # ★変更：ボタン名を「確認する」に
         "show_draft_button": False,
         "show_delete_request": True,
     })
