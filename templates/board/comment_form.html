@@ -214,22 +214,5 @@
 </script>
 {% endif %}
 
-<script>
-  {# 返信番号JS（新規作成モードのみ有効） #}
-  document.getElementById("commentForm").addEventListener("submit", function () {
-    const reply = document.getElementById("{{ form.reply_to.id_for_label }}");
-    const textEl = document.getElementById("{{ form.text.id_for_label }}");
-    if (!reply || !textEl) return;
-
-    const n = (reply.value || "").trim();
-    if (!n) return;
-
-    const prefix = ">>" + n;
-    const currentText = textEl.value || "";
-
-    if (currentText.trimStart().startsWith(prefix)) return;
-    textEl.value = prefix + "\n" + currentText;
-  });
-</script>
 
 {% endblock %}
