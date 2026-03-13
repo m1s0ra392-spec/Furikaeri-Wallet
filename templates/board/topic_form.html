@@ -236,7 +236,20 @@
   // 今日は「既存タグを選ぶ」まで。選択状態はここで管理
   const selected = new Map(); // id -> name
 
+  {% if topic and topic.tags.all %}
+    {% for tag in topic.tags.all %}
+      selected.set({{ tag.id }}, "{{ tag.name }}");
+    {% endfor %}
+  {% endif %}
+
   let timer = null;
+
+  // ★★★ 追加：ページ読み込み時に初期タグをフォームとhiddenに反映する
+  function initTags() {
+    renderSelectedOnForm();
+    renderHidden();
+  }
+  initTags();
 
   function openModal() {
     overlay.style.display = "block";

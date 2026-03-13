@@ -108,7 +108,7 @@ def topic_save(request, pk=None):
         topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
     if request.method == "POST":
-        print("action =", request.POST.get("action"))
+        
         
         form = TopicForm(request.POST, instance=topic)
         action = request.POST.get("action")  # "draft" / "confirm"
@@ -164,7 +164,7 @@ def topic_confirm(request, pk):
     # POST（確認画面のボタン）
     if request.method == "POST":
         action = request.POST.get("action")
-        print("topic_confirm action =", action)
+
         
         if action == "back":
             # 下書き編集に戻す（draft_topic_edit を使う方針なら）
@@ -176,10 +176,6 @@ def topic_confirm(request, pk):
         if action == "post":
             form = TopicForm(request.POST, instance=topic)
             
-            print("POST title =", request.POST.get("title"))
-            print("POST text =", request.POST.get("text"))
-            print("POST tags =", request.POST.getlist("tags"))
-
             if form.is_valid():
                 obj = form.save(commit=False)
                 obj.user = request.user
@@ -234,10 +230,15 @@ def draft_topic_edit(request, pk):
                 return redirect("board:mypage_drafts")
 
             if action == "confirm":
+                obj = form.save(commit=False)      
+                obj.user = request.user            
+                obj.status = Topic.TopicStatus.DRAFT  
+                obj.save()                      
+                form.save_m2m()                    
                 return render(request, "board/topic_confirm.html", {
                     "form": form,
-                    "topic": topic,
-                    "category_label": topic.get_board_category_display(),
+                    "topic": obj,            # ← topicをobjに変更
+                    "category_label": obj.get_board_category_display(),  # ← 同上
                     "tags": form.cleaned_data.get("tags", []),
                     "mode": "draft_edit",
                 })
