@@ -2,10 +2,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Exists, OuterRef
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
-from django.urls import reverse
 from django.utils import timezone
 
 from collections import defaultdict
@@ -94,7 +93,6 @@ def topic_detail(request, pk):
         "is_topic_liked": is_topic_liked,
         "comments": comments,
     })
-
 
 
 # ==================================
@@ -342,6 +340,74 @@ def topic_delete_request(request, pk):
     return render(request, "board/topic_delete_confirm.html", {
         "topic": topic,
     })
+
+
+# ==============================
+# 新規タグ作成API
+# ==============================
+
+@login_required
+@require_POST
+def tag_create_api(request):
+    """
+    新規タグをDBに保存して id と name を返す
+    POST /board/api/tags/create/
+    body: JSON {"name": "新しいタグ名"}
+    戻り値: {"id": 5, "name": "新しいタグ名"}
+    """
+    import json
+
+    try:
+        body = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "不正なリクエストです"}, status=400)
+
+    name = (body.get("name") or "").strip()
+
+    if not name:
+        return JsonResponse({"error": "タグ名を入力してください"}, status=400)
+
+    if len(name) > 30:
+        return JsonResponse({"error": "タグ名は30文字以内にしてください"}, status=400)
+
+    # get_or_create：同名タグが既にあればそれを返す（重複防止）
+    tag, created = Tag.objects.get_or_create(name=name)
+
+    return JsonResponse({"id": tag.id, "name": tag.name})
+
+
+# ==============================
+# タグ検索
+# ==============================
+
+@login_required
+@require_GET
+def tag_search_api(request):
+    """
+    入力文字列 q をもとに既存タグ候補を返すAPI
+    GET /board/api/tags/?q=xxx
+    戻り値: [{"id": 1, "name": "節約"}, ...]
+    """
+    q = (request.GET.get("q") or "").strip()
+
+    if q:
+        # 検索ワードあり → 部分一致で絞り込み
+        qs = (
+            Tag.objects
+            .filter(name__icontains=q)
+            .order_by("name")
+            .values("id", "name")[:10]
+        )
+    else:
+        # 検索ワードなし → 全件返す
+        qs = (
+            Tag.objects
+            .order_by("name")
+            .values("id", "name")[:30]
+        )
+
+    return JsonResponse(list(qs), safe=False)
+
 
 
 
@@ -618,34 +684,6 @@ def comment_like_toggle(request, pk):
 
     # コメントは基本トピック詳細に戻すのが自然
     return redirect(request.META.get("HTTP_REFERER", "board:topic_detail"), pk=comment.pk)
-
-
-# ==============================
-# タグ検索
-# ==============================
-
-@login_required
-@require_GET
-def tag_search_api(request):
-    """
-    入力文字列 q をもとに既存タグ候補を返すAPI
-    GET /board/api/tags/?q=xxx
-    戻り値: [{"id": 1, "name": "節約"}, ...]
-    """
-    q = (request.GET.get("q") or "").strip()
-
-    # 空なら空配列（候補を出さない）
-    if not q:
-        return JsonResponse([], safe=False)
-
-    qs = (
-        Tag.objects
-        .filter(name__istartswith=q)
-        .order_by("name")
-        .values("id", "name")[:10]
-    )
-
-    return JsonResponse(list(qs), safe=False)
 
 
 

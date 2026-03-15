@@ -168,37 +168,36 @@
               style="border:none; background:transparent; font-size:18px; cursor:pointer;">×</button>
     </div>
 
-    <div style="padding:14px;">
-      <!-- 新規タグ（枠だけ：今日はまだ作成APIがないので押しても何もしない） -->
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+  <div style="padding:14px;">
+
+      <!-- 新規タグ入力 + ＋ボタン -->
+      <div style="display:flex; gap:8px; align-items:center;">
         <input id="new-tag-input" type="text" placeholder="新規タグ"
                style="flex:1; padding:8px; border:1px solid #ccc; border-radius:6px;">
         <button type="button" id="new-tag-add"
-                style="width:44px; padding:8px 0; border:1px solid #ccc; border-radius:6px; background:#f3f3f3;">
+                style="width:44px; padding:8px 0; border:1px solid #ccc; border-radius:6px; background:#f3f3f3; font-size:16px; cursor:pointer;">
           ＋
         </button>
       </div>
 
-      <!-- 検索（既存タグ候補を出す） -->
-      <input id="tag-search-input" type="text" placeholder="タグを検索（例：節）"
-             autocomplete="off"
-             style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;">
-
-      <!-- 候補（検索結果） -->
-      <div id="tag-suggestions"
-           style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <!-- 既存タグ警告メッセージ（重複時に表示） -->
+      <div id="tag-duplicate-msg"
+           style="display:none; margin-top:4px; font-size:12px; color:#888;">
       </div>
 
-      <!-- 選択済み（モーダル内でも見えるように） -->
-      <div style="margin-top:12px; font-size:12px; color:#666;">選択中</div>
-      <div id="selected-tags-in-modal" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;"></div>
+      <!-- タグ一覧（全件 or 検索絞り込み） -->
+      <div id="tag-list"
+           style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; min-height:40px;">
+        <span style="font-size:12px; color:#aaa;">読み込み中…</span>
+      </div>
 
       <!-- 決定ボタン -->
       <button type="button" id="apply-tags"
               style="width:100%; margin-top:14px; padding:10px; border:1px solid #bbb; border-radius:8px; background:#eee; cursor:pointer;">
         トピック内容に入力
       </button>
-    </div>
+
+    </div> 
   </div>
 </div>
 
@@ -221,55 +220,269 @@
 <!--タグモーダル用JS-->
 <script>
 (() => {
-  const overlay = document.getElementById("tag-modal-overlay");
-  const openBtn = document.getElementById("open-tag-modal");
-  const closeBtn = document.getElementById("close-tag-modal");
-  const applyBtn = document.getElementById("apply-tags");
-
-  const searchInput = document.getElementById("tag-search-input");
-  const suggestions = document.getElementById("tag-suggestions");
-
-  const selectedOnForm = document.getElementById("selected-tags-on-form");
-  const selectedInModal = document.getElementById("selected-tags-in-modal");
+  const overlay      = document.getElementById("tag-modal-overlay");
+  const openBtn      = document.getElementById("open-tag-modal");
+  const closeBtn     = document.getElementById("close-tag-modal");
+  const applyBtn     = document.getElementById("apply-tags");
+  const newTagInput  = document.getElementById("new-tag-input");
+  const newTagAdd    = document.getElementById("new-tag-add");
+  const tagList      = document.getElementById("tag-list");
+  const dupMsg       = document.getElementById("tag-duplicate-msg");
+  const selectedOnForm  = document.getElementById("selected-tags-on-form");
   const hiddenContainer = document.getElementById("tag-hidden-container");
 
-  // 今日は「既存タグを選ぶ」まで。選択状態はここで管理
-  const selected = new Map(); // id -> name
+  // 選択状態を管理 (id -> name)
+  // 既存タグ: id は数値
+  // 新規タグ: id は "new_タグ名"（まだDBにない）
+  const selected = new Map();
 
+  // 表示中のタグ一覧データ（配列）
+  // 新規追加したものは先頭に入れる
+  let allTags  = [];   // APIから取得した全タグ（常に保持）
+  let newTags  = [];   // ＋ボタンで追加した新規タグ
+
+  // ── 編集時：既存選択タグを復元 ──────────────
   {% if topic and topic.tags.all %}
     {% for tag in topic.tags.all %}
       selected.set({{ tag.id }}, "{{ tag.name }}");
     {% endfor %}
   {% endif %}
 
-  let timer = null;
-
-  // ★★★ 追加：ページ読み込み時に初期タグをフォームとhiddenに反映する
-  function initTags() {
+  // ── 初期化 ───────────────────────────────
+  function init() {
     renderSelectedOnForm();
     renderHidden();
   }
-  initTags();
+  init();
 
-  function openModal() {
+  // ── モーダル開閉 ──────────────────────────
+  async function openModal() {
     overlay.style.display = "block";
-    searchInput.value = "";
-    suggestions.innerHTML = "";
-    renderSelectedInModal();
-    setTimeout(() => searchInput.focus(), 0);
+    newTagInput.value = "";
+    dupMsg.style.display = "none";
+    dupMsg.textContent = "";
+    await loadAllTags();   // 全タグをAPIから取得
+    renderTagList("");     // 全件表示
+    setTimeout(() => newTagInput.focus(), 0);
   }
 
   function closeModal() {
     overlay.style.display = "none";
   }
 
+  openBtn.addEventListener("click", openModal);
+  closeBtn.addEventListener("click", closeModal);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+
+  // ── 全タグ取得（モーダルを開くたびに実行） ────────
+  async function loadAllTags() {
+    tagList.innerHTML = '<span style="font-size:12px;color:#aaa;">読み込み中…</span>';
+    try {
+      // q を渡さない or q= で全件返すAPIに合わせる
+      const res = await fetch("/board/api/tags/", {
+        headers: { "Accept": "application/json" }
+      });
+      if (!res.ok) throw new Error("fetch failed");
+      allTags = await res.json();   // [{id, name}, ...] を期待
+    } catch {
+      allTags = [];
+    }
+  }
+
+  // ── タグ一覧を描画（keyword で絞り込み） ──────────
+  // keyword が空 → 全件（新規追加タグ先頭 + 既存タグ）
+  // keyword あり → 新規追加タグ＋既存タグの部分一致
+  function renderTagList(keyword) {
+    const kw = keyword.trim();
+
+    // 新規タグ（先頭表示）
+    const filteredNew = kw
+      ? newTags.filter(t => t.name.includes(kw))
+      : [...newTags];
+
+    // 既存タグ（絞り込み）
+    const filteredAll = kw
+      ? allTags.filter(t => t.name.includes(kw))
+      : [...allTags];
+
+    const items = [...filteredNew, ...filteredAll];
+
+    tagList.innerHTML = "";
+
+    if (items.length === 0) {
+      tagList.innerHTML = '<span style="font-size:12px;color:#aaa;">該当するタグがありません</span>';
+      return;
+    }
+
+    items.forEach(item => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.textContent = `#${item.name}`;
+      chip.dataset.id = item.id;
+
+      const isSelected = selected.has(item.id);
+      applyChipStyle(chip, isSelected);
+
+      chip.addEventListener("click", () => {
+        if (selected.has(item.id)) {
+          selected.delete(item.id);
+        } else {
+          selected.set(item.id, item.name);
+        }
+        // このチップだけ見た目を更新（再描画不要でパフォーマンス良好）
+        applyChipStyle(chip, selected.has(item.id));
+        renderSelectedOnForm();
+        renderHidden();
+      });
+
+      tagList.appendChild(chip);
+    });
+  }
+
+  function applyChipStyle(chip, isSelected) {
+    chip.style.cssText = `
+      padding:6px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:13px;
+      border: 1px solid ${isSelected ? "#6a9e74" : "#ccc"};
+      background: ${isSelected ? "#8bbf95" : "#fff"};
+      color: ${isSelected ? "#fff" : "#333"};
+    `;
+  }
+
+  // ── テキストボックス入力 → リアルタイム絞り込み & 重複チェック ──
+  newTagInput.addEventListener("input", () => {
+    const kw = newTagInput.value.trim();
+    dupMsg.style.display = "none";
+    dupMsg.textContent = "";
+
+    if (kw) {
+      // 既存タグ or 新規タグに部分一致するものがあれば警告表示
+      const hits = [
+        ...allTags.filter(t => t.name.includes(kw)),
+        ...newTags.filter(t => t.name.includes(kw)),
+      ];
+      if (hits.length > 0) {
+        dupMsg.style.display = "block";
+        dupMsg.textContent = "既存あります " + hits.map(t => `#${t.name}`).join(" ");
+      }
+    }
+
+    // タグ一覧もリアルタイム絞り込み
+    renderTagList(kw);
+  });
+
+  // ── ＋ボタン → 新規タグ追加 ──────────────────
+ newTagAdd.addEventListener("click", async () => {
+    const name = newTagInput.value.trim();
+
+    if (!name) {
+      alert("タグ名を入力してください");
+      return;
+    }
+
+    // 完全一致する既存タグがあれば追加せずそのタグを選択
+    const exactExisting = allTags.find(t => t.name === name);
+    if (exactExisting) {
+      dupMsg.style.display = "block";
+      dupMsg.textContent = `既存あります #${exactExisting.name}`;
+      selected.set(exactExisting.id, exactExisting.name);
+      newTagInput.value = "";
+      renderTagList("");
+      renderSelectedOnForm();
+      renderHidden();
+      return;
+    }
+
+    // 新規タグにも完全一致があれば追加しない
+    const exactNew = newTags.find(t => t.name === name);
+    if (exactNew) {
+      dupMsg.style.display = "block";
+      dupMsg.textContent = `既存あります #${exactNew.name}`;
+      return;
+    }
+
+    // ↓↓↓ ここだけ変更：DBに保存してから本物のIDで登録 ↓↓↓
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+    let tag;
+    try {
+      const res = await fetch("/board/api/tags/create/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "タグの作成に失敗しました");
+        return;
+      }
+      tag = await res.json();  // { id: 5, name: "節電" }
+    } catch {
+      alert("通信エラーが発生しました");
+      return;
+    }
+
+    // 本物のIDで newTags と selected に追加
+    newTags.unshift({ id: tag.id, name: tag.name });
+    selected.set(tag.id, tag.name);
+    newTagInput.value = "";
+    dupMsg.style.display = "none";
+    renderTagList("");
+    renderSelectedOnForm();
+    renderHidden();
+  });
+
+  // ── 「トピック内容に入力」ボタン ──────────────────
+  applyBtn.addEventListener("click", () => {
+    // テキストエリアを取得（id="id_body" はDjango標準。違う場合は合わせてください）
+    const textarea = document.getElementById("id_body")
+                  || document.querySelector("textarea[name='body']");
+
+    if (textarea && selected.size > 0) {
+      // 末尾の既存タグ行を除去してから追記
+      let text = textarea.value.replace(/\n?(#[^\n]+)+$/, "").trimEnd();
+      const tagStr = [...selected.values()].map(n => `#${n}`).join(" ");
+      textarea.value = text + (text ? "\n" : "") + tagStr;
+    }
+    closeModal();
+  });
+
+  // ── フォーム上の選択済みチップ ─────────────────
+  function renderSelectedOnForm() {
+    selectedOnForm.innerHTML = "";
+    for (const [id, name] of selected.entries()) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.textContent = `#${name} ×`;
+      chip.style.cssText = `
+        padding:5px 10px; border:1px solid #8bbf95; border-radius:999px;
+        background:#e8f4ea; cursor:pointer; font-size:12px; color:#3a6b44;
+      `;
+      chip.addEventListener("click", () => {
+        selected.delete(id);
+        renderSelectedOnForm();
+        renderHidden();
+        // タグ一覧の該当チップの色も更新
+        const chipInList = tagList.querySelector(`[data-id="${id}"]`);
+        if (chipInList) applyChipStyle(chipInList, false);
+      });
+      selectedOnForm.appendChild(chip);
+    }
+  }
+
+  // ── hidden input（フォーム送信用） ──────────────
   function renderHidden() {
     hiddenContainer.innerHTML = "";
-
     for (const rawId of selected.keys()) {
+      // 新規タグ（new_xxx）はhiddenには入れない
       const id = Number(rawId);
       if (!Number.isFinite(id)) continue;
-
       const input = document.createElement("input");
       input.type = "hidden";
       input.name = "tags";
@@ -278,109 +491,6 @@
     }
   }
 
-  function makeChip({ id, name, removable = false }) {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.textContent = removable ? `${name} ×` : `#${name}`;
-    chip.style.cssText = `
-      padding:6px 10px; border:1px solid #ccc; border-radius:999px;
-      background:#fff; cursor:pointer; font-size:12px;
-    `;
-    chip.dataset.id = id;
-    return chip;
-  }
-
-  function renderSelectedOnForm() {
-    selectedOnForm.innerHTML = "";
-    for (const [id, name] of selected.entries()) {
-      const chip = makeChip({ id, name, removable: true });
-      chip.addEventListener("click", () => {
-        selected.delete(Number(id));
-        renderSelectedOnForm();
-        renderSelectedInModal();
-        renderHidden();
-      });
-      selectedOnForm.appendChild(chip);
-    }
-  }
-
-  function renderSelectedInModal() {
-    selectedInModal.innerHTML = "";
-    for (const [id, name] of selected.entries()) {
-      const chip = makeChip({ id, name, removable: true });
-      chip.addEventListener("click", () => {
-        selected.delete(Number(id));
-        renderSelectedInModal();
-        renderSelectedOnForm();
-        renderHidden();
-      });
-      selectedInModal.appendChild(chip);
-    }
-  }
-
-  function renderSuggestions(items) {
-    suggestions.innerHTML = "";
-    items.forEach(item => {
-      const chip = makeChip({ id: item.id, name: item.name, removable: false });
-
-      // 選択状態に応じて見た目を変える
-      if (selected.has(item.id)) {
-        chip.style.background = "#e8f4ea";
-        chip.style.borderColor = "#8bbf95";
-      }
-
-      chip.addEventListener("click", () => {
-        if (selected.has(item.id)) {
-          selected.delete(item.id);
-        } else {
-          selected.set(item.id, item.name);
-        }
-        renderSuggestions(items);
-        renderSelectedInModal();
-        renderSelectedOnForm();
-        renderHidden();
-      });
-
-      suggestions.appendChild(chip);
-    });
-  }
-
-  async function fetchTags(q) {
-    const url = `/board/api/tags/?q=${encodeURIComponent(q)}`;
-    const res = await fetch(url, { headers: { "Accept": "application/json" }});
-    if (!res.ok) return [];
-    return await res.json();
-  }
-
-  openBtn.addEventListener("click", openModal);
-  closeBtn.addEventListener("click", closeModal);
-
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) closeModal();
-  });
-
-  applyBtn.addEventListener("click", () => {
-    closeModal();
-  });
-
-  searchInput.addEventListener("input", () => {
-    const q = searchInput.value.trim();
-    clearTimeout(timer);
-
-    if (!q) {
-      suggestions.innerHTML = "";
-      return;
-    }
-
-    timer = setTimeout(async () => {
-      const items = await fetchTags(q);
-      renderSuggestions(items);
-    }, 200);
-  });
-
-  document.getElementById("new-tag-add").addEventListener("click", () => {
-    alert("新規タグ作成は次のステップ（作成API）で実装します。今日は既存タグの選択まで！");
-  });
 })();
 </script>
 

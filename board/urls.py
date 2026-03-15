@@ -12,11 +12,14 @@ urlpatterns = [
     #トピック
     path("new/", views.topic_save, name="topic_new"),#トピック作成
     path("topics/<int:pk>/confirm/", views.topic_confirm, name="topic_confirm"),#トピック確認(PKあり)
-
     path("topics/<int:pk>/edit/", views.topic_edit, name="topic_edit"),  # トピック編集（公開済み）
     path("drafts/<int:pk>/edit/", views.draft_topic_edit, name="draft_topic_edit"),#トピック編集（下書き）
     path("drafts/<int:pk>/delete/", views.draft_topic_delete, name="draft_topic_delete"),#下書きトピック削除
     path("topics/<int:pk>/delete-request/", views.topic_delete_request, name="topic_delete_request"),#トピック削除リクエスト
+    
+    #タグ
+    path("api/tags/", views.tag_search_api, name="tag_search_api"),#タグ検索
+    path("api/tags/create/", views.tag_create_api, name="tag_create_api"),#新規タグ追加
   
   
     # コメント（新規作成・下書き編集は comment_save に統合）
@@ -32,7 +35,6 @@ urlpatterns = [
     path("topics/<int:pk>/like/", views.topic_like_toggle, name="topic_like_toggle"),#トピックのいいね
     path("comments/<int:pk>/like/", views.comment_like_toggle, name="comment_like_toggle"),#コメントのいいね
   
-    path("api/tags/", views.tag_search_api, name="tag_search_api"),#タグ検索
     
     
     #掲示板マイページ
