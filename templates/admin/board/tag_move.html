@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+
+{% if step == "select" %}
+  {# ===== ステップ１：移動先を選ぶ ===== #}
+  <h1>タグの移動・削除</h1>
+  <p>以下のタグを移動先タグに統合し、元タグを削除します。</p>
+
+  <h3>移動元タグ（削除されます）</h3>
+  <ul>
+    {% for tag in source_tags %}
+      <li><strong>{{ tag.name }}</strong></li>
+    {% endfor %}
+  </ul>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="ids" value="{{ ids_str }}">
+    <input type="hidden" name="step" value="confirm">
+
+    <h3>移動先タグを選択</h3>
+    <select name="target_tag" required style="padding:6px; font-size:14px; min-width:200px;">
+      <option value="">--- 選択してください ---</option>
+      {% for tag in target_candidates %}
+        <option value="{{ tag.id }}">{{ tag.name }}</option>
+      {% endfor %}
+    </select>
+
+    <div style="margin-top:20px;">
+      <input type="submit" value="確認画面へ →"
+             style="background:#417690; color:#fff; padding:8px 18px; border:none; border-radius:4px; cursor:pointer; font-size:14px;">
+      &nbsp;
+      <a href="../">キャンセル</a>
+    </div>
+  </form>
+
+{% elif step == "confirm" %}
+  {# ===== ステップ２：確認 ===== #}
+  <h1>移動内容の確認</h1>
+
+  <p>以下の内容で移動・削除を実行します。よろしいですか？</p>
+
+  <table style="border-collapse:collapse; font-size:14px;">
+    <tr>
+      <th style="padding:8px 16px 8px 0; text-align:left;">移動元（削除されます）</th>
+      <td>
+        {% for tag in source_tags %}
+          <strong>{{ tag.name }}</strong>{% if not forloop.last %}、{% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    <tr>
+      <th style="padding:8px 16px 8px 0; text-align:left;">移動先</th>
+      <td><strong>{{ target.name }}</strong></td>
+    </tr>
+  </table>
+
+  <form method="post" style="margin-top:20px;">
+    {% csrf_token %}
+    <input type="hidden" name="ids" value="{{ ids_str }}">
+    <input type="hidden" name="target_tag" value="{{ target_id }}">
+    <input type="hidden" name="step" value="execute">
+
+    <input type="submit" value="はい、移動して削除する"
+           style="background:#ba2121; color:#fff; padding:8px 18px; border:none; border-radius:4px; cursor:pointer; font-size:14px;">
+    &nbsp;
+    <a href="../">キャンセル</a>
+  </form>
+
+{% endif %}
+
+{% endblock %}
