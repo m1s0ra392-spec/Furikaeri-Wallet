@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>キーワード検索</h2>
+
+{# パンくずリスト #}
+<p><a href="{% url 'board:topic_list' %}">掲示板top</a> ＞ 検索</p>
+
+{# 検索フォーム #}
+<form method="get" action="{% url 'board:topic_list' %}">
+
+  {# カテゴリ選択 #}
+  <div>
+    <label>カテゴリ</label>
+    <label><input type="radio" name="category" value=""> すべて</label>
+    {% for value, label in categories %}
+      <label>
+        <input type="radio" name="category" value="{{ value }}">
+        {{ label }}
+      </label>
+    {% endfor %}
+  </div>
+
+  {# テキスト検索 #}
+  <div>
+    <input type="text" name="q" placeholder="検索ワード">
+    <button type="submit">🔍</button>
+  </div>
+
+  {# 選択中のタグ表示エリア #}
+  <div id="selected-tags">
+    {# JavaScriptで動的に表示する #}
+  </div>
+
+  {# タグ一覧 #}
+  <div id="tag-list">
+    {% for tag in tags %}
+      <button
+        type="button"
+        class="tag-btn"
+        data-tagname="{{ tag.name }}"
+      >
+        #{{ tag.name }}
+      </button>
+    {% endfor %}
+  </div>
+
+  {# 選択タグをhiddenで送る（JSで追加） #}
+  <div id="hidden-tags"></div>
+
+</form>
+
+<script>
+  // 選択中のタグを管理する配列
+  const selectedTags = [];
+
+  // タグボタンをクリックしたとき
+  document.querySelectorAll(".tag-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tagName = btn.dataset.tagname;
+
+      // すでに選択済みなら何もしない
+      if (selectedTags.includes(tagName)) return;
+
+      // 配列に追加
+      selectedTags.push(tagName);
+
+      // ボタンの見た目を変える
+      btn.style.opacity = "0.4";
+
+      // 選択中タグを表示
+      updateSelectedTags();
+    });
+  });
+
+  function updateSelectedTags() {
+    // 選択中タグの表示エリアを更新
+    const area = document.getElementById("selected-tags");
+    area.innerHTML = selectedTags.map(name =>
+      `<span>#${name}
+        <button type="button" onclick="removeTag('${name}')">×</button>
+      </span>`
+    ).join("");
+
+    // hiddenフィールドを更新（フォーム送信用）
+    const hiddenArea = document.getElementById("hidden-tags");
+    hiddenArea.innerHTML = selectedTags.map(name =>
+      `<input type="hidden" name="tag" value="${name}">`
+    ).join("");
+  }
+
+  function removeTag(name) {
+    // 配列から削除
+    const index = selectedTags.indexOf(name);
+    selectedTags.splice(index, 1);
+
+    // ボタンの見た目を元に戻す
+    document.querySelectorAll(".tag-btn").forEach(btn => {
+      if (btn.dataset.tagname === name) btn.style.opacity = "1";
+    });
+
+    // 表示を更新
+    updateSelectedTags();
+  }
+</script>
+
+{% endblock %}

@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Max, Exists, OuterRef
+from django.db.models import Count, Max, Exists, OuterRef, Q
 from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
@@ -19,8 +19,12 @@ from .forms import TopicForm, CommentForm
 
 @login_required
 def topic_list(request):
-    category = request.GET.get("category")  # "0"/"1"/"2"/None
-    sort = request.GET.get("sort", "popular")  # "popular" or "new"（トップは人気が初期）
+    category = request.GET.get("category")
+    sort = request.GET.get("sort", "popular")
+
+    keyword = request.GET.get("q", "").strip()
+    tag_names = request.GET.getlist("tag")#タグ複数取得
+    period = request.GET.get("period", "")
 
     qs = (
         Topic.objects
@@ -30,25 +34,44 @@ def topic_list(request):
             like_count=Count("likes", distinct=True),
             is_liked=Exists(
                 TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
-        ),
-    ))
+            ),
+        )
+    )
+
+    # キーワード・タグ・期間フィルター
+    if keyword:
+        qs = qs.filter(
+            Q(title__icontains=keyword) | Q(text__icontains=keyword)
+        )
+
+    # --- タグ絞り込み（AND検索） ---
+    for tag_name in tag_names:
+        qs = qs.filter(tags__name=tag_name)
+
+    if period:
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        period_map = {
+            "1w":  timedelta(weeks=1),
+            "2w":  timedelta(weeks=2),
+            "1m":  timedelta(days=30),
+            "1y":  timedelta(days=365),
+        }
+        if period in period_map:
+            qs = qs.filter(created_at__gte=now - period_map[period])
 
     is_category_page = category in {"0", "1", "2"}
 
-    # --- カテゴリ絞り込み ---
     if is_category_page:
         qs = qs.filter(board_category=int(category))
-        # カテゴリ内は一旦 新着順でOK（人気順も後で可能）
         qs = qs.order_by("-created_at")
-
-    # --- トップ（全カテゴリ横断の並び替え） ---
     else:
         if sort == "new":
-            qs = qs.order_by("-created_at")   #新着順
+            qs = qs.order_by("-created_at")
         else:
-            qs = qs.order_by("-created_at")   #いいね順
-
-        qs = qs[:20]  # ★トップは最大20件
+            qs = qs.order_by("-created_at")
+        qs = qs[:20]
 
     context = {
         "topics": qs,
@@ -56,11 +79,28 @@ def topic_list(request):
         "categories": Topic.BoardCategory.choices,
         "sort": sort,
         "is_category_page": is_category_page,
+       
+        "keyword": keyword,
+        "tag_names": tag_names,
+        "period": period,
     }
     return render(request, "board/topic_list.html", context)
 
 
+# ==============================
+# 検索ページ
+# ==============================
 
+@login_required
+def search(request):
+    tags = Tag.objects.filter(is_active=True).order_by("name")
+    categories = Topic.BoardCategory.choices
+    return render(request, "board/search.html", {
+        "tags": tags,
+        "categories": categories,
+    })
+    
+    
 # ==============================
 # トピック詳細ビュー
 # ==============================
