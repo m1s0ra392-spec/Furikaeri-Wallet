@@ -1,6 +1,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.db.models import Count, Max, Exists, OuterRef, Q
 from django.http import JsonResponse
 from django.contrib import messages
@@ -88,7 +89,7 @@ def topic_list(request):
 
 
 # ==============================
-# 検索ページ
+# キーワード検索入力
 # ==============================
 
 @login_required
@@ -99,7 +100,73 @@ def search(request):
         "tags": tags,
         "categories": categories,
     })
-    
+
+ 
+# ==============================
+# キーワード検索（結果表示）
+# ==============================
+
+@login_required
+def topic_search(request):
+    query = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "")
+    sort = request.GET.get("sort", "new")
+    period = request.GET.get("period", "")
+
+    qs = (
+        Topic.objects
+        .filter(status=Topic.TopicStatus.PUBLIC)
+        .select_related("user")
+        .annotate(
+            like_count=Count("likes", distinct=True),
+            comment_count=Count("comments", distinct=True),
+            is_liked=Exists(
+                TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
+            ),
+        )
+    )
+
+    # カテゴリ絞り込み
+    if category in {"0", "1", "2"}:
+        qs = qs.filter(board_category=int(category))
+
+    # キーワード絞り込み（タイトルまたは本文に含まれる）
+    if query:
+        qs = qs.filter(
+            models.Q(title__icontains=query) | models.Q(text__icontains=query)
+        )
+
+    # 期間絞り込み
+    if period:
+        from django.utils import timezone
+        from datetime import timedelta
+        period_map = {
+            "1w":  timedelta(weeks=1),
+            "2w":  timedelta(weeks=2),
+            "1m":  timedelta(days=30),
+            "1y":  timedelta(days=365),
+        }
+        if period in period_map:
+            since = timezone.now() - period_map[period]
+            qs = qs.filter(created_at__gte=since)
+
+    # 並び替え
+    if sort == "popular":
+        qs = qs.order_by("-like_count", "-created_at")
+    elif sort == "comments":
+        qs = qs.order_by("-comment_count", "-created_at")
+    else:
+        qs = qs.order_by("-created_at")  # デフォルト：新着順
+
+    context = {
+        "topics": qs,
+        "query": query,
+        "selected_category": category,
+        "categories": Topic.BoardCategory.choices,
+        "sort": sort,
+        "period": period,
+    }
+    return render(request, "board/topic_search.html", context)   
     
 # ==============================
 # トピック詳細ビュー

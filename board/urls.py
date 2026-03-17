@@ -7,7 +7,8 @@ urlpatterns = [
     #掲示板トップ～閲覧・検索
     path("", views.topic_list, name="topic_list"),#トピック一覧（掲示板トップ）
     path("topics/<int:pk>/", views.topic_detail, name="topic_detail"), #トピック詳細
-    path("search/", views.search, name="search"),#キーワード検索
+    path("search/", views.search, name="search"),#キーワード検索（入力フォーム）
+    path("search/result/", views.topic_search, name="topic_search"),#キーワード検索結果
     
     
     #トピック
