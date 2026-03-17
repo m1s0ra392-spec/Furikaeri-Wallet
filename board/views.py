@@ -21,10 +21,7 @@ from .forms import TopicForm, CommentForm
 @login_required
 def topic_list(request):
     category = request.GET.get("category")
-    sort = request.GET.get("sort", "popular")
-
-    keyword = request.GET.get("q", "").strip()
-    tag_names = request.GET.getlist("tag")#タグ複数取得
+    sort = request.GET.get("sort", "new")
     period = request.GET.get("period", "")
 
     qs = (
@@ -33,40 +30,42 @@ def topic_list(request):
         .select_related("user")
         .annotate(
             like_count=Count("likes", distinct=True),
+            comment_count=Count("comments", distinct=True),
             is_liked=Exists(
                 TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
             ),
         )
     )
 
-    # キーワード・タグ・期間フィルター
-    if keyword:
-        qs = qs.filter(
-            Q(title__icontains=keyword) | Q(text__icontains=keyword)
-        )
-
-    # --- タグ絞り込み（AND検索） ---
-    for tag_name in tag_names:
-        qs = qs.filter(tags__name=tag_name)
-
-    if period:
-        from django.utils import timezone
-        from datetime import timedelta
-        now = timezone.now()
-        period_map = {
-            "1w":  timedelta(weeks=1),
-            "2w":  timedelta(weeks=2),
-            "1m":  timedelta(days=30),
-            "1y":  timedelta(days=365),
-        }
-        if period in period_map:
-            qs = qs.filter(created_at__gte=now - period_map[period])
-
     is_category_page = category in {"0", "1", "2"}
 
+    # カテゴリ絞り込み
     if is_category_page:
         qs = qs.filter(board_category=int(category))
-        qs = qs.order_by("-created_at")
+
+        # 期間フィルター
+        if period:
+            from django.utils import timezone
+            from datetime import timedelta
+            period_map = {
+                "1w": timedelta(weeks=1),
+                "2w": timedelta(weeks=2),
+                "1m": timedelta(days=30),
+                "1y": timedelta(days=365),
+            }
+            if period in period_map:
+                since = timezone.now() - period_map[period]
+                qs = qs.filter(created_at__gte=since)
+
+        # 並び替え
+        if sort == "popular":
+            qs = qs.order_by("-like_count", "-created_at")
+        elif sort == "comments":
+            qs = qs.order_by("-comment_count", "-created_at")
+        else:
+            qs = qs.order_by("-created_at")
+
+    # トップ（全カテゴリ）
     else:
         if sort == "new":
             qs = qs.order_by("-created_at")
@@ -79,11 +78,8 @@ def topic_list(request):
         "selected_category": category,
         "categories": Topic.BoardCategory.choices,
         "sort": sort,
-        "is_category_page": is_category_page,
-       
-        "keyword": keyword,
-        "tag_names": tag_names,
         "period": period,
+        "is_category_page": is_category_page,
     }
     return render(request, "board/topic_list.html", context)
 

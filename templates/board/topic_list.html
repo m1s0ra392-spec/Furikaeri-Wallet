@@ -21,23 +21,44 @@
   {% endfor %}
 </div>
 
+<!-- 並び替え・期間フィルター（カテゴリ選択後のみ表示） -->
+{% if is_category_page %}
+  <div style="display:flex; gap:12px; margin:12px 0; flex-wrap:wrap;">
 
-<!--人気・新着並び替え-->
-{% if not is_category_page %}
-  <div style="display:flex; gap:8px; margin:12px 0;">
-    <a href="{% url 'board:topic_list' %}?sort=popular"
-       style="padding:6px 10px; border:1px solid #ccc; border-radius:16px;
-              text-decoration:none;
-              {% if sort == 'popular' %}font-weight:bold;{% endif %}">
-      人気
-    </a>
-    <a href="{% url 'board:topic_list' %}?sort=new"
-       style="padding:6px 10px; border:1px solid #ccc; border-radius:16px;
-              text-decoration:none;
-              {% if sort == 'new' %}font-weight:bold;{% endif %}">
-      新着
-    </a>
+    <!-- 並び替え -->
+    <select id="sort-select"
+            style="padding:6px 10px; border:1px solid #aaa; border-radius:16px; background:#fff;">
+      <option value="new"      {% if sort == 'new'      %}selected{% endif %}>新着順</option>
+      <option value="popular"  {% if sort == 'popular'  %}selected{% endif %}>人気順</option>
+      <option value="comments" {% if sort == 'comments' %}selected{% endif %}>コメント順</option>
+    </select>
+
+    <!-- 期間フィルター -->
+    <select id="period-select"
+            style="padding:6px 10px; border:1px solid #aaa; border-radius:16px; background:#fff;">
+      <option value=""   {% if period == ''   %}selected{% endif %}>全期間</option>
+      <option value="1y" {% if period == '1y' %}selected{% endif %}>1年以内</option>
+      <option value="1m" {% if period == '1m' %}selected{% endif %}>1か月以内</option>
+      <option value="2w" {% if period == '2w' %}selected{% endif %}>2週間以内</option>
+      <option value="1w" {% if period == '1w' %}selected{% endif %}>1週間以内</option>
+    </select>
+
   </div>
+
+  <script>
+    const sortSelect = document.getElementById("sort-select");
+    const periodSelect = document.getElementById("period-select");
+
+    function applyFilter() {
+      const params = new URLSearchParams(window.location.search);
+      params.set("sort", sortSelect.value);
+      params.set("period", periodSelect.value);
+      window.location.search = params.toString();
+    }
+
+    sortSelect.addEventListener("change", applyFilter);
+    periodSelect.addEventListener("change", applyFilter);
+  </script>
 {% endif %}
 
 
