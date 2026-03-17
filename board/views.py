@@ -135,6 +135,11 @@ def topic_search(request):
         qs = qs.filter(
             models.Q(title__icontains=query) | models.Q(text__icontains=query)
         )
+        
+    # タグ絞り込み（複数タグはAND検索）
+    tag_names = request.GET.getlist("tag")
+    for tag_name in tag_names:
+        qs = qs.filter(tags__name=tag_name)
 
     # 期間絞り込み
     if period:
