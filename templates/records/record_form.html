@@ -1,37 +1,252 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>記録を追加</h1>
+<style>
+  .page-title {
+    font-size: 18px;
+    text-align: right;
+    margin: 10px 0 16px;
+    color: #333;
+  }
 
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 16px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
 
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">保存</button>
-</form>
+  .field {
+    margin-bottom: 14px;
+  }
 
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 4px;
+  }
 
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 15px;
+  }
 
+  .field textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
 
+  .error {
+    color: #c00;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #2f6f47;
+    background: #2f6f47;
+    color: #fff;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .btn.sub {
+    background: #fff;
+    color: #2f6f47;
+  }
+
+  /* 保存完了モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-overlay.show {
+    display: flex;
+  }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px 20px;
+    text-align: center;
+    width: min(80vw, 280px);
+  }
+
+  .modal-box p {
+    margin: 0 0 16px;
+    font-size: 15px;
+  }
+
+  .modal-box button {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #2f6f47;
+    background: #2f6f47;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+</style>
+
+<h1 class="page-title">記録を追加</h1>
+
+<!-- 保存完了モーダル -->
+{% if saved %}
+<div class="modal-overlay show" id="savedModal">
+  <div class="modal-box">
+    <p>記録を保存しました</p>
+    <button onclick="document.getElementById('savedModal').classList.remove('show')">
+      閉じる
+    </button>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- タブ -->
+<div style="display:flex; margin-bottom:14px; border-bottom:2px solid #ddd;">
+  <button type="button" id="tab-success"
+          onclick="switchTab(0)"
+          style="flex:1; padding:10px; border:none; background:none;
+                 font-size:14px; font-weight:bold; cursor:pointer;
+                 border-bottom:3px solid #2f6f47; color:#2f6f47;">
+    🌱 うまくいった
+  </button>
+  <button type="button" id="tab-regret"
+          onclick="switchTab(1)"
+          style="flex:1; padding:10px; border:none; background:none;
+                 font-size:14px; color:#aaa; cursor:pointer;">
+    🍂 惜しかった
+  </button>
+</div>
+
+<!-- カテゴリ選択（タブに連動して中身が変わる） -->
+<div class="field">
+  <label>カテゴリ</label>
+  <select name="category" id="category-select">
+    {% for cat in success_categories %}
+      <option value="{{ cat.id }}">{{ cat.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- JSに渡すためのデータ（画面には表示されない） -->
 <script>
-  //memoの入力自体を200字以上できる仕様にする（エラーで調整）
-document.addEventListener('DOMContentLoaded', () => {
-  const memoEl = document.querySelector('[name="memo"]');
-  if (!memoEl) return;
+  // Djangoから受け取ったカテゴリデータをJS変数に入れる
+  const categoryData = {
+    0: [
+      {% for cat in success_categories %}
+        { id: {{ cat.id }}, name: "{{ cat.name }}" },
+      {% endfor %}
+    ],
+    1: [
+      {% for cat in regret_categories %}
+        { id: {{ cat.id }}, name: "{{ cat.name }}" },
+      {% endfor %}
+    ],
+  };
 
-  // ① 200字以上も入力できるようにする（maxlength を外す）
-  memoEl.removeAttribute('maxlength');
+  function switchTab(type) {
+    // カテゴリのselectを書き換える
+    const select = document.getElementById("category-select");
+    select.innerHTML = "";  // 一旦空にする
+    categoryData[type].forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      select.appendChild(opt);
+    });
 
-  // ② ブラウザ標準吹き出しの文言だけカスタム（空欄のとき）
-  memoEl.addEventListener('invalid', () => {
-    memoEl.setCustomValidity('内容を入力してください');
-  });
-
-  memoEl.addEventListener('input', () => {
-    memoEl.setCustomValidity('');
-  });
-});
+    // タブの見た目を切り替える
+    const successTab = document.getElementById("tab-success");
+    const regretTab  = document.getElementById("tab-regret");
+    if (type === 0) {
+      successTab.style.borderBottom = "3px solid #2f6f47";
+      successTab.style.color = "#2f6f47";
+      regretTab.style.borderBottom  = "none";
+      regretTab.style.color = "#aaa";
+    } else {
+      regretTab.style.borderBottom = "3px solid #c0392b";
+      regretTab.style.color = "#c0392b";
+      successTab.style.borderBottom  = "none";
+      successTab.style.color = "#aaa";
+    }
+  }
 </script>
 
+    <!-- 金額 -->
+    <div class="field">
+      <label for="{{ form.amount.id_for_label }}">金額（円）</label>
+      {{ form.amount }}
+      {% for error in form.amount.errors %}
+        <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <!-- 日付 -->
+    <div class="field">
+      <label for="{{ form.date.id_for_label }}">日付</label>
+      {{ form.date }}
+      {% for error in form.date.errors %}
+        <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <!-- メモ -->
+    <div class="field">
+      <label for="{{ form.memo.id_for_label }}">MEMO</label>
+      {{ form.memo }}
+      {% for error in form.memo.errors %}
+        <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" type="submit">保存</button>
+      <button class="btn sub" type="submit" name="continue" value="1">続けて入力</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const memoEl = document.querySelector('[name="memo"]');
+    if (!memoEl) return;
+    memoEl.removeAttribute('maxlength');
+    memoEl.addEventListener('invalid', () => {
+      memoEl.setCustomValidity('内容を入力してください');
+    });
+    memoEl.addEventListener('input', () => {
+      memoEl.setCustomValidity('');
+    });
+  });
+</script>
 
 {% endblock %}

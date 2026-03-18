@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django . http import JsonResponse
 
 from .forms import RecordForm
-from .models import Record  
+from .models import Record, RecordCategory
 from .services import get_home_advice
 
 
@@ -94,17 +94,33 @@ def home(request):
 #記録の追加
 @login_required   
 def record_create(request):
+    saved = False  
+    
     if request.method == "POST":
         form = RecordForm(request.POST)
         if form.is_valid():
-            record = form.save(commit=False)  # まだDBに保存しない
-            record.user = request.user        # ログイン中ユーザーを入れる
-            record.save()                     # ここで保存
-            return redirect("records:record_create")  
+            record = form.save(commit=False)
+            record.user = request.user
+            record.save()
+            # 「続けて入力」ボタンが押された場合
+            if request.POST.get("continue"):
+                form = RecordForm()   # フォームをリセット
+                saved = True          # モーダルを出す
+            else:
+                return redirect("records:record_create")
     else:
         form = RecordForm()
+    
+    # タブ用にカテゴリを2種類に分けて渡す
+    success_categories = RecordCategory.objects.filter(user=request.user, type=0)
+    regret_categories  = RecordCategory.objects.filter(user=request.user, type=1)
 
-    return render(request, "records/record_form.html", {"form": form})
+    return render(request, "records/record_form.html", {
+        "form": form,
+        "saved": saved,
+        "success_categories": success_categories,  # うまくいった用
+        "regret_categories":  regret_categories,   # 惜しかった用
+    })
 
 @login_required
 def record_list(request):
