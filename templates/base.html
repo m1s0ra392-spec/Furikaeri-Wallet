@@ -4,18 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}ふりかえり財布{% endblock %}</title>
-
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 追加：Yomogi フォント -->
+    <link href="https://fonts.googleapis.com/css2?family=Yomogi&display=swap" rel="stylesheet">
+    {% load static %}
+    <style>
+        .navbar-custom {
+            background-color: #d6e8d0;
+        }
+        .navbar-custom .navbar-brand {
+            font-family: 'Yomogi', cursive;
+            font-size: 1.3rem;
+            color: #3a5a3a;
+        }
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            margin-right: 10px;
+        }
+        .side-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 4px;
+            text-decoration: none;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+        .side-menu-item:hover {
+            background-color: #f0f7ee;
+        }
+    </style>
 </head>
 <body>
 
-    <main>
+    <!-- ヘッダー -->
+    <nav class="navbar navbar-custom px-3">
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse" data-bs-target="#sideMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <span class="navbar-brand mx-auto">ふりかえり財布</span>
+        <a href="#">
+            <img src="{% static 'images/人物.png' %}" style="height: 32px;" alt="ユーザー">
+            </a>
+    </nav>
+
+    <!-- サイドメニュー -->
+    <div class="collapse" id="sideMenu">
+        <div class="bg-white border-bottom px-3 py-2">
+            <a href="{% url 'records:home' %}" class="side-menu-item">
+                <img src="{% static 'images/家.png' %}" class="menu-icon" alt="ホーム">
+                ホーム
+            </a>
+            <a href="{% url 'records:record_create' %}" class="side-menu-item">
+                <img src="{% static 'images/鉛筆.png' %}" class="menu-icon" alt="記録入力">
+                記録入力
+            </a>
+            <a href="#" class="side-menu-item">
+                <img src="{% static 'images/カレンダー.png' %}" class="menu-icon" alt="カレンダー">
+                カレンダー
+            </a>
+            <a href="#" class="side-menu-item">
+                <img src="{% static 'images/棒グラフ.png' %}" class="menu-icon" alt="分析">
+                分析
+            </a>
+            <a href="{% url 'board:topic_list' %}" class="side-menu-item">
+                <img src="{% static 'images/会話.png' %}" class="menu-icon" alt="ふりかえり広場">
+                ふりかえり広場
+            </a>
+            <a href="{% url 'board:mypage_likes' %}" class="side-menu-item">
+                <img src="{% static 'images/えんぴつ付きノート.png' %}" class="menu-icon" alt="掲示板マイページ">
+                掲示板マイページ
+            </a>
+        </div>
+    </div>
+
+    <main class="pb-4">
         {% block content %}
         {% endblock %}
     </main>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

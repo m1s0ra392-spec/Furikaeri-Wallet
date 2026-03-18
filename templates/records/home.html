@@ -1,30 +1,45 @@
 <!-- templates/records/home.html -->
 {% extends "base.html" %}
+{% load static %}
 
 {% block content %}
- <h2>{{ year }}年{{ month }}月</h2>
+<div class="container py-4" style="max-width: 480px;">
 
-<div>
-  <h3>今月のまとめ</h3>
-  <p>合計：¥{{ monthly_total }}</p>
+  <!-- あいさつ -->
+  <p class="text-center mb-1" style="color: #555;">{{ request.user.username }}さん、本日もお疲れさま</p>
 
-  <p>🌱 うまくいった金額：¥{{ success_total }}</p>
-  <p>🍂 惜しかった金額：¥{{ regret_total }}</p>
-</div>
+  <!-- 月表示 -->
+  <h2 class="text-center mb-4">{{ year }}年{{ month }}月</h2>
 
-
-{# Advice 表示エリア #}
-{% if advice %}
-  <div class="advice-bubble">
-    {{ advice.message }}
-    {% else %}
-  <p>（adviceなし）</p>
+  <!-- 今月のまとめカード -->
+  <div class="card mb-3 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3">今月のまとめ</h5>
+      <p class="mb-2">合計：<strong>¥{{ monthly_total }}</strong></p>
+      <p class="mb-2">🌱 うまくいった金額：<strong>¥{{ success_total }}</strong></p>
+      <p class="mb-0">🍂 惜しかった金額：<strong>¥{{ regret_total }}</strong></p>
+    </div>
   </div>
-{% endif %}
 
-<br>
+ <!-- アドバイス＋画像 横並び -->
+  <div class="d-flex align-items-center gap-3 mb-4">
 
-<a href="{% url 'records:record_create' %}">
-  <button>記録する</button>
-</a>
+    {% if advice %}
+      <div class="alert alert-success mb-0" role="alert">
+        {{ advice.message }}
+      </div>
+    {% endif %}
+
+    <img src="{% static 'images/wallet.png' %}" alt="お財布" style="height: 120px; flex-shrink: 0;">
+
+  </div> 
+
+  <!-- 記録するボタン -->
+  <div class="d-grid">
+    <a href="{% url 'records:record_create' %}" class="btn btn-success btn-lg">
+      記録する
+    </a>
+  </div>
+
+</div>
 {% endblock %}
