@@ -249,9 +249,6 @@ def analysis_year(request):
         "cumulative_net": cumulative_net,
     }
 
-    # 確認したいなら一時的にOK（不要なら消す）
-    print("analysis_year data:", data)
-
     return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
 
 

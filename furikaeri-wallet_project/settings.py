@@ -126,6 +126,4 @@ LOGIN_URL = "/accounts/login/"
 
 
 # ===== 開発用メール設定（コンソールに出す） =====
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-EMAIL_FILE_PATH = BASE_DIR / "tmp_emails"
-DEFAULT_FROM_EMAIL = "no-reply@furikaeri-wallet.local"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

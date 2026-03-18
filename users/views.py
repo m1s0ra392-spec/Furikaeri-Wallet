@@ -18,7 +18,7 @@ def signup(request):   #新規登録
         
         
 class PasswordResetCompleteToLoginView(auth_views.PasswordResetCompleteView):
-    template_name = "users/login.html"
+    template_name = "registration/login.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

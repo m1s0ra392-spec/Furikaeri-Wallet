@@ -1,46 +1,63 @@
 {% extends "base.html" %}
 
-{% block content %}
-  <main class="auth">
-    <h1>新規アカウント登録</h1>
+{% block title %}新規アカウント登録{% endblock %}
 
+{% block content %}
+
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="w-100" style="max-width: 390px; padding: 2rem;">
+
+    <!-- タイトル -->
+    <h1 class="text-center mb-4" style="font-size: 1.3rem; color: #4a4a4a;">新規アカウント登録</h1>
+
+    <!-- エラーメッセージ -->
     {% if form.errors %}
-      <p class="error">入力内容に誤りがあります。各項目を確認してください。</p>
+    <p class="text-center mb-3" style="color: #c0392b; font-size: 0.85rem;">
+      入力内容に誤りがあります。各項目を確認してください。
+    </p>
     {% endif %}
 
+    <!-- フォーム -->
     <form method="post">
       {% csrf_token %}
 
-      <div class="field">
-        <label for="{{ form.username.id_for_label }}">ユーザー名</label><br>
+      <div class="mb-3 d-flex flex-column align-items-center">
+        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">ユーザーネーム</label>
         {% for error in form.username.errors %}
-            <p class="error">{{ error }}</p>
+          <p style="color: #c0392b; font-size: 0.85rem; align-self: start;">{{ error }}</p>
         {% endfor %}
         {{ form.username }}
       </div>
 
-      <div class="field">
-        <label for="{{ form.email.id_for_label }}">メールアドレス</label><br>
+      <div class="mb-3 d-flex flex-column align-items-center">
+        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">メールアドレス</label>
         {{ form.email }}
       </div>
 
-      <div class="field">
-        <label for="{{ form.password1.id_for_label }}">パスワード</label><br>
+      <div class="mb-3 d-flex flex-column align-items-center">
+        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">パスワード</label>
         {{ form.password1 }}
       </div>
 
-      <div class="field">
-        <label for="{{ form.password2.id_for_label }}">パスワード再入力</label><br>
+      <div class="mb-3 d-flex flex-column align-items-center">
+        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">パスワード再入力</label>
         {{ form.password2 }}
       </div>
 
-      <div class="actions">
-        <button type="submit">登録</button>
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn"
+          style="background-color: #5a8a5a; color: white; border-radius: 8px; padding: 0.7rem;">
+          登録
+        </button>
       </div>
     </form>
 
-    <p class="links">
-      <a href="{% url 'login' %}">ログイン画面へ</a>
+    <!-- リンク -->
+    <p class="text-center mt-3" style="font-size: 0.85rem;">
+      <a href="{% url 'login' %}" style="color: #5a8a5a;">ログイン画面へ</a>
     </p>
-  </main>
+
+  </div>
+</div>
+
 {% endblock %}

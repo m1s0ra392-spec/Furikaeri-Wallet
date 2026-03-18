@@ -1,43 +1,65 @@
-
-
 {% extends "base.html" %}
 
+{% block title %}ログイン{% endblock %}
+
 {% block content %}
-<main class="auth">
-<h1>ふりかえり財布</h1>
-<p>
-    うまくできた日も、惜しかった日も<br>
-    全部気づきに変えていく。
-</p>
 
-{% if form.errors %}
-<p class="error">ユーザー名またはパスワードが正しくありません</p>
-{% endif %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="w-100" style="max-width: 390px; padding: 2rem;">
 
-<form method="post" action="{% url 'login' %}">
-    {% csrf_token %}
+    <!-- タイトル -->
+    <h1 class="text-center mb-2" style="font-family: serif; color: #4a4a4a;">ふりかえり財布</h1>
+    <p class="text-center text-muted mb-4" style="font-size: 0.9rem;">
+      うまくできた日も、惜しかった日も<br>
+      全部気づきに変えていく。
+    </p>
 
-    <div class="field">
-        <label for="{{form.username.id_for_label }}">ユーザー名</label><br>
+    <!-- パスワード再設定完了メッセージ -->
+    {% if password_reset_completed %}
+    <p class="text-center mb-3" style="color: #c0392b; font-size: 0.85rem;">
+      パスワードを再設定しました。新しいパスワードでログインしてください。
+    </p>
+    {% endif %}
+
+    <!-- ログイン失敗メッセージ -->
+    {% if form.errors %}
+    <p class="text-center mb-3" style="color: #c0392b; font-size: 0.85rem;">
+      ユーザー名またはパスワードが正しくありません
+    </p>
+    {% endif %}
+
+    <!-- フォーム -->
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+
+    <div class="mb-3 d-flex flex-column align-items-center">
+        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">ユーザーネーム</label>
         {{ form.username }}
-    </div>
+      </div>
 
-    <div class="field">
-        <label for="{{form.password.id_for_label }}">パスワード</label><br>
+      <div class="mb-3 d-flex flex-column align-items-center">
+        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">パスワード</label>
         {{ form.password }}
-    </div>
+      </div>
 
-    <div class="actions">
-        <button type="submit">ログイン</button>
-    </div>
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn"
+          style="background-color: #5a8a5a; color: white; border-radius: 8px; padding: 0.7rem;">
+          ログイン
+        </button>
+      </div>
     </form>
 
-    <p class='links'>
-        <a href="{% url 'users:signup' %}">アカウント登録</a>
+    <!-- リンク -->
+    <p class="text-center mt-3" style="font-size: 0.85rem;">
+      <a href="{% url 'users:signup' %}" style="color: #5a8a5a;">アカウント登録</a>
+    </p>
+    <p class="text-center" style="font-size: 0.85rem;">
+      パスワードを忘れた方は
+      <a href="{% url 'password_reset' %}" style="color: #5a8a5a;">こちら</a>
     </p>
 
-    <p class='links'>
-        <a href="{% url 'password_reset' %}">パスワードを忘れた方はこちら</a>
-    </p>
-</main>
+  </div>
+</div>
+
 {% endblock %}
