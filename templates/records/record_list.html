@@ -42,23 +42,8 @@
                                color:{% if forloop.first %}#c0392b{% elif forloop.last %}#2980b9{% else %}#333{% endif %};">
                     {{ day }}
                   </div>
-                  <!-- その日の記録アイコン＋金額 -->
-                  {% if records_by_day|dictsort:day %}{% endif %}
-                  <div style="margin-top:2px;">
-                    {% for record in records_by_day|default_if_none:"" %}{% endfor %}
-                    {# Django テンプレートは辞書の動的アクセスが苦手なので工夫 #}
-                    {% for d, recs in records_by_day.items %}
-                      {% if d == day %}
-                        {% for r in recs %}
-                          <div style="font-size:10px; line-height:1.3;
-                                      color:{% if r.category.type == 0 %}#27ae60{% else %}#e74c3c{% endif %};">
-                            {% if r.category.type == 0 %}🌱{% else %}🍂{% endif %}{{ r.amount }}
-                          </div>
-                        {% endfor %}
-                      {% endif %}
-                    {% endfor %}
-                  </div>
-                </div>
+                  <!-- その日の記録：JSで🌱合計・🍂合計を描画 -->
+                  <div class="cal-icons" data-day="{{ day }}" style="margin-top:2px;"></div>
               {% endif %}
             </td>
           {% endfor %}
@@ -91,13 +76,6 @@
     <!-- 記録リスト（JS で書き換える） -->
     <div id="modal-records"></div>
 
-    <!-- 新規記録ボタン -->
-    <a id="modal-new-link" href="{% url 'records:record_create' %}"
-       style="display:block; text-align:center; margin-top:12px; padding:10px;
-              background:#5a8a6a; color:#fff; border-radius:8px;
-              text-decoration:none; font-weight:bold;">
-      ＋ この日の記録を追加
-    </a>
 
   </div>
 </div>
@@ -127,16 +105,35 @@ const recordsByDay = {
 const year  = {{ year }};
 const month = {{ month }};
 
+// ===== カレンダーマスにアイコンを描画 =====
+document.querySelectorAll(".cal-icons").forEach(el => {
+  const day = parseInt(el.dataset.day);
+  const recs = recordsByDay[day] || [];
+  if (recs.length === 0) return;
+
+  // 🌱と🍂それぞれの合計を計算
+  let successTotal = 0;
+  let regretTotal  = 0;
+  recs.forEach(r => {
+    if (r.type === 0) successTotal += r.amount;
+    else              regretTotal  += r.amount;
+  });
+
+  let html = "";
+  if (successTotal > 0) {
+    html += `<div style="font-size:10px; line-height:1.4; color:#27ae60;">🌱${successTotal}</div>`;
+  }
+  if (regretTotal > 0) {
+    html += `<div style="font-size:10px; line-height:1.4; color:#e74c3c;">🍂${regretTotal}</div>`;
+  }
+  el.innerHTML = html;
+});
+
 function openDayModal(day) {
   // タイトル
   document.getElementById("modal-title").textContent =
     `${year}年${month}月${day}日の記録`;
 
-  // 新規追加リンクに日付を付ける（記録入力画面に日付を渡す）
-  const d = String(month).padStart(2,"0") + "/" + String(day).padStart(2,"0");
-  document.getElementById("modal-new-link").href =
-    "{% url 'records:record_create' %}?date=" + year + "-" +
-    String(month).padStart(2,"0") + "-" + String(day).padStart(2,"0");
 
   // 記録リストを組み立て
   const container = document.getElementById("modal-records");

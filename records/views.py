@@ -95,7 +95,7 @@ def home(request):
 @login_required   
 def record_create(request):
     saved = False  
-
+    return_to_calendar = False
         
     if request.method == "POST":
         form = RecordForm(request.POST)
@@ -108,7 +108,9 @@ def record_create(request):
                 form = RecordForm()   # フォームをリセット
                 saved = True          # モーダルを出す
             else:
-                return redirect("records:record_create")
+                form = RecordForm()
+                saved = True  # モーダルを出す
+                return_to_calendar = True  # カレンダーへ戻るフラグ
     else:
         form = RecordForm()
     
@@ -119,10 +121,12 @@ def record_create(request):
     return render(request, "records/record_form.html", {
         "form": form,
         "saved": saved,
-        "success_categories": success_categories,  # うまくいった用
-        "regret_categories":  regret_categories,   # 惜しかった用
+        "return_to_calendar": return_to_calendar,
+        "success_categories": success_categories,
+        "regret_categories":  regret_categories,
     })
-
+    
+    
 @login_required
 def record_list(request):
     today = date.today()
@@ -202,7 +206,13 @@ def record_update(request, pk):
     else:
         form = RecordForm(instance=record)
 
-    return render(request, "records/record_form.html", {"form": form})
+    return render(request, "records/record_form.html", {
+        "form": form,
+        "edit_category_type": record.category.type,
+        "edit_category_id":   record.category.id,
+        "success_categories": RecordCategory.objects.filter(user=request.user, type=0),
+        "regret_categories":  RecordCategory.objects.filter(user=request.user, type=1),
+    })      
 
 
 #記録の削除

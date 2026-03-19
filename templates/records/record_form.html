@@ -116,12 +116,18 @@
 
 <!-- 保存完了モーダル -->
 {% if saved %}
-<div class="modal-overlay show" id="savedModal">
+  <div class="modal-overlay show" id="savedModal">
   <div class="modal-box">
     <p>記録を保存しました</p>
-    <button onclick="document.getElementById('savedModal').classList.remove('show')">
-      閉じる
-    </button>
+    {% if return_to_calendar %}
+      <button onclick="location.href='{% url 'records:record_list' %}'">
+        閉じる
+      </button>
+    {% else %}
+      <button onclick="document.getElementById('savedModal').classList.remove('show')">
+        閉じる
+      </button>
+    {% endif %}
   </div>
 </div>
 {% endif %}
@@ -235,9 +241,20 @@
   }
 
   // ページ読み込み時にselectを初期化
+  // 編集時は保存済みのtypeを使う、新規は0（🌱）
+  const initialType = {{ edit_category_type|default:0 }};
+  const initialCategoryId = {{ edit_category_id|default:"null" }};
+
   document.addEventListener("DOMContentLoaded", () => {
-    switchTab(0);
+    switchTab(initialType);
+
+    // 編集時：正しいカテゴリIDを選択状態にする
+    if (initialCategoryId !== null) {
+      const select = document.getElementById("category-select");
+      select.value = initialCategoryId;
+    }
   });
+
 </script>
 
 <script>
