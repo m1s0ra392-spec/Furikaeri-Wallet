@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth.decorators import login_required 
 from django . http import JsonResponse
 
+from django.db import models
+
 from .forms import RecordForm
 from .models import Record, RecordCategory
 from .services import get_home_advice
@@ -232,10 +234,8 @@ def record_delete(request, pk):
 # ==============================
 
 #年次分析
-
 @login_required
 def analysis_year(request):
-    # 今年を対象（まずは固定でOK。あとで年選択にできる）
     year = date.today().year
 
     qs = (
@@ -247,48 +247,57 @@ def analysis_year(request):
         .order_by("month")
     )
 
-    # monthごとに「得/損」をまとめる箱を作る
     monthly = {m: {"plus": 0, "minus": 0} for m in range(1, 13)}
 
     for r in qs:
         m = r["month"].month
-        t = r["category__type"]  # 0=得, 1=損 の想定
+        t = r["category__type"]
         total = r["total"] or 0
-
         if t == 0:
             monthly[m]["plus"] = total
         else:
             monthly[m]["minus"] = total
 
-
- # ===== 累計（plus - minus）を作る =====
-
-    labels = list(range(1, 13))  # 1〜12（int）
-
+    labels = list(range(1, 13))
     monthly_net = []
     cumulative_net = []
-
-    running = 0  # 累計用の箱
+    running = 0
 
     for m in labels:
         plus = monthly[m]["plus"]
         minus = monthly[m]["minus"]
-
-        net = plus - minus      # その月の差額
-        running += net          # 年始からの累計
-
+        net = plus - minus
+        running += net
         monthly_net.append(net)
         cumulative_net.append(running)
 
-    # JSONで返す
-    data = {
+    import json
+    # アプリ開始からの累計合計
+    all_records = Record.objects.filter(user=request.user)
+    
+    total_ever = all_records.aggregate(
+        plus=Sum("amount", filter=models.Q(category__type=0)),
+        minus=Sum("amount", filter=models.Q(category__type=1)),
+    )
+    total_plus  = total_ever["plus"]  or 0
+    total_minus = total_ever["minus"] or 0
+    total_net   = total_plus - total_minus
+
+    # 最初の記録の年月を取得
+    first_record = all_records.order_by("date").first()
+    first_label  = f"{first_record.date.year}年{first_record.date.month}月" if first_record else None
+
+    import json
+    context = {
         "year": year,
-        "labels": labels,
-        "monthly_net": monthly_net,
-        "cumulative_net": cumulative_net,
+        "labels_json": json.dumps(labels),
+        "monthly_net_json": json.dumps(monthly_net),
+        "cumulative_net_json": json.dumps(cumulative_net),
+        "total_net": total_net,
+        "first_label": first_label,
     }
 
-    return JsonResponse(data, json_dumps_params={"ensure_ascii": False})
+    return render(request, "records/analysis.html", context)
 
 
 #月次カテゴリ別分析

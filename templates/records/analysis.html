@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+  .analysis-container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  .analysis-title {
+    font-size: 18px;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    width: 100%;
+    /* スマホで見やすい高さ */
+    height: 260px;
+  }
+
+  .summary-text {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.7;
+    background: #f9f5f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  /* モーダル背景 */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  /* モーダル本体 */
+  .modal-box {
+    background: #fff;
+    border-radius: 12px;
+    width: min(92vw, 420px);
+    padding: 16px;
+    position: relative;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-size: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+  }
+
+  .modal-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .modal-nav button {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  .modal-month-title {
+    font-weight: bold;
+    font-size: 15px;
+  }
+
+  .pie-wrapper {
+    position: relative;
+    width: 100%;
+    height: 220px;
+  }
+
+  .modal-no-data {
+    text-align: center;
+    color: #aaa;
+    padding: 40px 0;
+    font-size: 14px;
+  }
+</style>
+
+<div class="analysis-container">
+
+  <div class="analysis-title">これまでの軌跡</div>
+
+  <div class="chart-wrapper">
+    <canvas id="yearChart"></canvas>
+  </div>
+
+  {% if first_label %}
+  <div class="summary-text">
+    このアプリを始めてから{{ total_net }}円分、<br>
+    {{ first_label }}から{{ total_net }}円分工夫されています🌸
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- 月次円グラフ モーダル -->
+<div class="modal-overlay" id="monthModal">
+  <div class="modal-box">
+
+    <button class="modal-close" onclick="closeModal()">×</button>
+
+    <div class="modal-nav">
+      <button onclick="changeMonth(-1)">＜ 前月</button>
+      <span class="modal-month-title" id="modalTitle">〇月の内訳</span>
+      <button onclick="changeMonth(1)">次月 ＞</button>
+    </div>
+
+    <div class="pie-wrapper">
+      <canvas id="pieChart"></canvas>
+    </div>
+
+    <div id="modalNoData" class="modal-no-data" style="display:none;">
+      この月のデータはありません
+    </div>
+
+  </div>
+</div>
+
+<!-- Chart.js を CDN で読み込む -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Django から渡されたデータを受け取る
+  const labels = {{ labels_json }};
+  const monthlyNet = {{ monthly_net_json }};
+  const cumulativeNet = {{ cumulative_net_json }};
+
+  // ラベルを「1月」「2月」の形に変換
+  const labelNames = labels.map(m => m + "月");
+
+  // 棒グラフ＋ラインチャートを描画
+  const ctx = document.getElementById("yearChart").getContext("2d");
+
+  const yearChartInstance = new Chart(ctx, {
+    data: {
+      labels: labelNames,
+      datasets: [
+        {
+          // 棒グラフ：月ごとの差額（プラスなら緑、マイナスなら赤）
+          type: "bar",
+          label: "月の差額",
+          data: monthlyNet,
+          backgroundColor: monthlyNet.map(v =>
+            v >= 0 ? "rgba(144, 190, 144, 0.7)" : "rgba(210, 120, 110, 0.7)"
+          ),
+          borderRadius: 4,
+          yAxisID: "y",
+        },
+        {
+          // 折れ線グラフ：累計
+          type: "line",
+          label: "累計",
+          data: cumulativeNet,
+          borderColor: "rgba(150, 180, 220, 0.9)",
+          backgroundColor: "rgba(150, 180, 220, 0.15)",
+          tension: 0.3,
+          pointRadius: 3,
+          yAxisID: "y",
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { font: { size: 12 } }
+        }
+      },
+      scales: {
+        y: {
+          ticks: { font: { size: 11 } }
+        },
+        x: {
+          ticks: { font: { size: 11 } }
+        }
+      }
+    }
+  });
+
+// ===== モーダル・円グラフ =====
+
+  let currentYear = {{ year }};
+  let currentMonth = 1;
+  let pieChartInstance = null;
+
+  // 棒グラフをクリックしたらモーダルを開く
+  document.getElementById("yearChart").addEventListener("click", function(e) {
+    const points = yearChartInstance.getElementsAtEventForMode(
+      e, "nearest", { intersect: true }, false
+    );
+    if (points.length === 0) return;
+
+    const index = points[0].index;       // 0〜11
+    currentMonth = labels[index];        // 1〜12
+    openModal(currentYear, currentMonth);
+  });
+
+  function openModal(year, month) {
+    currentYear = year;
+    currentMonth = month;
+    document.getElementById("monthModal").classList.add("active");
+    loadPieChart(year, month);
+  }
+
+  function closeModal() {
+    document.getElementById("monthModal").classList.remove("active");
+    if (pieChartInstance) {
+      pieChartInstance.destroy();
+      pieChartInstance = null;
+    }
+  }
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+    if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+    loadPieChart(currentYear, currentMonth);
+  }
+
+  function loadPieChart(year, month) {
+    document.getElementById("modalTitle").textContent = month + "月の内訳";
+
+    // 前の円グラフを消す
+    if (pieChartInstance) {
+      pieChartInstance.destroy();
+      pieChartInstance = null;
+    }
+
+    // APIからデータを取得
+    fetch(`/records/analysis/month/?year=${year}&month=${month}`)
+      .then(res => res.json())
+      .then(data => {
+        const all = [...data.success, ...data.regret];
+
+        if (all.length === 0) {
+          document.getElementById("pieChart").style.display = "none";
+          document.getElementById("modalNoData").style.display = "block";
+          return;
+        }
+
+        document.getElementById("pieChart").style.display = "block";
+        document.getElementById("modalNoData").style.display = "none";
+
+        const pieLabels = all.map(d => d.name);
+        const pieData   = all.map(d => d.total);
+
+        // 得=緑系、損=赤系で色分け
+        const pieColors = [
+          ...data.success.map(() => "rgba(144,190,144,0.8)"),
+          ...data.regret.map(()  => "rgba(210,120,110,0.8)"),
+        ];
+
+        const ctxPie = document.getElementById("pieChart").getContext("2d");
+        pieChartInstance = new Chart(ctxPie, {
+          type: "pie",
+          data: {
+            labels: pieLabels,
+            datasets: [{
+              data: pieData,
+              backgroundColor: pieColors,
+              borderWidth: 1,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "right",
+                labels: { font: { size: 11 }, boxWidth: 14 }
+              }
+            }
+          }
+        });
+      });
+  }
+  
+</script>
+
+{% endblock %}
