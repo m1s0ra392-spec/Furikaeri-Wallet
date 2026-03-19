@@ -95,7 +95,8 @@ def home(request):
 @login_required   
 def record_create(request):
     saved = False  
-    
+
+        
     if request.method == "POST":
         form = RecordForm(request.POST)
         if form.is_valid():

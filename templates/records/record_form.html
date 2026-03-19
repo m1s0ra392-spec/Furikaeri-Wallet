@@ -157,49 +157,6 @@
   </select>
 </div>
 
-<!-- JSに渡すためのデータ（画面には表示されない） -->
-<script>
-  // Djangoから受け取ったカテゴリデータをJS変数に入れる
-  const categoryData = {
-    0: [
-      {% for cat in success_categories %}
-        { id: {{ cat.id }}, name: "{{ cat.name }}" },
-      {% endfor %}
-    ],
-    1: [
-      {% for cat in regret_categories %}
-        { id: {{ cat.id }}, name: "{{ cat.name }}" },
-      {% endfor %}
-    ],
-  };
-
-  function switchTab(type) {
-    // カテゴリのselectを書き換える
-    const select = document.getElementById("category-select");
-    select.innerHTML = "";  // 一旦空にする
-    categoryData[type].forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.id;
-      opt.textContent = cat.name;
-      select.appendChild(opt);
-    });
-
-    // タブの見た目を切り替える
-    const successTab = document.getElementById("tab-success");
-    const regretTab  = document.getElementById("tab-regret");
-    if (type === 0) {
-      successTab.style.borderBottom = "3px solid #2f6f47";
-      successTab.style.color = "#2f6f47";
-      regretTab.style.borderBottom  = "none";
-      regretTab.style.color = "#aaa";
-    } else {
-      regretTab.style.borderBottom = "3px solid #c0392b";
-      regretTab.style.color = "#c0392b";
-      successTab.style.borderBottom  = "none";
-      successTab.style.color = "#aaa";
-    }
-  }
-</script>
 
     <!-- 金額 -->
     <div class="field">
@@ -234,6 +191,54 @@
     </div>
   </form>
 </div>
+
+<!--タブ切替時のカテゴリ表示分け-->
+<script>
+  const categoryData = {
+    0: [
+      {% for cat in success_categories %}
+        { id: {{ cat.id }}, name: "{{ cat.name }}" },
+      {% endfor %}
+    ],
+    1: [
+      {% for cat in regret_categories %}
+        { id: {{ cat.id }}, name: "{{ cat.name }}" },
+      {% endfor %}
+    ],
+  };
+
+  console.log("success件数:", {{ success_categories|length }}, "regret件数:", {{ regret_categories|length }});
+
+  function switchTab(type) {
+    const select = document.getElementById("category-select");
+    select.innerHTML = "";
+    categoryData[type].forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      select.appendChild(opt);
+    });
+
+    const successTab = document.getElementById("tab-success");
+    const regretTab  = document.getElementById("tab-regret");
+    if (type === 0) {
+      successTab.style.borderBottom = "3px solid #2f6f47";
+      successTab.style.color = "#2f6f47";
+      regretTab.style.borderBottom  = "none";
+      regretTab.style.color = "#aaa";
+    } else {
+      regretTab.style.borderBottom = "3px solid #c0392b";
+      regretTab.style.color = "#c0392b";
+      successTab.style.borderBottom  = "none";
+      successTab.style.color = "#aaa";
+    }
+  }
+
+  // ページ読み込み時にselectを初期化
+  document.addEventListener("DOMContentLoaded", () => {
+    switchTab(0);
+  });
+</script>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
