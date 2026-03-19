@@ -125,54 +125,68 @@ def record_create(request):
 
 @login_required
 def record_list(request):
-    # 今日の年月
     today = date.today()
-    year = today.year
-    month = today.month
-    
-    # ★ 追加：URLクエリから date を受け取る
-    selected_date_str = request.GET.get("date")  # "2026-01-14" みたいな文字列
-    selected_date = None
 
-    if selected_date_str:
-        try:
-            selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
-            # クリックした日付の月をカレンダー表示にも反映（便利）
-            year = selected_date.year
-            month = selected_date.month
-        except ValueError:
-            selected_date = None  # 変な値が来たら無視
+    # ★ year・month を URL クエリから受け取る（なければ今月）
+    try:
+        year  = int(request.GET.get("year",  today.year))
+        month = int(request.GET.get("month", today.month))
+    except ValueError:
+        year, month = today.year, today.month
 
-    # 月のカレンダー（週単位の配列）
+    # 月をまたいでしまったときの補正
+    if month > 12:
+        year += 1
+        month = 1
+    elif month < 1:
+        year -= 1
+        month = 12
+
+    # 前月・次月の year/month を計算（テンプレートのリンク用）
+    prev_month = month - 1
+    prev_year  = year
+    if prev_month < 1:
+        prev_month = 12
+        prev_year  = year - 1
+
+    next_month = month + 1
+    next_year  = year
+    if next_month > 12:
+        next_month = 1
+        next_year  = year + 1
+
+    # カレンダー（週単位の配列）
     cal = calendar.monthcalendar(year, month)
-    
-     # 月内の記録（カレンダーと同じ月を対象にするのが自然）
-    month_records = (
+
+    # 月内の記録を取得
+    month_records_qs = (
         Record.objects
         .filter(user=request.user, date__year=year, date__month=month)
-        .order_by("-date", "-created_at")
+        .select_related("category")
+        .order_by("date", "created_at")
     )
 
-    # 全件（未選択時の一覧用）
-    records = Record.objects.filter(user=request.user)
-    
-     # 選択日の記録だけ
-    selected_records = None
-    if selected_date:
+    # ★ 日付をキーにした辞書に変換
+    # 例: {15: [record1, record2], 20: [record3]}
+    records_by_day = {}
+    for record in month_records_qs:
+        day = record.date.day
+        if day not in records_by_day:
+            records_by_day[day] = []
+        records_by_day[day].append(record)
 
-        selected_records = (
-            Record.objects
-            .filter(user=request.user, date=selected_date)
-            .order_by("-created_at")
-        )
     return render(request, "records/record_list.html", {
-        "selected_records": selected_records,
-        "records": records,
-        "calendar": cal,
-        "year": year,
-        "month": month,
-        "selected_date": selected_date,
+        "calendar":      cal,
+        "year":          year,
+        "month":         month,
+        "today":         today,
+        "prev_year":     prev_year,
+        "prev_month":    prev_month,
+        "next_year":     next_year,
+        "next_month":    next_month,
+        "records_by_day": records_by_day,
     })
+
 
 
 #記録の編集   

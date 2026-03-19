@@ -1,93 +1,174 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div style="max-width:420px; margin:0 auto; padding:0 12px;">
 
-{% if selected_date %}
-  <p>選択中：{{ selected_date|date:"Y-m-d" }}</p>
-{% endif %}
-<!-- カレンダー -->
-<h2>{{ year }}年 {{ month }}月</h2>
+  <!-- ===== 月ナビゲーション ===== -->
+  <div style="display:flex; align-items:center; justify-content:space-between;
+              padding:12px 0; font-size:16px; font-weight:bold;">
+    <a href="?year={{ prev_year }}&month={{ prev_month }}"
+       style="text-decoration:none; font-size:20px; padding:4px 10px;">◁</a>
+    <span>{{ year }}年 {{ month }}月</span>
+    <a href="?year={{ next_year }}&month={{ next_month }}"
+       style="text-decoration:none; font-size:20px; padding:4px 10px;">▷</a>
+  </div>
 
-<table border="1">
-  <tr>
-    <th>月</th><th>火</th><th>水</th>
-    <th>木</th><th>金</th><th>土</th><th>日</th>
-  </tr>
-
-  {% for week in calendar %}
-    <tr>
-      {% for day in week %}
-        <td style="text-align:center; height:40px;">
-          {% if day != 0 %}
-            <a href="?date={{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
-            {{ day }}
-              </a>
-          {% endif %}
-        </td>
+  <!-- ===== カレンダー ===== -->
+  <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+    <thead>
+      <tr>
+        {% for label in "日月火水木金土" %}
+          <th style="text-align:center; padding:4px 0; font-size:12px;
+                     color:{% if forloop.first %}#c0392b{% elif forloop.last %}#2980b9{% else %}#555{% endif %};">
+            {{ label }}
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in calendar %}
+        <tr>
+          {% for day in week %}
+            <td style="border:1px solid #e0e0e0; vertical-align:top;
+                       min-height:52px; padding:3px 2px; font-size:11px;
+                       {% if day == today.day and year == today.year and month == today.month %}
+                         background:#fffde7;
+                       {% endif %}">
+              {% if day != 0 %}
+                <!-- 日付タップでモーダルを開く -->
+                <div onclick="openDayModal({{ day }})"
+                     style="cursor:pointer; min-height:48px;">
+                  <div style="text-align:right; font-size:12px; font-weight:bold;
+                               color:{% if forloop.first %}#c0392b{% elif forloop.last %}#2980b9{% else %}#333{% endif %};">
+                    {{ day }}
+                  </div>
+                  <!-- その日の記録アイコン＋金額 -->
+                  {% if records_by_day|dictsort:day %}{% endif %}
+                  <div style="margin-top:2px;">
+                    {% for record in records_by_day|default_if_none:"" %}{% endfor %}
+                    {# Django テンプレートは辞書の動的アクセスが苦手なので工夫 #}
+                    {% for d, recs in records_by_day.items %}
+                      {% if d == day %}
+                        {% for r in recs %}
+                          <div style="font-size:10px; line-height:1.3;
+                                      color:{% if r.category.type == 0 %}#27ae60{% else %}#e74c3c{% endif %};">
+                            {% if r.category.type == 0 %}🌱{% else %}🍂{% endif %}{{ r.amount }}
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
       {% endfor %}
-    </tr>
+    </tbody>
+  </table>
+
+</div><!-- /max-width -->
+
+
+<!-- ===== モーダル（<form> の外に置く！） ===== -->
+<div id="day-modal-overlay"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9000;"
+     onclick="closeDayModal(event)">
+
+  <div id="day-modal"
+       style="position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+              width:min(100vw, 440px); background:#fff; border-radius:16px 16px 0 0;
+              max-height:70vh; overflow-y:auto; padding:16px;">
+
+    <!-- ヘッダー -->
+    <div style="display:flex; justify-content:space-between; align-items:center;
+                margin-bottom:12px;">
+      <span id="modal-title" style="font-weight:bold; font-size:16px;"></span>
+      <button onclick="closeDayModal()"
+              style="border:none; background:none; font-size:20px; cursor:pointer;">×</button>
+    </div>
+
+    <!-- 記録リスト（JS で書き換える） -->
+    <div id="modal-records"></div>
+
+    <!-- 新規記録ボタン -->
+    <a id="modal-new-link" href="{% url 'records:record_create' %}"
+       style="display:block; text-align:center; margin-top:12px; padding:10px;
+              background:#5a8a6a; color:#fff; border-radius:8px;
+              text-decoration:none; font-weight:bold;">
+      ＋ この日の記録を追加
+    </a>
+
+  </div>
+</div>
+
+
+<!-- ===== JavaScript ===== -->
+<script>
+// Django の records_by_day をJSで使えるように変換
+const recordsByDay = {
+  {% for d, recs in records_by_day.items %}
+    {{ d }}: [
+      {% for r in recs %}
+        {
+          pk:       {{ r.pk }},
+          type:     {{ r.category.type }},
+          category: "{{ r.category.name }}",
+          amount:   {{ r.amount }},
+          memo:     "{{ r.memo|escapejs }}",
+          editUrl:  "{% url 'records:record_update' r.pk %}",
+          deleteUrl:"{% url 'records:record_delete' r.pk %}",
+        },
+      {% endfor %}
+    ],
   {% endfor %}
-</table>
+};
 
-<hr>
-<!-- その日の記録欄 -->
-{% if selected_date %}
-  <h2>{{ selected_date|date:"Y/m/d" }} の記録</h2>
+const year  = {{ year }};
+const month = {{ month }};
 
-  {% if selected_records %}
-    <ul>
-      {% for record in selected_records %}
-        <li>
-          <a href="{% url 'records:record_update' record.pk %}"
-             style="display:block; text-decoration:none; color:inherit;">
-            <strong>{{ record.date|date:"Y/m/d" }}</strong>
-            ｜{{ record.category.get_type_display }}
-            ｜{{ record.category.name }}
-            <br>
-            {{ record.memo }}
-          </a>
+function openDayModal(day) {
+  // タイトル
+  document.getElementById("modal-title").textContent =
+    `${year}年${month}月${day}日の記録`;
 
-          <a href="{% url 'records:record_delete' record.pk %}">🗑️</a>
-        </li>
-        <hr>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>この日の記録はありません。</p>
-  {% endif %}
+  // 新規追加リンクに日付を付ける（記録入力画面に日付を渡す）
+  const d = String(month).padStart(2,"0") + "/" + String(day).padStart(2,"0");
+  document.getElementById("modal-new-link").href =
+    "{% url 'records:record_create' %}?date=" + year + "-" +
+    String(month).padStart(2,"0") + "-" + String(day).padStart(2,"0");
 
-  <hr>
-{% endif %}
-<hr>
+  // 記録リストを組み立て
+  const container = document.getElementById("modal-records");
+  const recs = recordsByDay[day] || [];
 
-<h2>記録一覧</h2>
-
-{% if records %}
-  <ul>
-    {% for record in records %}
-      <li>
-        <!-- ここをクリックすると編集画面へ -->
-        <a href="{% url 'records:record_update' record.pk %}"
-           style="display:block; text-decoration:none; color:inherit;">
-
-          <strong>{{ record.date|date:"Y/m/d" }}</strong>
-          ｜{{ record.category.get_type_display }}
-          ｜{{ record.category.name }}
-          ｜{{ record.amount }}円
-          <br>
-          {{ record.memo }}
-
+  if (recs.length === 0) {
+    container.innerHTML = '<p style="color:#888; text-align:center;">この日の記録はありません</p>';
+  } else {
+    container.innerHTML = recs.map(r => `
+      <div style="border:1px solid #eee; border-radius:8px; padding:10px;
+                  margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <a href="${r.editUrl}" style="text-decoration:none; color:inherit; flex:1;">
+          <div style="font-size:13px; color:${r.type===0 ? '#27ae60':'#e74c3c'}; font-weight:bold;">
+            ${r.type===0 ? '🌱':'🍂'} ${r.category}｜${r.amount}円
+          </div>
+          <div style="font-size:12px; color:#666; margin-top:3px;">${r.memo || '（メモなし）'}</div>
         </a>
+        <a href="${r.deleteUrl}"
+           style="margin-left:10px; font-size:18px; text-decoration:none;">🗑️</a>
+      </div>
+    `).join("");
+  }
 
-        <!-- ゴミ箱（削除）だけ別 -->
-        <a href="{% url 'records:record_delete' record.pk %}">🗑️</a>
+  document.getElementById("day-modal-overlay").style.display = "block";
+}
 
-      </li>
-      <hr>
-    {% endfor %}
-  </ul>
-{% else %}
-  <p>まだ記録がありません。</p>
-{% endif %}
+function closeDayModal(e) {
+  // オーバーレイ部分クリック、または × ボタン
+  if (!e || e.target === document.getElementById("day-modal-overlay")) {
+    document.getElementById("day-modal-overlay").style.display = "none";
+  }
+}
+</script>
 
 {% endblock %}
