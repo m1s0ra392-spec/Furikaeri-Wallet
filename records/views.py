@@ -222,11 +222,9 @@ def record_delete(request, pk):
 
     if request.method == "POST":
         record.delete()
-        return redirect("records:record_list")
+        return JsonResponse({"status": "ok"})
 
-    # いったん最小：確認画面テンプレ
     return render(request, "records/record_confirm_delete.html", {"record": record})
-
 
 
 # ==============================
