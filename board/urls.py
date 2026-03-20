@@ -4,6 +4,9 @@ from . import views
 app_name = "board"
 
 urlpatterns = [
+    
+    path("intro/", views.board_intro, name="board_intro"),  # ふりかえり広場 案内
+    
     #掲示板トップ～閲覧・検索
     path("", views.topic_list, name="topic_list"),#トピック一覧（掲示板トップ）
     path("topics/<int:pk>/", views.topic_detail, name="topic_detail"), #トピック詳細

@@ -1,89 +1,188 @@
-{% extends "base.html" %}
+{% extends "base_board.html" %}
 
-{% block content %}
-  <h1>ふりかえり広場</h1>
+{% block board_content %}
 
-  <!-- トピック作成（仮） -->
-   <p>
-    <a href="{% url 'board:topic_new' %}">トピックを作成</a>
-  </p>
+<style>
+  .board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0 16px;
+  }
+  .board-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+  }
+  .btn-new {
+    padding: 8px 14px;
+    background: #2f6f47;
+    color: #fff;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+  }
 
+  /* カテゴリタブ（横スクロール） */
+  .tab-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin: 0 0 12px;
+    scrollbar-width: none; /* Firefoxでスクロールバー非表示 */
+  }
+  .tab-scroll::-webkit-scrollbar { display: none; }
+  .tab-item {
+    white-space: nowrap;
+    padding: 6px 14px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #333;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .tab-item.active {
+    background: #2f6f47;
+    color: #fff;
+    border-color: #2f6f47;
+    font-weight: bold;
+  }
 
-  <!-- カテゴリタブ -->
-  <div style="display:flex; gap:8px; margin:12px 0;">
+  /* 並び替えタブ */
+  .sort-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .sort-item {
+    padding: 5px 12px;
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    text-decoration: none;
+    color: #555;
+    font-size: 12px;
+  }
+  .sort-item.active {
+    font-weight: bold;
+    background: #f3f3f3;
+    border-color: #999;
+  }
+
+  /* トピックカード */
+  .topic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .topic-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .topic-card-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #222;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .topic-card-title:hover { text-decoration: underline; }
+  .topic-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .topic-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .like-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .like-count {
+    font-size: 12px;
+    color: #888;
+  }
+  .empty-msg {
+    color: #999;
+    font-size: 14px;
+    text-align: center;
+    padding: 24px 0;
+  }
+</style>
+
+<!-- ヘッダー -->
+<div class="board-header">
+  <h1 class="board-title">ふりかえり広場</h1>
+  <a href="{% url 'board:topic_new' %}" class="btn-new">＋ 投稿</a>
+</div>
+
+<!-- カテゴリタブ（横スクロール） -->
+<div class="tab-scroll">
+  <a href="{% url 'board:topic_list' %}"
+     class="tab-item {% if not selected_category %}active{% endif %}">
+    すべて
+  </a>
   {% for value, label in categories %}
     <a href="{% url 'board:topic_list' %}?category={{ value }}"
-       style="padding:6px 10px; border:1px solid #ccc; border-radius:16px;
-              text-decoration:none;
-              {% if selected_category == value|stringformat:'s' %}font-weight:bold;{% endif %}">
+       class="tab-item {% if selected_category == value|stringformat:'s' %}active{% endif %}">
       {{ label }}
     </a>
   {% endfor %}
 </div>
 
-<!-- 並び替え・期間フィルター（カテゴリ選択後のみ表示） -->
-{% if is_category_page %}
-  <div style="display:flex; gap:12px; margin:12px 0; flex-wrap:wrap;">
-
-    <!-- 並び替え -->
-    <select id="sort-select"
-            style="padding:6px 10px; border:1px solid #aaa; border-radius:16px; background:#fff;">
-      <option value="new"      {% if sort == 'new'      %}selected{% endif %}>新着順</option>
-      <option value="popular"  {% if sort == 'popular'  %}selected{% endif %}>人気順</option>
-      <option value="comments" {% if sort == 'comments' %}selected{% endif %}>コメント順</option>
-    </select>
-
-    <!-- 期間フィルター -->
-    <select id="period-select"
-            style="padding:6px 10px; border:1px solid #aaa; border-radius:16px; background:#fff;">
-      <option value=""   {% if period == ''   %}selected{% endif %}>全期間</option>
-      <option value="1y" {% if period == '1y' %}selected{% endif %}>1年以内</option>
-      <option value="1m" {% if period == '1m' %}selected{% endif %}>1か月以内</option>
-      <option value="2w" {% if period == '2w' %}selected{% endif %}>2週間以内</option>
-      <option value="1w" {% if period == '1w' %}selected{% endif %}>1週間以内</option>
-    </select>
-
+<!-- 並び替え（トップページのみ） -->
+{% if not is_category_page %}
+  <div class="sort-tabs">
+    <a href="{% url 'board:topic_list' %}?sort=popular"
+       class="sort-item {% if sort == 'popular' %}active{% endif %}">
+      人気
+    </a>
+    <a href="{% url 'board:topic_list' %}?sort=new"
+       class="sort-item {% if sort == 'new' %}active{% endif %}">
+      新着
+    </a>
   </div>
-
-  <script>
-    const sortSelect = document.getElementById("sort-select");
-    const periodSelect = document.getElementById("period-select");
-
-    function applyFilter() {
-      const params = new URLSearchParams(window.location.search);
-      params.set("sort", sortSelect.value);
-      params.set("period", periodSelect.value);
-      window.location.search = params.toString();
-    }
-
-    sortSelect.addEventListener("change", applyFilter);
-    periodSelect.addEventListener("change", applyFilter);
-  </script>
 {% endif %}
 
+<!-- トピック一覧 -->
+{% if topics %}
+  <ul class="topic-list">
+    {% for topic in topics %}
+      <li class="topic-card">
+        <a href="{% url 'board:topic_detail' topic.id %}" class="topic-card-title">
+          {{ topic.title }}
+        </a>
+        <div class="topic-meta">
+          {{ topic.get_board_category_display }} ｜ {{ topic.created_at|date:"Y/m/d" }}
+        </div>
+        <div class="topic-footer">
+          <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="like-btn">
+              {% if topic.is_liked %}❤️{% else %}🤍{% endif %}
+            </button>
+          </form>
+          <span class="like-count">{{ topic.like_count }}</span>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="empty-msg">公開中のトピックがまだありません。</p>
+{% endif %}
 
-  {% if topics %}
- <ul>
-  {% for topic in topics %}
-    <li>
-      <a href="{% url 'board:topic_detail' topic.id %}">
-        {{ topic.title }}
-      </a>
-      <div>{{ topic.category.get_type_display }}｜{{ topic.created_at|date:"Y/m/d" }}</div>
-
-    {#  いいね表示　#}
-    <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
-      {% csrf_token %}
-    <button type="submit" style="border:none;background:transparent;cursor:pointer;">
-    {% if topic.is_liked %}❤️{% else %}🤍{% endif %}
-    </button>
-  </form>
-  <span style="font-size:12px; color:#666;">{{ t.like_count }}</span>
-    
-    </li>
-  {% endfor %}
-</ul>
-  {% else %}
-    <p>公開中のトピックがまだありません。</p>
-  {% endif %}
-{% endblock %}
+{% endblock board_content %}

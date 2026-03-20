@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- 第２ヘッダー -->
+<div class="board-subnav d-flex align-items-center px-3 py-2">
+    <a href="{% url 'board:topic_list' %}" class="board-subnav-title">
+        ふりかえり広場
+    </a>
+    <div class="ms-auto d-flex gap-3">
+        <a href="{% url 'board:mypage_likes' %}">
+            <img src="{% static 'images/えんぴつ付きノート.png' %}" class="subnav-icon" alt="掲示板マイページ">
+        </a>
+        <a href="{% url 'board:topic_new' %}">
+            <img src="{% static 'images/枠つきの羽根ペン.png' %}" class="subnav-icon" alt="トピック入力">
+        </a>
+    </div>
+</div>
+
+{% block board_content %}{% endblock %}
+
+{% endblock %}

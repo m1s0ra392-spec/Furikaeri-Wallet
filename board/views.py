@@ -15,6 +15,15 @@ from .forms import TopicForm, CommentForm
 
 
 # ==============================
+# ふりかえり広場 案内ページ
+# ==============================
+
+@login_required
+def board_intro(request):
+    return render(request, "board/board_intro.html")
+
+
+# ==============================
 # 掲示板トップ　トピックの選定
 # ==============================
 

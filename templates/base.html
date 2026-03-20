@@ -16,7 +16,7 @@
         .navbar-custom .navbar-brand {
             font-family: 'Yomogi', cursive;
             font-size: 1.3rem;
-            color: #3a5a3a;
+            color: #544739;
             font-weight: bold;
         }
         .menu-icon {
@@ -36,6 +36,28 @@
         .side-menu-item:hover {
             background-color: #f0f7ee;
         }
+
+        
+        .board-subnav {
+        background-color: #ffffff;
+        border-bottom: 1px solid #c8dfc2;
+        font-family: 'Yomogi', cursive;
+        }
+        .board-subnav-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #544739;
+            text-decoration: none;
+        }
+        .board-subnav-title:hover {
+            text-decoration: underline;
+        }
+        .subnav-icon {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+        }
+    
     </style>
 </head>
 <body>
@@ -46,7 +68,7 @@
                 data-bs-toggle="collapse" data-bs-target="#sideMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <span class="navbar-brand mx-auto">ふりかえり財布</span>
+        <a href="{% url 'records:home' %}" class="navbar-brand mx-auto" style="text-decoration: none;">ふりかえり財布</a>
         <a href="#">
             <img src="{% static 'images/人物.png' %}" style="height: 32px;" alt="ユーザー">
             </a>
@@ -67,11 +89,11 @@
                 <img src="{% static 'images/カレンダー.png' %}" class="menu-icon" alt="カレンダー">
                 カレンダー
             </a>
-            <a href="#" class="side-menu-item">
+            <a href="{% url 'records:analysis_year' %}" class="side-menu-item">
                 <img src="{% static 'images/棒グラフ.png' %}" class="menu-icon" alt="分析">
                 分析
             </a>
-            <a href="{% url 'board:topic_list' %}" class="side-menu-item">
+            <a href="{% url 'board:board_intro' %}" class="side-menu-item">
                 <img src="{% static 'images/会話.png' %}" class="menu-icon" alt="ふりかえり広場">
                 ふりかえり広場
             </a>

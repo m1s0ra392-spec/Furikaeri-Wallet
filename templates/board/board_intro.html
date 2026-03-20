@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 480px;">
+
+  <p class="text-muted mb-4">ふりかえり広場を使っていただくにあたって</p>
+
+  <p class="text-center mb-4">
+    <u class="fw-bold">必ずご一読の上、ご利用ください</u>
+  </p>
+
+  <p class="mb-4">
+    この掲示板は、【ふりかえり財布】でのヒントとなるような、日々の「得した工夫」や「ちょっとした気づき」をやさしく共有し合う場所です。
+  </p>
+
+  <div class="mb-3">
+    <p class="fw-bold mb-1">✎ 書ける内容</p>
+    <ul class="mb-0 ps-3">
+      <li>お得な買い物・節約・暮らしの工夫</li>
+      <li>反省や気づきを通じた学び</li>
+    </ul>
+    <p class="text-muted small ps-3">（カテゴリの範囲内での内容でお願いします）</p>
+  </div>
+
+  <div class="mb-4">
+    <p class="fw-bold mb-1">⚠ ご遠慮いただきたい内容</p>
+    <ul class="mb-0 ps-3">
+      <li>お店や商品の宣伝・勧誘</li>
+      <li>誹謗中傷・個人情報の書き込み</li>
+      <li>お金に関係のない話題</li>
+    </ul>
+  </div>
+
+  <p class="text-muted small mb-4">あなたの投稿が、誰かの"次の芽"になります</p>
+
+  <div class="d-grid">
+    <a href="{% url 'board:topic_list' %}" class="btn btn-lg"
+       style="background-color: #7aab6e; color: white; border-radius: 12px; font-weight: bold;">
+      ふりかえり広場へ行く
+    </a>
+  </div>
+
+</div>
+{% endblock %}
