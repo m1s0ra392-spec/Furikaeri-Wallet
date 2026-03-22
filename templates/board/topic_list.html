@@ -16,7 +16,7 @@
   }
   .btn-new {
     padding: 8px 14px;
-    background: #2f6f47;
+    background: #d6e8d0;
     color: #fff;
     border-radius: 20px;
     text-decoration: none;
@@ -45,9 +45,9 @@
     flex-shrink: 0;
   }
   .tab-item.active {
-    background: #2f6f47;
-    color: #fff;
-    border-color: #2f6f47;
+    background: #d6e8d0;
+    color: #3a5a3a;
+    border-color: #d6e8d0;
     font-weight: bold;
   }
 
@@ -67,8 +67,8 @@
   }
   .sort-item.active {
     font-weight: bold;
-    background: #f3f3f3;
-    border-color: #999;
+    background: #d6e8d0;
+    border-color: #3a5a3a;
   }
 
   /* トピックカード */
@@ -124,18 +124,8 @@
   }
 </style>
 
-<!-- ヘッダー -->
-<div class="board-header">
-  <h1 class="board-title">ふりかえり広場</h1>
-  <a href="{% url 'board:topic_new' %}" class="btn-new">＋ 投稿</a>
-</div>
-
 <!-- カテゴリタブ（横スクロール） -->
 <div class="tab-scroll">
-  <a href="{% url 'board:topic_list' %}"
-     class="tab-item {% if not selected_category %}active{% endif %}">
-    すべて
-  </a>
   {% for value, label in categories %}
     <a href="{% url 'board:topic_list' %}?category={{ value }}"
        class="tab-item {% if selected_category == value|stringformat:'s' %}active{% endif %}">
@@ -144,19 +134,23 @@
   {% endfor %}
 </div>
 
-<!-- 並び替え（トップページのみ） -->
-{% if not is_category_page %}
-  <div class="sort-tabs">
-    <a href="{% url 'board:topic_list' %}?sort=popular"
-       class="sort-item {% if sort == 'popular' %}active{% endif %}">
-      人気
-    </a>
-    <a href="{% url 'board:topic_list' %}?sort=new"
-       class="sort-item {% if sort == 'new' %}active{% endif %}">
-      新着
-    </a>
-  </div>
-{% endif %}
+<!-- 第２タブ -->
+<div class="sort-tabs">
+  <a href="{% url 'board:topic_list' %}{% if selected_category %}?category={{ selected_category }}&sort=popular{% else %}?sort=popular{% endif %}"
+     class="sort-item {% if sort == 'popular' %}active{% endif %}">
+    人気
+  </a>
+  <a href="{% url 'board:topic_list' %}{% if selected_category %}?category={{ selected_category }}&sort=new{% else %}?sort=new{% endif %}"
+     class="sort-item {% if sort == 'new' %}active{% endif %}">
+    新着
+  </a>
+  <a href="{% url 'board:search' %}" class="sort-item">
+    探す
+  </a>
+  <a href="{% url 'board:board_intro' %}" class="sort-item">
+    使い方
+  </a>
+</div>
 
 <!-- トピック一覧 -->
 {% if topics %}
