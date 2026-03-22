@@ -1,101 +1,158 @@
 {% extends "base_board.html" %}
+{% load static %}
 
 {% block board_content %}
 
+<style>
+  .topic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .topic-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .topic-card-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #222;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .topic-card-title:hover { text-decoration: underline; }
+  .topic-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .topic-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .like-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .like-count {
+    font-size: 12px;
+    color: #888;
+  }
+  .filter-select {
+    padding: 5px 12px;
+    border: 1px solid #aaa;
+    border-radius: 16px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+</style>
+<br>
 <!-- パンくずリスト -->
-<p style="font-size:12px; color:#666;">
-  <a href="{% url 'board:topic_list' %}">掲示板top</a>
-  {% if selected_category == "0" %} &gt; お得情報
-  {% elif selected_category == "1" %} &gt; 日々のひと工夫
-  {% elif selected_category == "2" %} &gt; 失敗からの学び
+<p style="font-size:12px; color:#666; margin-bottom:8px;">
+  <a href="{% url 'board:topic_list' %}" style="color:#666;">掲示板top</a>
+  {% if selected_category == "0" %}
+    &gt; <a href="{% url 'board:topic_list' %}?category=0" style="color:#666;">お得情報</a>
+  {% elif selected_category == "1" %}
+    &gt; <a href="{% url 'board:topic_list' %}?category=1" style="color:#666;">日々のひと工夫</a>
+  {% elif selected_category == "2" %}
+    &gt; <a href="{% url 'board:topic_list' %}?category=2" style="color:#666;">失敗からの学び</a>
+  {% else %}
+    &gt; <a href="{% url 'board:search' %}" style="color:#666;">検索</a>
   {% endif %}
-  {% if query %} &gt; キーワード「{{ query }}」{% endif %}
+  {% if query %} &gt; キーワード「{{ query }}」{% endif %}{% for tag in selected_tags %} &gt; #{{ tag }}{% endfor %}
 </p>
 
 <!-- カテゴリ見出し -->
 {% if selected_category == "0" %}
-  <h2>🛒 お得情報</h2>
+  <h2 style="font-size:17px; font-weight:bold; margin-bottom:10px;">🛒 お得情報</h2>
 {% elif selected_category == "1" %}
-  <h2>🌱 日々のひと工夫</h2>
+  <h2 style="font-size:17px; font-weight:bold; margin-bottom:10px;">🌱 日々のひと工夫</h2>
 {% elif selected_category == "2" %}
-  <h2>📖 失敗からの学び</h2>
+  <h2 style="font-size:17px; font-weight:bold; margin-bottom:10px;">📖 失敗からの学び</h2>
 {% else %}
-  <h2>🔍 検索結果</h2>
+    <h2 style="font-size:17px; font-weight:bold; margin-bottom:10px;">
+    <img src="{% static 'images/サーチアイコン.png' %}" style="width:18px; height:18px; object-fit:contain; vertical-align:middle;" alt="検索"> 検索結果
+  </h2>
 {% endif %}
 
 <!-- 並び替え・期間フィルター -->
-<div style="display:flex; gap:12px; margin:12px 0; flex-wrap:wrap;">
-
-  <!-- 並び替え -->
-  <select id="sort-select"
-          style="padding:6px 10px; border:1px solid #aaa; border-radius:16px; background:#fff;">
+<div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+  <select id="sort-select" class="filter-select">
     <option value="new"      {% if sort == 'new'      %}selected{% endif %}>新着順</option>
     <option value="popular"  {% if sort == 'popular'  %}selected{% endif %}>人気順</option>
     <option value="comments" {% if sort == 'comments' %}selected{% endif %}>コメント順</option>
   </select>
-
-  <!-- 期間フィルター -->
-  <select id="period-select"
-          style="padding:6px 10px; border:1px solid #aaa; border-radius:16px; background:#fff;">
+  <select id="period-select" class="filter-select">
     <option value=""   {% if period == ''   %}selected{% endif %}>全期間</option>
     <option value="1y" {% if period == '1y' %}selected{% endif %}>1年以内</option>
     <option value="1m" {% if period == '1m' %}selected{% endif %}>1か月以内</option>
     <option value="2w" {% if period == '2w' %}selected{% endif %}>2週間以内</option>
     <option value="1w" {% if period == '1w' %}selected{% endif %}>1週間以内</option>
   </select>
-
 </div>
 
-<!-- 選んだ瞬間にページ遷移するJS -->
 <script>
   const sortSelect = document.getElementById("sort-select");
   const periodSelect = document.getElementById("period-select");
-
   function applyFilter() {
     const params = new URLSearchParams(window.location.search);
     params.set("sort", sortSelect.value);
     params.set("period", periodSelect.value);
     window.location.search = params.toString();
   }
-
   sortSelect.addEventListener("change", applyFilter);
   periodSelect.addEventListener("change", applyFilter);
 </script>
 
-
-<!-- 検索結果一覧 -->
+<!-- トピック一覧 -->
 {% if topics %}
-  <ul style="list-style:none; padding:0;">
+  <ul class="topic-list">
     {% for topic in topics %}
-      <li style="padding:12px 0; border-bottom:1px solid #eee;">
-        <a href="{% url 'board:topic_detail' topic.id %}" style="text-decoration:none; color:#333;">
+      <li class="topic-card">
+        <a href="{% url 'board:topic_detail' topic.id %}" class="topic-card-title">
           {{ topic.title }}
         </a>
-        <div style="font-size:12px; color:#666; margin-top:4px;">
-          {{ topic.get_board_category_display }}
-          　{{ topic.comment_count }}コメント
-          　{{ topic.like_count }}いいね
-          　{{ topic.created_at|date:"Y年m月d日" }}
+        <div class="topic-meta">
+          {{ topic.get_board_category_display }} ｜ {{ topic.created_at|date:"Y/m/d" }}
         </div>
-
-        <!-- いいねボタン -->
-        <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" style="border:none; background:transparent; cursor:pointer; font-size:16px;">
-            {% if topic.is_liked %}❤️{% else %}🤍{% endif %}
-          </button>
-        </form>
-
+        <div class="topic-footer">
+          <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="like-btn">
+              {% if topic.is_liked %}❤️{% else %}🤍{% endif %}
+            </button>
+          </form>
+          <span class="like-count">{{ topic.like_count }}</span>
+        </div>
       </li>
     {% endfor %}
   </ul>
 {% else %}
-  <p style="color:#666; margin-top:16px;">該当するトピックが見つかりませんでした。</p>
+  <p style="color:#999; font-size:14px; text-align:center; padding:24px 0;">
+    該当するトピックが見つかりませんでした。
+  </p>
 {% endif %}
 
-<!-- 検索画面へ戻る -->
-<p style="margin-top:20px;">
-  <a href="{% url 'board:search' %}">← 検索条件を変える</a>
+<!-- 検索条件を変える -->
+<p style="margin-top:16px; font-size:13px;">
+  <a href="{% url 'board:search' %}" style="color:#666;">← 検索条件を変える</a>
 </p>
 
 {% endblock %}

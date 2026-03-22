@@ -1,106 +1,195 @@
 {% extends "base_board.html" %}
 {% block board_content %}
 
-<h2>キーワード検索</h2>
+<style>
+  /* カテゴリタブ（topic_listと共通スタイル） */
+  .tab-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin: 12px 0;
+    scrollbar-width: none;
+  }
+  .tab-scroll::-webkit-scrollbar { display: none; }
+  .tab-item {
+    white-space: nowrap;
+    padding: 6px 14px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #333;
+    font-size: 13px;
+    flex-shrink: 0;
+    cursor: pointer;
+    background: #fff;
+  }
+  .tab-item.active {
+    background: #d6e8d0;
+    color: #3a5a3a;
+    border-color: #d6e8d0;
+    font-weight: bold;
+  }
 
-{# パンくずリスト #}
-<p><a href="{% url 'board:topic_list' %}">掲示板top</a> ＞ 検索</p>
+  /* 検索ボックス */
+  .search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #aaa;
+    border-radius: 24px;
+    padding: 6px 12px;
+    background: #fff;
+    margin-bottom: 10px;
+  }
+  .search-box input[type="text"] {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 14px;
+    background: transparent;
+  }
+  .search-box button[type="submit"] {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+  }
 
-{# 検索フォーム #}
+  /* 選択中タグエリア */
+  .selected-tag-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 24px;
+    margin-bottom: 12px;
+  }
+  .selected-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #eaf3e7;
+    border: 1px solid #a8cba0;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 13px;
+    color: #3a5a3a;
+  }
+  .selected-tag-chip button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    color: #888;
+    padding: 0;
+    line-height: 1;
+  }
+
+  /* タグボタン一覧 */
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .tag-btn {
+    padding: 5px 12px;
+    border: 1px solid #bbb;
+    border-radius: 20px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    color: #444;
+  }
+  .tag-btn.selected {
+    opacity: 0.4;
+  }
+</style>
+
+
+<br>
+<h2 style="font-size:18px; font-weight:bold; color:#544739; margin-bottom:4px;">キーワード検索</h2>
+<p style="font-size:12px; color:#666; margin-bottom:8px;">
+
+  <a href="{% url 'board:topic_list' %}" style="color:#666;">掲示板top</a> ＞ 検索
+</p>
+
 <form method="get" action="{% url 'board:topic_search' %}">
 
-  {# カテゴリ選択 #}
-  <div>
-    <label>カテゴリ</label>
-    <label><input type="radio" name="category" value=""> すべて</label>
-    {% for value, label in categories %}
-      <label>
-        <input type="radio" name="category" value="{{ value }}">
-        {{ label }}
-      </label>
-    {% endfor %}
-  </div>
+{# カテゴリ選択（ラジオボタン） #}
+<div style="font-size:13px; margin-bottom:12px;">
+  <span style="margin-right:8px;">カテゴリ</span>
+  <label style="margin-right:10px;">
+  <input type="radio" name="category" value="" checked> すべて
+</label>
+  {% for value, label in categories %}
+    <label style="margin-right:10px;">
+      <input type="radio" name="category" value="{{ value }}"> {{ label }}
+    </label>
+  {% endfor %}
+</div>
 
-  {# テキスト検索 #}
-  <div>
+  {# 検索ボックス #}
+  <div class="search-box">
     <input type="text" name="q" placeholder="検索ワード">
-    <button type="submit">🔍</button>
+    {% load static %}
+<button type="submit" style="line-height:1; padding:0; border:none; background:transparent; cursor:pointer;">
+  <img src="{% static 'images/サーチアイコン.png' %}" style="width:18px; height:18px; object-fit:contain;" alt="検索">
+</button>
   </div>
 
-  {# 選択中のタグ表示エリア #}
-  <div id="selected-tags">
-    {# JavaScriptで動的に表示する #}
-  </div>
+  {# 選択中タグ表示エリア #}
+  <div class="selected-tag-area" id="selected-tags"></div>
 
   {# タグ一覧 #}
-  <div id="tag-list">
+  <div class="tag-list" id="tag-list">
     {% for tag in tags %}
-      <button
-        type="button"
-        class="tag-btn"
-        data-tagname="{{ tag.name }}"
-      >
+      <button type="button" class="tag-btn" data-tagname="{{ tag.name }}" onclick="toggleTag(this)">
         #{{ tag.name }}
       </button>
     {% endfor %}
   </div>
 
-  {# 選択タグをhiddenで送る（JSで追加） #}
+  {# 選択タグをhiddenで送る #}
   <div id="hidden-tags"></div>
 
 </form>
 
 <script>
-  // 選択中のタグを管理する配列
+
+  // タグ選択
   const selectedTags = [];
 
-  // タグボタンをクリックしたとき
-  document.querySelectorAll(".tag-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const tagName = btn.dataset.tagname;
+  function toggleTag(btn) {
+    const tagName = btn.dataset.tagname;
+    if (selectedTags.includes(tagName)) return;
+    selectedTags.push(tagName);
+    btn.classList.add("selected");
+    updateSelectedTags();
+  }
 
-      // すでに選択済みなら何もしない
-      if (selectedTags.includes(tagName)) return;
-
-      // 配列に追加
-      selectedTags.push(tagName);
-
-      // ボタンの見た目を変える
-      btn.style.opacity = "0.4";
-
-      // 選択中タグを表示
-      updateSelectedTags();
+  function removeTag(name) {
+    const index = selectedTags.indexOf(name);
+    selectedTags.splice(index, 1);
+    document.querySelectorAll(".tag-btn").forEach(btn => {
+      if (btn.dataset.tagname === name) btn.classList.remove("selected");
     });
-  });
+    updateSelectedTags();
+  }
 
   function updateSelectedTags() {
-    // 選択中タグの表示エリアを更新
     const area = document.getElementById("selected-tags");
     area.innerHTML = selectedTags.map(name =>
-      `<span>#${name}
+      `<span class="selected-tag-chip">#${name}
         <button type="button" onclick="removeTag('${name}')">×</button>
       </span>`
     ).join("");
 
-    // hiddenフィールドを更新（フォーム送信用）
     const hiddenArea = document.getElementById("hidden-tags");
     hiddenArea.innerHTML = selectedTags.map(name =>
       `<input type="hidden" name="tag" value="${name}">`
     ).join("");
-  }
-
-  function removeTag(name) {
-    // 配列から削除
-    const index = selectedTags.indexOf(name);
-    selectedTags.splice(index, 1);
-
-    // ボタンの見た目を元に戻す
-    document.querySelectorAll(".tag-btn").forEach(btn => {
-      if (btn.dataset.tagname === name) btn.style.opacity = "1";
-    });
-
-    // 表示を更新
-    updateSelectedTags();
   }
 </script>
 

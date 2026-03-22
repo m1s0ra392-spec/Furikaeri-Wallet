@@ -175,6 +175,7 @@ def topic_search(request):
         "categories": Topic.BoardCategory.choices,
         "sort": sort,
         "period": period,
+        "selected_tags": tag_names, 
     }
     return render(request, "board/topic_search.html", context)   
     
