@@ -139,7 +139,7 @@
               {% if topic.is_liked %}❤️{% else %}🤍{% endif %}
             </button>
           </form>
-          <span class="like-count">{{ topic.like_count }}</span>
+          <span>❤ トピック{{ topic.like_count }}　コメント{{ topic.comment_like_count }}</span>
         </div>
       </li>
     {% endfor %}

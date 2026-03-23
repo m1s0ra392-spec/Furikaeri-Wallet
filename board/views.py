@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from collections import defaultdict
 
@@ -38,19 +39,20 @@ def topic_list(request):
         .filter(status=Topic.TopicStatus.PUBLIC)
         .select_related("user")
         .annotate(
-            like_count=Count("likes", distinct=True),
-            comment_count=Count("comments", distinct=True),
-            is_liked=Exists(
-                TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
-            ),
-        )
+        like_count=Count("likes", distinct=True),
+        comment_count=Count("comments", distinct=True),
+        comment_like_count=Count("comments__likes", distinct=True),  
+        is_liked=Exists(
+            TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
+        ),
+    )
     )
 
     is_category_page = category in {"0", "1", "2"}
 
     # カテゴリ絞り込み
     if is_category_page:
-        qs = qs.filter(board_category=int(category))
+        qs = qs.order_by("-like_count", "-comment_like_count", "-created_at")
 
         # 期間フィルター
         if period:
@@ -205,13 +207,28 @@ def topic_detail(request, pk):
         .order_by("sequence")
     )
 
+    page_size = 10
+    all_comments_list = list(comments)
+
+    # sequence→ページ番号の辞書
+    seq_to_page = {
+        c.sequence: (i // page_size) + 1
+        for i, c in enumerate(all_comments_list)
+    }
+
+    paginator = Paginator(all_comments_list, page_size)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "board/topic_detail.html", {
         "topic": topic,
         "topic_like_count": topic_like_count,
         "is_topic_liked": is_topic_liked,
-        "comments": comments,
-    })
-
+        "comments": page_obj,
+        "page_obj": page_obj,
+        "seq_to_page": seq_to_page,  
+        "comment_count": paginator.count,
+    }) 
 
 # ==================================
 # トピック作成（新規・編集のベース）　

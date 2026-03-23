@@ -1,91 +1,267 @@
 {% extends "base_board.html" %}
-
-
-{#トピック本文#}
+{% load static %}
+{% load board_extras %}
 {% block board_content %}
-  <h1>{{ topic.title }}</h1>
+<br>
+<style>
+  /* パンくずリスト */
+  .breadcrumb-area {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+  .breadcrumb-area a { color: #666; text-decoration: none; }
+  .breadcrumb-area a:hover { text-decoration: underline; }
 
-  <p style="font-size: 12px; color: #666;">
-    {{ topic.get_board_category_display }} | （{{ topic.user.username }} / {{ topic.created_at|date:"Y-m-d H:i" }}）
-  </p>
+  /* カテゴリ見出し */
+  .category-heading {
+    font-size: 14px;
+    font-weight: bold;
+    color: #3a5a3a;
+    margin-bottom: 8px;
+  }
+
+  /* トピック本文エリア */
+  .topic-box {
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 14px;
+    background: #fff;
+    margin-bottom: 16px;
+  }
+  .topic-title {
+    font-size: 17px;
+    font-weight: bold;
+    color: #222;
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .topic-author {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .topic-text {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .topic-tags {
+    font-size: 12px;
+    color: #5a8a5a;
+    margin-bottom: 10px;
+  }
+  .topic-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+  }
+  .like-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    line-height: 1;
+  }
+
+  /* コメント */
+  .comment-item {
+    padding: 12px 0;
+    border-bottom: 1px dashed #ddd;
+  }
+  .comment-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .comment-reply {
+    font-size: 12px;
+    color: #2f6f47;
+    font-weight: bold;
+    text-decoration: none;
+  }
+  .comment-text {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.6;
+    margin: 6px 0;
+  }
+  .comment-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  /* ページネーション */
+  .pagination-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  .pagination-area a, .pagination-area span {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+  }
+  .pagination-area .current {
+    background: #d6e8d0;
+    border-color: #d6e8d0;
+    font-weight: bold;
+    color: #3a5a3a;
+  }
+
+  /* 吹き出しアイコン固定 */
+  .comment-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 100;
+  }
+  .comment-fab img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+</style>
+
+<!-- パンくずリスト -->
+<div class="breadcrumb-area">
+  <a href="{% url 'board:topic_list' %}">掲示板top</a>
+  &gt;
+  <a href="{% url 'board:topic_list' %}?category={{ topic.board_category }}">
+    {{ topic.get_board_category_display }}
+  </a>
+  &gt;
+  {{ topic.title|truncatechars:6 }}
+</div>
+
+<!-- カテゴリ見出し -->
+<div class="category-heading">
+  {% if topic.board_category == 0 %}🛒
+  {% elif topic.board_category == 1 %}🌱
+  {% elif topic.board_category == 2 %}📖
+  {% endif %}
+  {{ topic.get_board_category_display }}
+</div>
+
+<!-- トピック本文 -->
+<div class="topic-box">
+  <div class="topic-title">{{ topic.title }}</div>
+  <div class="topic-author">{{ topic.user.username }}</div>
 
   {% if topic.text %}
-    <p>{{ topic.text|linebreaksbr }}</p>
+    <div class="topic-text">{{ topic.text|linebreaksbr }}</div>
   {% endif %}
 
-{#　トピックタグ　#}
-{% if topic.tags.all %}
-  <div style="margin-top:8px; font-size:12px;">
-    {% for tag in topic.tags.all %}
-      #{{ tag.name }}
-    {% endfor %}
-  </div>
-{% endif %}
-
-{#　トピックのいいね　#}
-<form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
-  {% csrf_token %}
-  <button type="submit" style="border:none;background:transparent;cursor:pointer;font-size:18px;">
-    {% if is_topic_liked %}❤️{% else %}🤍{% endif %}
-  </button>
-</form>
-<span>{{ topic_like_count }}</span>
-
-  <hr>
-
- {#　コメントリンク　#} 
-  <p>
-    <a href="{% url 'board:comment_save_new' topic_pk=topic.pk %}">
-      コメントを書く
-    </a>
-  </p>
-
-  {# コメント一覧 #}
-  <h2>コメント</h2>
-
-  {% for c in comments %}
-  <div id="comment-{{ c.sequence }}" style="padding:10px 0; border-bottom:1px solid #eee;">
-
-    <div style="font-size:12px; color:#666;">
-      #{{ c.sequence }}（{{ c.user.username }} / {{ c.created_at|date:"Y-m-d H:i" }}）
+  {% if topic.tags.all %}
+    <div class="topic-tags">
+      {% for tag in topic.tags.all %}#{{ tag.name }} {% endfor %}
     </div>
+  {% endif %}
 
-  {#　コメントのいいね　#}
-  <div style="margin-top:4px;">
-      <form method="post" action="{% url 'board:comment_like_toggle' c.id %}" style="display:inline;">
+  <div class="topic-footer">
+    <span>{{ comment_count }}コメント ｜ {{ topic.created_at|date:"Y年m月d日" }}</span>
+    <div style="display:flex; align-items:center; gap:4px;">
+      <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
         {% csrf_token %}
-        <button type="submit" style="border:none;background:transparent;cursor:pointer;">
-          {% if c.is_liked %}❤️{% else %}🤍{% endif %}
+        <button type="submit" class="like-btn">
+          {% if is_topic_liked %}❤️{% else %}🤍{% endif %}
         </button>
       </form>
-      <span style="font-size:12px; color:#666;">{{ c.like_count }}</span>
+      <span style="font-size:12px; color:#888;">{{ topic_like_count }}</span>
     </div>
-
-  {#　親子コメント　#}
-    {% if c.parent_comment %}
-      <div style="margin-top:4px;">
-        <a href="#comment-{{ c.parent_comment.sequence }}"
-           style="font-size:12px; color:#2f6f47; text-decoration:none; font-weight:bold;">
-           &gt;&gt;{{ c.parent_comment.sequence }}
-        </a>
-        
-    {% endif %}
-
-    <div style="margin-top:6px;">
-      {% if c.is_deleted %}
-        <span style="color:#999;">削除されました</span>
-      {% else %}
-        {{ c.text|linebreaksbr }}
-      {% endif %}
-    </div>
-
   </div>
+</div>
+
+<!-- ページネーション（上） -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination-area">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">&lt;</a>
+  {% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="current">{{ num }}</span>
+    {% else %}
+      <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">&gt;</a>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- コメント一覧 -->
+{% for c in comments %}
+<div id="comment-{{ c.sequence }}" class="comment-item">
+  <div class="comment-meta">
+    {{ c.sequence }}. {{ c.user.username }}
+    {% if c.parent_comment %}
+      <a href="?page={{ seq_to_page|get_item:c.parent_comment.sequence }}#comment-{{ c.parent_comment.sequence }}" class="comment-reply">
+        &gt;&gt;{{ c.parent_comment.sequence }}
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="comment-text">
+    {% if c.is_deleted %}
+      <span style="color:#999;">削除されました</span>
+    {% else %}
+      {{ c.text|linebreaksbr }}
+    {% endif %}
+  </div>
+
+  <div class="comment-footer">
+    <form method="post" action="{% url 'board:comment_like_toggle' c.id %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="like-btn" style="font-size:16px;">
+        {% if c.is_liked %}❤️{% else %}🤍{% endif %}
+      </button>
+    </form>
+    <span style="font-size:12px; color:#888;">{{ c.like_count }}</span>
+    <span style="font-size:12px; color:#aaa; margin-left:8px;">{{ c.created_at|date:"Y年m月d日" }}</span>
+  </div>
+</div>
 {% empty %}
-  <p>コメントはまだありません。</p>
+<p style="color:#999; font-size:14px; text-align:center; padding:24px 0;">
+  コメントはまだありません。
+</p>
 {% endfor %}
 
-{#一覧へ　リンク#}
-  <p>
-    <a href="{% url 'board:topic_list' %}">← 一覧へ戻る</a>
-  </p>
+<!-- ページネーション（下） -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="pagination-area" style="margin-bottom:80px;">
+  {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">&lt;</a>
+  {% endif %}
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="current">{{ num }}</span>
+    {% else %}
+      <a href="?page={{ num }}">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">&gt;</a>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- 吹き出しアイコン（固定） -->
+<a href="{% url 'board:comment_save_new' topic_pk=topic.pk %}" class="comment-fab">
+  <img src="{% static 'images/吹き出しのアイコン.png' %}" alt="コメントを書く">
+</a>
+
 {% endblock %}
