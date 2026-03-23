@@ -1,7 +1,7 @@
 {% extends "base_board.html" %}
 {% block board_content %}
-
-<h2>トピック投稿</h2>
+<br>
+<h2 style="font-size:18px; font-weight:bold; color:#544739; margin-bottom:4px;">トピック投稿確認</h2>
 <p>こちらの内容でよろしいですか？</p>
 
 <div style="margin:16px 0;">
@@ -36,7 +36,7 @@
 <div style="display:flex; gap:12px; margin-top:24px;">
 
   <!-- 投稿する -->
-  <form method="post" action="{% url 'board:topic_confirm' topic.pk %}">
+  <form method="post" action="{% url 'board:topic_confirm_session' %}">
     {% csrf_token %}
     <input type="hidden" name="action" value="post">
     <input type="hidden" name="board_category" value="{{ form.board_category.value }}">
@@ -54,7 +54,7 @@
   </form>
 
   <!-- 戻る -->
-  <form method="post" action="{% url 'board:topic_confirm' topic.pk %}">
+  <form method="post" action="{% url 'board:topic_confirm_session' %}">
     {% csrf_token %}
     <input type="hidden" name="action" value="back">
     <button type="submit"

@@ -257,22 +257,21 @@ def topic_save(request, pk=None):
                 return redirect("board:mypage_drafts")
 
             if action == "confirm":
-                # 新規でもpkを持たせるため、一旦DRAFTとして保存
-                if obj.pk is None:
-                    obj.status = Topic.TopicStatus.DRAFT
-                    obj.save()
-                    form.save_m2m()
-                else:
-                    obj.save()
-                    form.save_m2m()
-
-                return render(request, "board/topic_confirm.html", {
-                    "form": form,
-                    "topic": obj,
-                    "category_label": obj.get_board_category_display(),
-                    "tags": form.cleaned_data.get("tags", []),
-                    "mode": "create" if pk is None else "edit",
-                })
+            # sessionに一時保存（DBには保存しない）
+                request.session["topic_confirm_data"] = {
+                    "title": obj.title,
+                    "text": obj.text,
+                    "board_category": obj.board_category,
+                    "tags": [tag.pk for tag in form.cleaned_data.get("tags", [])],
+                    "pk": pk,  # 編集時はpkあり、新規はNone
+                }
+            return render(request, "board/topic_confirm.html", {
+                "form": form,
+                "topic": obj,
+                "category_label": obj.get_board_category_display(),
+                "tags": form.cleaned_data.get("tags", []),
+                "mode": "create" if pk is None else "edit",
+            })
 
     else:
         form = TopicForm(instance=topic)
@@ -298,26 +297,53 @@ def topic_confirm(request, pk):
     if request.method == "POST":
         action = request.POST.get("action")
 
-        
         if action == "back":
-            # 下書き編集に戻す（draft_topic_edit を使う方針なら）
-            if topic.status == Topic.TopicStatus.DRAFT:
-                return redirect("board:draft_topic_edit", pk=topic.pk)
-            # 公開済みなら topic_edit に戻す
-            return redirect("board:topic_edit", pk=topic.pk)
+            session_data = request.session.get("topic_confirm_data")
+            if session_data:
+                original_pk = session_data.get("pk")
+                if original_pk:
+                    # 編集モードで戻る
+                    return redirect("board:topic_edit", pk=original_pk)
+                else:
+                    # 新規投稿で戻る（sessionデータをフォームに復元）
+                    from .models import Tag
+                    initial = {
+                        "title": session_data["title"],
+                        "text": session_data["text"],
+                        "board_category": session_data["board_category"],
+                        "tags": Tag.objects.filter(pk__in=session_data["tags"]),
+                    }
+                    form = TopicForm(initial=initial)
+                    return render(request, "board/topic_form.html", {
+                        "form": form,
+                        "topic": None,
+                        "mode": "create",
+                        "primary_label": "確認画面へ",
+                        "show_draft_button": True,
+                        "show_delete_request": False,
+                    })
+            return redirect("board:topic_new")
 
         if action == "post":
-            form = TopicForm(request.POST, instance=topic)
-            
-            if form.is_valid():
-                obj = form.save(commit=False)
-                obj.user = request.user
-                obj.status = Topic.TopicStatus.PUBLIC
-                obj.save()
-                form.save_m2m()
-                return redirect("board:topic_detail", pk=obj.pk)
-            
-            print("form errors =", form.errors)
+            session_data = request.session.get("topic_confirm_data")
+            if session_data:
+                from .models import Tag
+                original_pk = session_data.get("pk")
+                if original_pk:
+                    # 編集の場合は既存レコードを更新
+                    topic = get_object_or_404(Topic, pk=original_pk, user=request.user)
+                else:
+                    # 新規の場合は新しいオブジェクト
+                    topic = Topic(user=request.user)
+
+                topic.title = session_data["title"]
+                topic.text = session_data["text"]
+                topic.board_category = session_data["board_category"]
+                topic.status = Topic.TopicStatus.PUBLIC
+                topic.save()
+                topic.tags.set(Tag.objects.filter(pk__in=session_data["tags"]))
+                del request.session["topic_confirm_data"]
+                return redirect("board:topic_detail", pk=topic.pk)
 
         print("redirect confirm again")
 
@@ -334,6 +360,60 @@ def topic_confirm(request, pk):
         "category_label": category_label,
         "tags": getattr(topic, "tags", None).all() if hasattr(topic, "tags") else [],
     })
+
+
+# ==============================
+# トピック確認　※PKなし
+# ==============================
+
+@login_required
+def topic_confirm_session(request):
+    if request.method != "POST":
+        return redirect("board:topic_new")
+
+    action = request.POST.get("action")
+    session_data = request.session.get("topic_confirm_data")
+
+    if not session_data:
+        return redirect("board:topic_new")
+
+    from .models import Tag
+    original_pk = session_data.get("pk")
+
+    if action == "back":
+        initial = {
+            "title": session_data["title"],
+            "text": session_data["text"],
+            "board_category": session_data["board_category"],
+            "tags": Tag.objects.filter(pk__in=session_data["tags"]),
+        }
+        form = TopicForm(initial=initial)
+        return render(request, "board/topic_form.html", {
+            "form": form,
+            "topic": None,
+            "mode": "create" if not original_pk else "edit",
+            "primary_label": "確認画面へ",
+            "show_draft_button": True,
+            "show_delete_request": False,
+        })
+
+    if action == "post":
+        if original_pk:
+            topic = get_object_or_404(Topic, pk=original_pk, user=request.user)
+        else:
+            topic = Topic(user=request.user)
+
+        topic.title = session_data["title"]
+        topic.text = session_data["text"]
+        topic.board_category = session_data["board_category"]
+        topic.status = Topic.TopicStatus.PUBLIC
+        topic.save()
+        topic.tags.set(Tag.objects.filter(pk__in=session_data["tags"]))
+        del request.session["topic_confirm_data"]
+        return redirect("board:topic_detail", pk=topic.pk)
+
+    return redirect("board:topic_new")
+
 
 # ==============================
 # 下書きトピック編集
