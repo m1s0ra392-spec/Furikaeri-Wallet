@@ -835,6 +835,7 @@ def comment_delete(request, pk):
     comment.is_deleted = True
     comment.deleted_at = timezone.now()
     comment.deleted_by = request.user
+    comment.text = ""
     comment.save()
     return JsonResponse({"status": "ok"})
 

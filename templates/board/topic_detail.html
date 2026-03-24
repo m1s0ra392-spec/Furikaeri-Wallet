@@ -173,6 +173,14 @@
   <div class="topic-footer">
     <span>{{ comment_count }}コメント ｜ {{ topic.created_at|date:"Y年m月d日" }}</span>
     <div style="display:flex; align-items:center; gap:4px;">
+      {# 自分のトピックだけ編集・削除を表示 #}
+      {% if topic.user == request.user %}
+        <div style="margin-top:8px;">
+          <a href="{% url 'board:topic_edit' topic.id %}" style="font-size:18px; text-decoration:none; margin-right:8px;">✎</a>
+          <a href="{% url 'board:topic_delete_request' topic.id %}" style="font-size:18px; text-decoration:none;">🗑</a>
+        </div>
+      {% endif %}
+      {#　トピックのいいね　#}
       <form method="post" action="{% url 'board:topic_like_toggle' topic.id %}" style="display:inline;">
         {% csrf_token %}
         <button type="submit" class="like-btn">
@@ -223,6 +231,17 @@
     {% endif %}
   </div>
 
+    {# 自分のコメントだけ編集・削除を表示 #}
+    {% if c.user == request.user and not c.is_deleted %}
+      <div style="margin-top:4px; text-align:right;">
+        <a href="{% url 'board:comment_edit' c.id %}" style="font-size:16px; text-decoration:none; margin-right:8px;">✎</a>
+        <button
+          onclick="openDeleteModal({{ c.id }})"
+          style="border:none; background:transparent; cursor:pointer; font-size:16px; padding:0;">🗑</button>
+      </div>
+    {% endif %}
+
+
   <div class="comment-footer">
     <form method="post" action="{% url 'board:comment_like_toggle' c.id %}" style="display:inline;">
       {% csrf_token %}
@@ -258,6 +277,49 @@
   {% endif %}
 </div>
 {% endif %}
+
+{# コメント削除モーダル（<form>タグの外に置く） #}
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+     background:rgba(0,0,0,0.4); z-index:999; justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:24px; border-radius:8px; width:80%; max-width:300px; text-align:center;">
+    <p>このコメントを削除しますか？</p>
+    <button onclick="submitDelete()" style="background:#e55; color:#fff; border:none; padding:8px 20px;
+        border-radius:4px; cursor:pointer; margin-right:8px;">削除する</button>
+    <button onclick="closeDeleteModal()"
+            style="background:#ccc; border:none; padding:8px 20px; border-radius:4px; cursor:pointer;">
+      キャンセル
+    </button>
+  </div>
+</div>
+
+<script>
+let targetCommentId = null;
+
+function openDeleteModal(commentId) {
+  targetCommentId = commentId;
+  document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeleteModal() {
+  document.getElementById("deleteModal").style.display = "none";
+}
+
+function submitDelete() {
+  fetch("/board/comments/" + targetCommentId + "/delete/", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Content-Type": "application/json",
+    },
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "ok") {
+      location.reload(); // 削除後にページを再読み込み
+    }
+  });
+}
+</script>
 
 <!-- 吹き出しアイコン（固定） -->
 <a href="{% url 'board:comment_save_new' topic_pk=topic.pk %}" class="comment-fab">

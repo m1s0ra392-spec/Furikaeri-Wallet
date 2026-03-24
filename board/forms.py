@@ -27,6 +27,7 @@ class CommentForm(forms.ModelForm):
         required=False,
         min_value=1,
         label="返信したいコメントの番号（任意）",
+        widget=forms.NumberInput(attrs={"class": "reply-input"}),
     )
 
     class Meta:

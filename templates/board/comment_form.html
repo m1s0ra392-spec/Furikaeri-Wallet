@@ -8,11 +8,9 @@
   .crumbs a { color: #666; text-decoration: none; }
   .crumbs a:hover { text-decoration: underline; }
 
-  .card {
-    border: 1px solid #ddd;
-    border-radius: 10px;
+    .card {
     padding: 14px;
-    max-width: 520px;
+    border: none;
   }
 
   .section-title { font-weight: 700; margin-bottom: 10px; }
@@ -21,19 +19,22 @@
     display: flex;
     gap: 10px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin: 8px 0 10px;
   }
 
   .row label { font-size: 12px; color: #555; }
 
-  .reply-input {
-    width: 70px;
-    padding: 6px 8px;
+  
+.reply-input {
+    width: 44px;
+    padding: 4px 6px;
     border: 1px solid #ccc;
     border-radius: 6px;
+    font-size: 12px;
+    text-align: center;
   }
-
+  
   .help { font-size: 11px; color: #888; }
 
   .textarea {
@@ -71,8 +72,7 @@
   .note { font-size: 12px; color: #666; margin-top: 8px; }
 </style>
 
-<h1 class="page-title">{% if mode == "edit" %}コメント編集画面{% else %}コメント入力画面{% endif %}</h1>
-
+<br>
 <div class="crumbs">
   <a href="{% url 'board:topic_list' %}">掲示板top</a>
   &nbsp;>&nbsp;
@@ -98,15 +98,16 @@
     {% csrf_token %}
 
     <div class="row">
-      <label for="{{ form.text.id_for_label }}">コメントを書く</label>
-
-      <label for="{{ form.reply_to.id_for_label }}" style="margin-left:auto;">
-        返信したいコメントの番号（任意）
-      </label>
-      {{ form.reply_to }}
-      <span class="help">※番号を入れると本文の先頭に「>>番号」を自動で付けます</span>
+      <div style="display:flex; align-items:center; gap:12px; margin:8px 0 10px; flex-wrap:nowrap;">
+          <span style="font-size:12px; color:#555; white-space:nowrap;">コメントを書く</span>
+          <div style="display:flex; align-items:center; gap:4px; font-size:12px; color:#555; white-space:nowrap;">
+            <span>返信したいコメントの番号【</span>
+            {{ form.reply_to }}
+            <span>】</span>
+          </div>
+      </div>
     </div>
-
+    
     {% for error in form.reply_to.errors %}
       <div class="error">{{ error }}</div>
     {% endfor %}
