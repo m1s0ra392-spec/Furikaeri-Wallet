@@ -196,7 +196,7 @@ def topic_detail(request, pk):
 
     comments = (
         Comment.objects
-        .filter(topic=topic, status=Comment.CommentStatus.PUBLIC)
+        .filter(topic=topic)
         .select_related("user", "parent_comment")
         .annotate(
         like_count=Count("likes", distinct=True),  
