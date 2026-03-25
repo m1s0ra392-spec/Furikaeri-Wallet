@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="padding: 16px;">
+
+  {% if changed == 'username' %}
+    <p style="color: #5a7a5a; margin-bottom: 16px;">ユーザーネームが変更されました。</p>
+  {% elif changed == 'password' %}
+    <p style="color: #5a7a5a; margin-bottom: 16px;">パスワードが変更されました。</p>
+  {% endif %}
+
+  <p style="font-size: 14px; margin-bottom: 16px;">アカウント情報</p>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span style="font-size:14px;">ユーザーネーム：{{ request.user.username }}</span>
+    <a href="{% url 'users:change_username' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span style="font-size:14px;">メールアドレス：{{ request.user.email }}</span>
+    <a href="{% url 'users:change_email' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span style="font-size:14px;">パスワード：••••••••</span>
+    <a href="{% url 'users:change_password' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+    <span style="font-size:14px;">カテゴリの設定</span>
+    <button disabled style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#f5f5f5; color:#aaa;">変更する</button>
+  </div>
+
+  <!-- リセットボタン -->
+  <div style="text-align:center; margin-bottom:16px;">
+    <button onclick="document.getElementById('reset-modal').style.display='flex'"
+      style="width:80%; padding:14px; background:#b85c5c; color:white; font-size:15px; border:none; border-radius:8px; cursor:pointer;">
+      ふりかえり財布のリセット
+    </button>
+  </div>
+
+<!-- ログアウト（モーダルを開くだけ） -->
+ <div style="text-align:center;">
+  <button onclick="document.getElementById('logout-modal').style.display='flex'"
+    style="width:80%; padding:14px; background:#b85c5c; color:white; font-size:15px; border:none; border-radius:8px; cursor:pointer;">
+    ログアウト
+  </button>
+ </div>
+</div>
+
+<!-- リセット確認モーダル -->
+<div id="reset-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:100;">
+  <div style="background:white; padding:24px; border-radius:12px; width:80%; max-width:300px; text-align:center;">
+    <p style="margin-bottom:20px;">これまで入力したデータがすべて消去されますがよろしいですか？</p>
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <form method="post" action="{% url 'users:account_reset' %}">
+        {% csrf_token %}
+        <button type="submit" style="padding:10px 24px; background:#b85c5c; color:white; border:none; border-radius:8px; cursor:pointer;">はい</button>
+      </form>
+      <button onclick="document.getElementById('reset-modal').style.display='none'"
+        style="padding:10px 24px; background:#5a7a5a; color:white; border:none; border-radius:8px; cursor:pointer;">いいえ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ログアウト確認モーダル -->
+<div id="logout-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:100;">
+  <div style="background:white; padding:24px; border-radius:12px; width:80%; max-width:300px; text-align:center;">
+
+    <!-- 確認画面 -->
+    <div id="logout-confirm">
+      <p style="margin-bottom:20px;">ログアウトしますか？</p>
+      <div style="display:flex; gap:12px; justify-content:center;">
+        <button onclick="doLogout()"
+          style="padding:10px 24px; background:#b85c5c; color:white; border:none; border-radius:8px; cursor:pointer;">はい</button>
+        <button onclick="document.getElementById('logout-modal').style.display='none'"
+          style="padding:10px 24px; background:#5a7a5a; color:white; border:none; border-radius:8px; cursor:pointer;">いいえ</button>
+      </div>
+    </div>
+
+    <!-- 完了画面（最初は非表示） -->
+    <div id="logout-done" style="display:none;">
+      <p style="margin-bottom:20px;">ログアウトしました。</p>
+      <a href="{% url 'login' %}"
+        style="display:inline-block; padding:10px 24px; border:1px solid #ccc; border-radius:8px; text-decoration:none; color:#333; background:#f5f5f5;">
+        ログイン画面へ戻る
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<form id="logout-form" method="post" action="{% url 'logout' %}" style="display:none;">
+  {% csrf_token %}
+</form>
+
+<script>
+function doLogout() {
+  // 裏でログアウトのPOSTを送る（ページ遷移しない）
+  const form = document.getElementById('logout-form');
+  const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  fetch("{% url 'logout' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken },
+    redirect: 'manual',  // リダイレクトを無視する
+  });
+
+  document.getElementById('logout-confirm').style.display = 'none';
+  document.getElementById('logout-done').style.display = 'block';
+}
+</script>
+
+{% endblock %}

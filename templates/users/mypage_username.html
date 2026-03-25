@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="padding: 16px;">
+
+  <p style="font-size: 15px; margin-bottom: 20px;">アカウント情報変更</p>
+
+  {% if form.errors %}
+    <p style="color:#b85c5c; margin-bottom:12px;">入力内容に誤りがあります。</p>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div style="margin-bottom: 8px;">
+      <label style="font-size:13px;">新しいユーザーネーム</label>
+    </div>
+    {{ form.username }}
+    {% for error in form.username.errors %}
+      <p style="color:#b85c5c; font-size:12px; margin-top:4px;">{{ error }}</p>
+    {% endfor %}
+    <p style="font-size:12px; color:#888; margin-top:6px; margin-bottom:24px;">
+      ※このユーザーネームは「ふりかえり広場」でも共通で使用します
+    </p>
+
+    <div style="text-align:center;">
+      <button type="submit" style="width:80%; padding:14px; background:#5a7a5a; color:white; font-size:15px; border:none; border-radius:8px; cursor:pointer;">
+        変更
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

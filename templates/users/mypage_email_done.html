@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="padding: 16px;">
+
+  {% if error %}
+    <p style="color:#b85c5c; margin-bottom:12px;">URLが無効または期限切れです。もう一度やり直してください。</p>
+  {% else %}
+    <p style="font-size:15px; margin-bottom:8px;">メールアドレス変更</p>
+    <p style="font-size:13px; color:#444; margin-bottom:24px;">新しいメールアドレスへの変更が完了しました。</p>
+  {% endif %}
+
+  <a href="{% url 'records:home' %}" style="color:#5a7a5a;">ホームへ</a>
+
+</div>
+{% endblock %}

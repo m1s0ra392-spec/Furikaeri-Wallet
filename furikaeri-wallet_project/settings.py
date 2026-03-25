@@ -117,3 +117,7 @@ LOGIN_URL = "/accounts/login/"
 
 # ===== 開発用メール設定（コンソールに出す） =====
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+
+# ↓ これを追加するとBase64にならず日本語で表示される
+EMAIL_CHARSET = 'utf-8'

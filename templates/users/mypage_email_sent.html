@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="padding: 16px;">
+
+  <p style="font-size:14px; margin-bottom: 12px;">新しいメールアドレスにメールを送信しました。</p>
+  <p style="font-size:13px; color:#666; margin-bottom: 24px;">
+    メール内の確認URLをクリックしていただくとメールアドレスの変更が完了します。
+  </p>
+
+  <a href="{% url 'records:home' %}" style="color:#5a7a5a;">ホームへ</a>
+
+</div>
+{% endblock %}
