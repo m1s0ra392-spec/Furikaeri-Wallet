@@ -33,8 +33,10 @@ urlpatterns = [
     path("topics/<int:topic_pk>/comments/<int:pk>/draft/edit/",views.comment_save,name="comment_save_edit"),#コメント編集（下書き）
     path("comments/<int:pk>/confirm/",views.comment_confirm,name="comment_confirm"),#コメント確認
     path("comments/<int:pk>/edit/",views.comment_edit,name="comment_edit"),#コメント編集（公開済み）
+    
+    path("draft-comments/<int:pk>/edit/", views.draft_comment_edit, name="draft_comment_edit"),  #下書きコメント
+    path("draft-comments/<int:pk>/delete/", views.draft_comment_delete, name="draft_comment_delete"),  # 下書きコメント削除           
     path("comments/<int:pk>/delete/",views.comment_delete,name="comment_delete"),#コメント削除
-    path("comments/<int:pk>/draft/delete/",views.draft_comment_delete,name="draft_comment_delete"),#下書きコメント削除
     
     
     #いいね

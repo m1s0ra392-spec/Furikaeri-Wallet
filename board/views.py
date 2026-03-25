@@ -827,18 +827,49 @@ def comment_delete(request, pk):
     投稿済みコメントの論理削除。
     他ユーザーの返信が残るため物理削除ではなく is_deleted=True にする。
     """
+    comment = get_object_or_404(Comment, pk=pk, user=request.user)
+    from django.utils import timezone
+    comment.is_deleted = True
+    comment.deleted_at = timezone.now()
+    comment.deleted_by = request.user
+    comment.save()
+    return redirect("board:mypage_comments")  
+
+
+# ==============================
+# 下書きコメント編集
+# ==============================
+@login_required
+def draft_comment_edit(request, pk):
     comment = get_object_or_404(
         Comment,
         pk=pk,
         user=request.user,
+        status=Comment.CommentStatus.DRAFT,
     )
-    comment.is_deleted = True
-    comment.deleted_at = timezone.now()
-    comment.deleted_by = request.user
-    comment.text = ""
-    comment.save()
-    return JsonResponse({"status": "ok"})
 
+    form = CommentForm(request.POST or None, instance=comment)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if form.is_valid():
+            obj = form.save(commit=False)
+            if action == "draft":
+                obj.status = Comment.CommentStatus.DRAFT
+                obj.save()
+                return redirect("board:mypage_drafts")
+            if action == "confirm":
+                return redirect("board:comment_confirm", pk=comment.pk)
+
+    return render(request, "board/comment_form.html", {
+        "form": form,
+        "comment": comment,
+        "topic": comment.topic,
+        "mode": "edit",
+        "primary_label": "確認画面へ",
+        "show_draft_button": True,
+    })
+    
 
 # ==============================
 # 下書きコメント削除（物理削除）
@@ -918,10 +949,14 @@ def mypage_index(request):
 def mypage_likes(request):
     user = request.user
 
-    # いいねしたトピック（いいね日時の新しい順）
+    # いいねしたトピック（いいね日時の新しい順）（コメント数・いいね数も一緒に取得）
     liked_topics = (
         Topic.objects.filter(likes__user=user)  
         .select_related("user")
+                .annotate(
+            like_count=Count("likes", distinct=True),       
+            comment_count=Count("comments", distinct=True), 
+        )
         .order_by("-likes__created_at")
         .distinct() #重複対策
     )
@@ -947,12 +982,17 @@ def mypage_likes(request):
 def mypage_topics(request):
     topics = (
         Topic.objects
-        .filter(user=request.user, status=Topic.TopicStatus.PUBLIC)  # 投稿済み＝公開
+        .filter(user=request.user, status=Topic.TopicStatus.PUBLIC)
+        .annotate(
+            like_count=Count("likes", distinct=True),        
+            comment_count=Count("comments", distinct=True),  
+        )
         .order_by("-created_at")
     )
 
     return render(request, "board/mypage_topics.html", {
         "topics": topics,
+        "tab": "topics",  
     })
     
 
@@ -962,13 +1002,31 @@ def mypage_topics(request):
 def mypage_comments(request):
     comments = (
         Comment.objects
-        .filter(user=request.user)
-        .select_related("topic")   # topic を一緒に取ってDB回数減らす
-        .order_by("-created_at")
+        .filter(user=request.user, status=Comment.CommentStatus.PUBLIC)
+        .select_related("topic")
+        .annotate(
+            like_count=Count("likes", distinct=True),  
+        )
+        .order_by("topic__id", "-created_at")  # ← トピックでまとまるように並び替え
     )
 
+    # トピックごとにグループ化
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    topic_order = []  # トピックの表示順を保持
+
+    for c in comments:
+        tid = c.topic.id
+        if tid not in grouped:
+            topic_order.append(c.topic)  # 初回だけトピックを記録
+        grouped[tid].append(c)
+
+    # テンプレに渡す：[(topic, [comment, ...]), ...]
+    grouped_comments = [(t, grouped[t.id]) for t in topic_order]
+
     return render(request, "board/mypage_comments.html", {
-        "comments": comments,
+        "grouped_comments": grouped_comments,
+        "tab": "comments",
     })
     
     

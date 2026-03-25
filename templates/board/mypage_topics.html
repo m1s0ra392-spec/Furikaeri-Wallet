@@ -1,31 +1,45 @@
 {% extends "base_board.html" %}
 {% block board_content %}
 
-<h2 style="margin:16px 0 8px;">掲示板マイページ</h2>
+<div style="margin:16px 0 8px;">掲示板マイページ</div>
 {% include "board/_mypage_tabs.html" %}
 
-  <h2 style="margin:16px 0 12px;">私のトピック</h2>
+{% if topics %}
+  {% for t in topics %}
 
-  {% if topics %}
-    <ul style="list-style:none; padding:0; margin:0;">
-      {% for t in topics %}
-        <li style="padding:12px; border:1px solid #ddd; border-radius:12px; margin-bottom:10px;">
-          <div style="font-weight:bold; margin-bottom:6px;">
-            {{ t.title }}
-          </div>
+    {# カード全体：左側はトピックリンク、右端に鉛筆マーク #}
+    <div style="display:flex; align-items:center;
+                border-bottom:1px solid #e0e0e0; padding:10px 0;">
 
-          <div style="font-size:12px; color:#666; margin-bottom:10px;">
-            {{ t.get_board_category_display }} ｜ {{ t.created_at|date:"Y/m/d H:i" }}
-          </div>
+      {# 左側：トピック情報（タップでトピック詳細へ） #}
+      <a href="{% url 'board:topic_detail' t.id %}"
+         style="flex:1; text-decoration:none; color:inherit;">
 
-        <a href="{% url 'board:topic_edit' t.id %}"
-   style="display:inline-block; padding:6px 10px; border:1px solid #ccc; border-radius:10px; text-decoration:none;">
-  編集
-</a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p style="color:#666;">投稿済みのトピックはまだありません。</p>
-  {% endif %}
+        <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">
+          ○{{ t.title }}
+        </div>
+
+        <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
+          <span>{{ t.get_board_category_display }}</span>
+          <span>💬 {{ t.comment_count }}</span>
+          <span>❤ {{ t.like_count }}</span>
+          <span>{{ t.created_at|date:"Y年n月j日" }}</span>
+        </div>
+
+      </a>
+
+      {# 右側：鉛筆マーク（タップで編集へ） #}
+      <a href="{% url 'board:topic_edit' t.id %}"
+         style="padding:6px 10px; text-decoration:none; font-size:18px; color:#888; flex-shrink:0;">
+        ✏️
+      </a>
+
+    </div>
+
+  {% endfor %}
+
+{% else %}
+  <p style="color:#666; padding:12px 0;">投稿済みのトピックはまだありません。</p>
+{% endif %}
+
 {% endblock %}

@@ -173,11 +173,10 @@
   <div class="topic-footer">
     <span>{{ comment_count }}コメント ｜ {{ topic.created_at|date:"Y年m月d日" }}</span>
     <div style="display:flex; align-items:center; gap:4px;">
-      {# 自分のトピックだけ編集・削除を表示 #}
+      {# 自分のトピックだけ編集を表示 #}
       {% if topic.user == request.user %}
         <div style="margin-top:8px;">
           <a href="{% url 'board:topic_edit' topic.id %}" style="font-size:18px; text-decoration:none; margin-right:8px;">✎</a>
-          <a href="{% url 'board:topic_delete_request' topic.id %}" style="font-size:18px; text-decoration:none;">🗑</a>
         </div>
       {% endif %}
       {#　トピックのいいね　#}

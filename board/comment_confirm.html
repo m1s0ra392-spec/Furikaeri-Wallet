@@ -1,0 +1,38 @@
+{% extends "base_board.html" %}
+{% block board_content %}
+<style>
+  .page-title { font-size: 20px; margin: 10px 0 14px; }
+  .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; max-width: 520px; }
+  .section-title { font-weight: 700; margin-bottom: 10px; }
+  .muted { color:#666; font-size:12px; }
+  .box { white-space: pre-wrap; border:1px solid #ccc; border-radius:10px; padding:10px; margin-top:8px; }
+  .btn-row { display:flex; gap:10px; margin-top:12px; }
+  .btn { padding:10px 14px; border-radius:10px; border:1px solid #2f6f47; background:#2f6f47; color:#fff; cursor:pointer; font-weight:700; }
+  .btn.sub { background:#fff; color:#2f6f47; }
+</style>
+
+<h1 class="page-title">コメント確認画面</h1>
+
+<div class="card">
+  <div class="section-title">この内容で投稿しますか？</div>
+
+  <div class="muted">返信番号（任意）</div>
+  <div class="box">{{ form.reply_to.value|default:"（なし）" }}</div>
+
+  <div class="muted" style="margin-top:10px;">コメント本文</div>
+  <div class="box">{{ form.text.value }}</div>
+
+  <form method="post" action="{% url 'board:comment_confirm' comment.pk %}">
+    {% csrf_token %}
+
+    {# 入力値を次のPOSTに持ち越す（超重要） #}
+    <input type="hidden" name="reply_to" value="{{ form.reply_to.value|default_if_none:'' }}">
+    <input type="hidden" name="text" value="{{ form.text.value|default_if_none:'' }}">
+
+    <div class="btn-row">
+      <button type="submit" name="action" value="back">戻る</button>
+      <button type="submit" name="action" value="post">投稿する</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

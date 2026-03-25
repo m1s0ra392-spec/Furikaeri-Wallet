@@ -1,222 +1,138 @@
 {% extends "base_board.html" %}
 {% block board_content %}
 
-<h2 style="margin:16px 0 8px;">掲示板マイページ</h2>
+
+<div style="margin:16px 0 8px;">掲示板マイページ</div>
 {% include "board/_mypage_tabs.html" %}
 
-<h3 style="margin-top:16px;">■ 下書きトピック</h3>
+{# ===== 下書きトピック ===== #}
+{% if draft_topics %}
+  {% for topic in draft_topics %}
 
-{% for topic in draft_topics %}
-  <div style="border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between; align-items:center;">
-    <div>
-      <!-- タイトルをリンクに変更 -->
-      <div>
-        <a href="{% url 'board:draft_topic_edit' topic.id %}"
-           style="text-decoration:none; color:inherit;">
-          {{ topic.title }}
-        </a>
-      </div>
-      <div style="font-size:12px; color:#666;">{{ topic.updated_at|date:"Y年n月j日" }}</div>
-    </div>
+    <div style="display:flex; align-items:center;
+                border-bottom:1px solid #e0e0e0; padding:10px 0;">
 
-    <!-- ゴミ箱ボタン -->
-    <button type="button"
-            onclick="openDeleteModal('{{ topic.id }}', '{{ topic.title|escapejs }}')"
-            style="padding:6px 10px; border:none; background:transparent;
-                   cursor:pointer; font-size:18px;">
-      🗑️
-    </button>
-  </div>
-{% empty %}
-  <div style="color:#999;">下書きトピックはありません</div>
-{% endfor %}
+      {# 左側：タップで編集画面へ #}
+      <a href="{% url 'board:draft_topic_edit' topic.id %}"
+         style="flex:1; text-decoration:none; color:inherit;">
 
-<!-- 削除確認モーダル -->
-<div id="draftDeleteModal"
-     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;">
-  <div style="width:min(90vw, 360px); margin:120px auto; background:#fff;
-              border-radius:10px; padding:24px; text-align:center;">
-
-    <!-- ステップ1：削除確認 -->
-    <div id="deleteStep1">
-      <p style="margin-bottom:8px; font-weight:bold;">下書きを削除しますか？</p>
-      <p id="deleteModalTitle" style="margin-bottom:20px; font-size:14px; color:#555;"></p>
-      <div style="display:flex; gap:12px; justify-content:center;">
-        <button type="button" onclick="closeDeleteModal()"
-                style="padding:10px 20px; border:1px solid #ccc; border-radius:8px;
-                       background:#fff; cursor:pointer;">
-          キャンセル
-        </button>
-        <button type="button" onclick="execDelete()"
-                style="padding:10px 20px; border:none; border-radius:8px;
-                       background:#d66a5e; color:#fff; cursor:pointer; font-weight:bold;">
-          削除する
-        </button>
-      </div>
-    </div>
-
-    <!-- ステップ2：削除完了 -->
-    <div id="deleteStep2" style="display:none;">
-      <p style="margin-bottom:20px; font-weight:bold;">削除しました</p>
-      <button type="button" onclick="closeAndReload()"
-              style="padding:10px 20px; border:1px solid #ccc; border-radius:8px;
-                     background:#fff; cursor:pointer;">
-        閉じる
-      </button>
-    </div>
-
-  </div>
-</div>
-
-<!-- 削除用フォーム（非表示） -->
-<form id="deleteForm" method="post" action="" style="display:none;">
-  {% csrf_token %}
-</form>
-
-<script>
-  // 削除ボタンを押したときにモーダルを開く
-  function openDeleteModal(topicId, topicTitle) {
-    document.getElementById("deleteModalTitle").textContent = '「' + topicTitle + '」';
-    document.getElementById("deleteForm").action = "/board/drafts/" + topicId + "/delete/";
-    document.getElementById("deleteStep1").style.display = "block";
-    document.getElementById("deleteStep2").style.display = "none";
-    document.getElementById("draftDeleteModal").style.display = "block";
-  }
-
-  // キャンセルボタン
-  function closeDeleteModal() {
-    document.getElementById("draftDeleteModal").style.display = "none";
-  }
-
-  // 「削除する」ボタン → fetchでサーバーに送信
-  function execDelete() {
-    const form = document.getElementById("deleteForm");
-    const url = form.action;
-    const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
-
-    fetch(url, {
-      method: "POST",
-      headers: { "X-CSRFToken": csrfToken },
-    })
-    .then(response => {
-      if (response.ok || response.redirected) {
-        // ステップ1を隠してステップ2を表示
-        document.getElementById("deleteStep1").style.display = "none";
-        document.getElementById("deleteStep2").style.display = "block";
-      }
-    });
-  }
-
-  // 「閉じる」ボタン → ページをリロードして一覧を更新
-  function closeAndReload() {
-    location.reload();
-  }
-
-  function openDeleteModal(topicId, topicTitle) {
-    // モーダルにタイトルをセット
-    document.getElementById("deleteModalTitle").textContent = '「' + topicTitle + '」';
-    // フォームのaction（送信先）をそのトピックのURLにセット
-    document.getElementById("deleteForm").action = "/board/drafts/" + topicId + "/delete/";
-    // モーダルを表示
-    document.getElementById("draftDeleteModal").style.display = "block";
-  }
-
-  function closeDeleteModal() {
-    document.getElementById("draftDeleteModal").style.display = "none";
-  }
-</script>
-
-
-<h3 style="margin-top:16px;">■ 下書きコメント</h3>
-
-{% for comment in draft_comments %}
-  <div style="border-bottom:1px solid #ddd; padding:8px 0; display:flex; justify-content:space-between; align-items:center;">
-    <div>
-      <a href="{% url 'board:comment_save_edit' topic_pk=comment.topic.pk pk=comment.pk %}"
-         style="text-decoration:none; color:inherit;">
-        <div style="font-size:12px; color:#999;">{{ comment.topic.title }}</div>
-        <div>{{ comment.text|truncatechars:20 }}
+        <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">
+          ○{{ topic.title }}
         </div>
-        <div style="font-size:12px; color:#666;">{{ comment.updated_at|date:"Y年n月j日" }}</div>
+
+        <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
+          <span>{{ topic.get_board_category_display }}</span>
+          <span>{{ topic.updated_at|date:"Y年n月j日" }}</span>
+        </div>
+
       </a>
+
+      {# 右側：ゴミ箱 #}
+      <form method="post" action="{% url 'board:draft_topic_delete' topic.id %}"
+            style="flex-shrink:0;">
+        {% csrf_token %}
+        <button type="button" onclick="openDeleteModal(this)"
+                data-action="{% url 'board:draft_topic_delete' topic.id %}"
+                style="border:none; background:transparent; cursor:pointer; font-size:18px; color:#aaa;">
+          🗑️
+        </button>
+      </form>
+
     </div>
 
-    <!-- ゴミ箱ボタン -->
-    <button type="button"
-            onclick="openCommentDeleteModal('{{ comment.pk }}')"
-            style="padding:6px 10px; border:none; background:transparent;
-                   cursor:pointer; font-size:18px;">
-      🗑️
-    </button>
-  </div>
-{% empty %}
-  <div style="color:#999;">下書きコメントはありません</div>
-{% endfor %}
+  {% endfor %}
+{% else %}
+  <p style="color:#999; font-size:13px; padding:8px 0;">下書きトピックはありません</p>
+{% endif %}
 
-<!-- コメント削除確認モーダル -->
-<div id="commentDeleteModal"
-     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;">
-  <div style="width:min(90vw, 360px); margin:120px auto; background:#fff;
-              border-radius:10px; padding:24px; text-align:center;">
 
-    <div id="commentDeleteStep1">
-      <p style="margin-bottom:20px; font-weight:bold;">下書きを削除しますか？</p>
-      <div style="display:flex; gap:12px; justify-content:center;">
-        <button type="button" onclick="closeCommentDeleteModal()"
-                style="padding:10px 20px; border:1px solid #ccc; border-radius:8px;
-                       background:#fff; cursor:pointer;">
-          キャンセル
-        </button>
-        <button type="button" onclick="execCommentDelete()"
-                style="padding:10px 20px; border:none; border-radius:8px;
-                       background:#d66a5e; color:#fff; cursor:pointer; font-weight:bold;">
-          削除する
-        </button>
+{# ===== 下書きコメント ===== #}
+{% if draft_comments %}
+  {% for comment in draft_comments %}
+
+    {# 親トピック行 #}
+    <a href="{% url 'board:topic_detail' comment.topic.id %}"
+       style="display:block; text-decoration:none; color:inherit;
+              border-bottom:1px solid #e0e0e0; padding:10px 0;">
+
+      <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">
+        ○{{ comment.topic.title }}
       </div>
+
+      <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
+        <span>{{ comment.topic.get_board_category_display }}</span>
+        <span>{{ comment.topic.created_at|date:"Y年n月j日" }}</span>
+      </div>
+
+    </a>
+
+    {# コメント行（点線） #}
+    <div style="display:flex; align-items:center;
+                border-bottom:1px dashed #e0e0e0; padding:8px 0 8px 8px;">
+
+      {# コメント本文（タップで編集へ） #}
+      <a href="{% url 'board:draft_comment_edit' comment.id %}"
+         style="flex:1; text-decoration:none; color:inherit; font-size:13px;">
+        下書き中
+        <div style="font-size:12px; color:#888; text-align:right; margin-top:2px;">
+          {{ comment.updated_at|date:"Y年n月j日" }}
+        </div>
+      </a>
+
+      {# ゴミ箱 #}
+      <button type="button" onclick="openDeleteModal(this)"
+              data-action="{% url 'board:draft_comment_delete' comment.id %}"
+              style="border:none; background:transparent; cursor:pointer; font-size:18px; color:#aaa; flex-shrink:0;">
+        🗑️
+      </button>
+
     </div>
 
-    <div id="commentDeleteStep2" style="display:none;">
-      <p style="margin-bottom:20px; font-weight:bold;">削除しました</p>
-      <button type="button" onclick="closeAndReload()"
-              style="padding:10px 20px; border:1px solid #ccc; border-radius:8px;
-                     background:#fff; cursor:pointer;">
-        閉じる
+  {% endfor %}
+{% else %}
+  <p style="color:#999; font-size:13px; padding:8px 0;">下書きコメントはありません</p>
+{% endif %}
+
+
+{# ===== 削除確認モーダル ===== #}
+<div id="deleteModal"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;
+            justify-content:center; align-items:center;">
+  <div style="background:#fff; border-radius:12px; padding:24px; width:min(80vw, 300px); text-align:center;">
+
+    <div style="font-size:15px; margin-bottom:20px;">本当に削除しますか？</div>
+
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <button onclick="closeDeleteModal()"
+              style="flex:1; padding:10px; border:1px solid #bbb; border-radius:8px;
+                     background:#eee; cursor:pointer;">
+        いいえ
       </button>
+
+      <form id="deleteForm" method="post" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit"
+                style="width:100%; padding:10px; border:none; border-radius:8px;
+                       background:#c0392b; color:#fff; cursor:pointer; font-weight:bold;">
+          はい
+        </button>
+      </form>
     </div>
+
   </div>
 </div>
 
-<!-- コメント削除用フォーム（非表示） -->
-<form id="commentDeleteForm" method="post" action="" style="display:none;">
-  {% csrf_token %}
-</form>
 
 <script>
-  function openCommentDeleteModal(commentId) {
-    document.getElementById("commentDeleteForm").action =
-      "/board/comments/" + commentId + "/draft/delete/";
-    document.getElementById("commentDeleteStep1").style.display = "block";
-    document.getElementById("commentDeleteStep2").style.display = "none";
-    document.getElementById("commentDeleteModal").style.display = "block";
+  function openDeleteModal(btn) {
+    const action = btn.dataset.action;
+    document.getElementById("deleteForm").action = action;
+    const modal = document.getElementById("deleteModal");
+    modal.style.display = "flex";
   }
 
-  function closeCommentDeleteModal() {
-    document.getElementById("commentDeleteModal").style.display = "none";
-  }
-
-  function execCommentDelete() {
-    const form = document.getElementById("commentDeleteForm");
-    const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
-
-    fetch(form.action, {
-      method: "POST",
-      headers: { "X-CSRFToken": csrfToken },
-    }).then(response => {
-      if (response.ok || response.redirected) {
-        document.getElementById("commentDeleteStep1").style.display = "none";
-        document.getElementById("commentDeleteStep2").style.display = "block";
-      }
-    });
+  function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none";
   }
 </script>
 
