@@ -57,8 +57,8 @@
   .btn {
     padding: 10px 14px;
     border-radius: 10px;
-    border: 1px solid #2f6f47;
-    background: #2f6f47;
+    border: 1px solid #5a7a5a;
+    background: #5a7a5a;
     color: #fff;
     cursor: pointer;
     font-weight: 700;
@@ -66,7 +66,7 @@
 
   .btn.sub {
     background: #fff;
-    color: #2f6f47;
+    color: #5a7a5a;
   }
 
   .note { font-size: 12px; color: #666; margin-top: 8px; }
@@ -128,7 +128,7 @@
     </button>
     <button class="btn" type="button"
             onclick="openDeleteModal({{ comment.id }}, '{{ comment.text|truncatechars:20|escapejs }}')"
-            style="background:#c0392b; border-color:#c0392b;">
+            style="background:#b85c5c; border-color:#b85c5c;">
       削除する
     </button>
   {% else %}
@@ -153,11 +153,11 @@
     <p style="font-weight:bold; margin-bottom:8px;">このコメントを削除しますか？</p>
     <p id="modalText" style="font-size:13px; color:#666; margin-bottom:16px;"></p>
 
-    <div id="deleteResult" style="display:none; color:#2f6f47; margin-bottom:12px;">削除しました</div>
+    <div id="deleteResult" style="display:none; color:#5a7a5a; margin-bottom:12px;">削除しました</div>
 
     <div id="modalButtons" style="display:flex; gap:10px;">
       <button onclick="doDelete()"
-              style="flex:1; padding:10px; background:#c0392b; color:white;
+              style="flex:1; padding:10px; background:#b85c5c; color:white;
                      border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
         はい
       </button>

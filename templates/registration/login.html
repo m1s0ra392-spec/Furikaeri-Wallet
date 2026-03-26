@@ -16,14 +16,14 @@
 
     <!-- パスワード再設定完了メッセージ -->
     {% if password_reset_completed %}
-    <p class="text-center mb-3" style="color: #c0392b; font-size: 0.85rem;">
+    <p class="text-center mb-3" style="color: #b85c5c; font-size: 0.85rem;">
       パスワードを再設定しました。新しいパスワードでログインしてください。
     </p>
     {% endif %}
 
     <!-- ログイン失敗メッセージ -->
     {% if form.errors %}
-    <p class="text-center mb-3" style="color: #c0392b; font-size: 0.85rem;">
+    <p class="text-center mb-3" style="color: #b85c5c; font-size: 0.85rem;">
       ユーザー名またはパスワードが正しくありません
     </p>
     {% endif %}
@@ -44,7 +44,7 @@
 
       <div class="d-grid mt-4">
         <button type="submit" class="btn"
-          style="background-color: #5a8a5a; color: white; border-radius: 8px; padding: 0.7rem;">
+          style="background-color: #5a7a5a; color: white; border-radius: 8px; padding: 0.7rem;">
           ログイン
         </button>
       </div>
@@ -52,11 +52,11 @@
 
     <!-- リンク -->
     <p class="text-center mt-3" style="font-size: 0.85rem;">
-      <a href="{% url 'users:signup' %}" style="color: #5a8a5a;">アカウント登録</a>
+      <a href="{% url 'users:signup' %}" style="color: #5a7a5a;">アカウント登録</a>
     </p>
     <p class="text-center" style="font-size: 0.85rem;">
       パスワードを忘れた方は
-      <a href="{% url 'password_reset' %}" style="color: #5a8a5a;">こちら</a>
+      <a href="{% url 'password_reset' %}" style="color: #5a7a5a;">こちら</a>
     </p>
 
   </div>

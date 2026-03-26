@@ -10,7 +10,7 @@
 <!-- タブ切替 -->
 <div style="display:flex; margin-bottom:16px;">
   <button id="tab-gain" onclick="switchTab('gain')"
-          style="flex:1; padding:10px; border:1px solid #ccc; background:#6ba17c; color:#fff; cursor:pointer; border-radius:8px 0 0 8px;">
+          style="flex:1; padding:10px; border:1px solid #ccc; background:#5a7a5a; color:#fff; cursor:pointer; border-radius:8px 0 0 8px;">
     🌱 うまくいった
   </button>
   <button id="tab-loss" onclick="switchTab('loss')"
@@ -54,7 +54,7 @@
   <input type="hidden" name="tab" value="gain">
   <div id="hidden-pks-gain"></div>
   <button type="button" onclick="submitBulkDelete('gain')"
-          style="padding:8px 16px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
+          style="padding:8px 16px; background:#b85c5c; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
     削除
   </button>
 </form>
@@ -66,7 +66,7 @@
     <input type="text" name="name" placeholder="新規で追加" maxlength="20"
            style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px;">
     <button type="submit"
-            style="padding:8px 14px; background:#6ba17c; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
+            style="padding:8px 14px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
       ＋
     </button>
   </form>
@@ -107,7 +107,7 @@
   <input type="hidden" name="tab" value="loss"> 
   <div id="hidden-pks-loss"></div>
   <button type="button" onclick="submitBulkDelete('loss')"
-          style="padding:8px 16px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
+          style="padding:8px 16px; background:#b85c5c; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
     削除
   </button>
   </form>
@@ -119,7 +119,7 @@
     <input type="text" name="name" placeholder="新規で追加" maxlength="20"
            style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px;">
     <button type="submit"
-            style="padding:8px 14px; background:#6ba17c; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
+            style="padding:8px 14px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
       ＋
     </button>
   </form>
@@ -143,7 +143,7 @@
       <input type="text" name="name" id="edit-input"
              style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; margin-bottom:12px;">
       <button type="submit"
-              style="width:100%; padding:10px; background:#6ba17c; color:#fff; border:none; border-radius:8px; cursor:pointer;">
+              style="width:100%; padding:10px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer;">
         保存
       </button>
     </form>
@@ -160,7 +160,7 @@
     <form method="post" id="delete-form">
       {% csrf_token %}
       <button type="submit"
-              style="width:100%; padding:10px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:8px;">
+              style="width:100%; padding:10px; background:#b85c5c; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:8px;">
         はい、削除する
       </button>
     </form>
@@ -176,9 +176,9 @@
 function switchTab(tab) {
   document.getElementById('panel-gain').style.display = tab === 'gain' ? 'block' : 'none';
   document.getElementById('panel-loss').style.display = tab === 'loss' ? 'block' : 'none';
-  document.getElementById('tab-gain').style.background = tab === 'gain' ? '#6ba17c' : '#eee';
+  document.getElementById('tab-gain').style.background = tab === 'gain' ? '#5a7a5a' : '#eee';
   document.getElementById('tab-gain').style.color = tab === 'gain' ? '#fff' : '#333';
-  document.getElementById('tab-loss').style.background = tab === 'loss' ? '#6ba17c' : '#eee';
+  document.getElementById('tab-loss').style.background = tab === 'loss' ? '#5a7a5a' : '#eee';
   document.getElementById('tab-loss').style.color = tab === 'loss' ? '#fff' : '#333';
 }
 

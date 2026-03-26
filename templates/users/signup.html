@@ -12,7 +12,7 @@
 
     <!-- エラーメッセージ -->
     {% if form.errors %}
-    <p class="text-center mb-3" style="color: #c0392b; font-size: 0.85rem;">
+    <p class="text-center mb-3" style="color: #b85c5c; font-size: 0.85rem;">
       入力内容に誤りがあります。各項目を確認してください。
     </p>
     {% endif %}
@@ -24,7 +24,7 @@
       <div class="mb-3 d-flex flex-column align-items-center">
         <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">ユーザーネーム</label>
         {% for error in form.username.errors %}
-          <p style="color: #c0392b; font-size: 0.85rem; align-self: start;">{{ error }}</p>
+          <p style="color: #b85c5c; font-size: 0.85rem; align-self: start;">{{ error }}</p>
         {% endfor %}
         {{ form.username }}
       </div>
@@ -46,7 +46,7 @@
 
       <div class="d-grid mt-4">
         <button type="submit" class="btn"
-          style="background-color: #5a8a5a; color: white; border-radius: 8px; padding: 0.7rem;">
+          style="background-color: #5a7a5a; color: white; border-radius: 8px; padding: 0.7rem;">
           登録
         </button>
       </div>
@@ -54,7 +54,7 @@
 
     <!-- リンク -->
     <p class="text-center mt-3" style="font-size: 0.85rem;">
-      <a href="{% url 'login' %}" style="color: #5a8a5a;">ログイン画面へ</a>
+      <a href="{% url 'login' %}" style="color: #5a7a5a;">ログイン画面へ</a>
     </p>
 
   </div>
