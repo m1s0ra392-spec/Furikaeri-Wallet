@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>カテゴリの設定</h2>
+
+{% if success == "added" %}<p style="color:green;">追加しました</p>{% endif %}
+{% if success == "edited" %}<p style="color:green;">変更しました</p>{% endif %}
+{% if success == "deleted" %}<p style="color:green;">削除しました（記録は「その他」に移動しました）</p>{% endif %}
+
+<!-- タブ切替 -->
+<div style="display:flex; margin-bottom:16px;">
+  <button id="tab-gain" onclick="switchTab('gain')"
+          style="flex:1; padding:10px; border:1px solid #ccc; background:#6ba17c; color:#fff; cursor:pointer; border-radius:8px 0 0 8px;">
+    🌱 うまくいった
+  </button>
+  <button id="tab-loss" onclick="switchTab('loss')"
+          style="flex:1; padding:10px; border:1px solid #ccc; background:#eee; color:#333; cursor:pointer; border-radius:0 8px 8px 0;">
+    🍂 惜しかった
+  </button>
+</div>
+
+<!-- うまくいったリスト -->
+<div id="panel-gain">
+  <ul style="list-style:none; padding:0; margin:0 0 12px;">
+    {% for c in gain_categories %}
+      <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+        {% if c.system_default == 0 %}
+          <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="gain" style="margin-right:8px;">
+        {% else %}
+          <span style="width:20px; margin-right:8px;"></span>
+        {% endif %}
+        <span style="flex:1;">{{ c.name }}</span>
+        <button onclick="openEditModal({{ c.pk }}, '{{ c.name }}')"
+                style="padding:4px 10px; border:1px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px;">
+          編集
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <!-- 削除ボタン -->
+  <button onclick="openDeleteModal('gain')"
+          style="padding:8px 16px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
+    削除
+  </button>
+
+  <!-- 追加フォーム -->
+  <form method="post" action="{% url 'users:category_add' %}" style="display:flex; gap:8px;">
+    {% csrf_token %}
+    <input type="hidden" name="type" value="0">
+    <input type="text" name="name" placeholder="新規で追加" maxlength="20"
+           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px;">
+    <button type="submit"
+            style="padding:8px 14px; background:#6ba17c; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
+      ＋
+    </button>
+  </form>
+</div>
+
+<!-- 惜しかったリスト -->
+<div id="panel-loss" style="display:none;">
+  <ul style="list-style:none; padding:0; margin:0 0 12px;">
+    {% for c in loss_categories %}
+      <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+        {% if c.system_default == 0 %}
+          <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="loss" style="margin-right:8px;">
+        {% else %}
+          <span style="width:20px; margin-right:8px;"></span>
+        {% endif %}
+        <span style="flex:1;">{{ c.name }}</span>
+        <button onclick="openEditModal({{ c.pk }}, '{{ c.name }}')"
+                style="padding:4px 10px; border:1px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px;">
+          編集
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <button onclick="openDeleteModal('loss')"
+          style="padding:8px 16px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
+    削除
+  </button>
+
+  <form method="post" action="{% url 'users:category_add' %}" style="display:flex; gap:8px;">
+    {% csrf_token %}
+    <input type="hidden" name="type" value="1">
+    <input type="text" name="name" placeholder="新規で追加" maxlength="20"
+           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px;">
+    <button type="submit"
+            style="padding:8px 14px; background:#6ba17c; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
+      ＋
+    </button>
+  </form>
+</div>
+
+<br>
+<a href="{% url 'users:account_mypage' %}">マイページへ戻る</a>
+
+<!-- 編集モーダル -->
+<div id="edit-modal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:100;">
+  <div style="background:#fff; border-radius:12px; padding:24px; width:80%; max-width:320px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <strong>カテゴリの編集</strong>
+      <button onclick="document.getElementById('edit-modal').style.display='none'"
+              style="background:none; border:none; font-size:18px; cursor:pointer;">×</button>
+    </div>
+    <form method="post" id="edit-form">
+      {% csrf_token %}
+      <input type="text" name="name" id="edit-input"
+             style="width:100%; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; margin-bottom:12px;">
+      <button type="submit"
+              style="width:100%; padding:10px; background:#6ba17c; color:#fff; border:none; border-radius:8px; cursor:pointer;">
+        保存
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- 削除確認モーダル -->
+<div id="delete-modal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:100;">
+  <div style="background:#fff; border-radius:12px; padding:24px; width:80%; max-width:320px;">
+    <h3 style="margin-top:0;">本当に削除しますか？</h3>
+    <p style="font-size:13px; color:#666;">削除した内容は「その他」に移動します</p>
+    <form method="post" id="delete-form">
+      {% csrf_token %}
+      <button type="submit"
+              style="width:100%; padding:10px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:8px;">
+        はい、削除する
+      </button>
+    </form>
+    <button onclick="document.getElementById('delete-modal').style.display='none'"
+            style="width:100%; padding:10px; background:#eee; border:none; border-radius:8px; cursor:pointer;">
+      キャンセル
+    </button>
+  </div>
+</div>
+
+<script>
+// タブ切替
+function switchTab(tab) {
+  document.getElementById('panel-gain').style.display = tab === 'gain' ? 'block' : 'none';
+  document.getElementById('panel-loss').style.display = tab === 'loss' ? 'block' : 'none';
+  document.getElementById('tab-gain').style.background = tab === 'gain' ? '#6ba17c' : '#eee';
+  document.getElementById('tab-gain').style.color = tab === 'gain' ? '#fff' : '#333';
+  document.getElementById('tab-loss').style.background = tab === 'loss' ? '#6ba17c' : '#eee';
+  document.getElementById('tab-loss').style.color = tab === 'loss' ? '#fff' : '#333';
+}
+
+// 編集モーダルを開く
+function openEditModal(pk, name) {
+  document.getElementById('edit-input').value = name;
+  document.getElementById('edit-form').action = '/users/categories/' + pk + '/edit/';
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+// 削除モーダルを開く（チェックされたものをまとめて削除）
+function openDeleteModal(type) {
+  const checks = document.querySelectorAll('.del-check[data-type="' + type + '"]:checked');
+  if (checks.length === 0) {
+    alert('削除するカテゴリを選択してください');
+    return;
+  }
+  // チェックされた最初の1件を削除（複数対応は後で拡張可）
+  const pk = checks[0].dataset.pk;
+  document.getElementById('delete-form').action = '/users/categories/' + pk + '/delete/';
+  document.getElementById('delete-modal').style.display = 'flex';
+}
+</script>
+
+{% endblock %}

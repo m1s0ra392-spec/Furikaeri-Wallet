@@ -9,8 +9,8 @@ from django.urls import reverse
 from django.conf import settings
 from .forms import SignUpForm, UsernameChangeForm, EmailChangeForm, PasswordChangeForm
 from .models import User
-from django.shortcuts import render, redirect
-from records.models import RecordCategory
+from django.shortcuts import render, redirect, get_object_or_404
+from records.models import Record, RecordCategory
 
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import AuthenticationForm
@@ -74,7 +74,12 @@ class PasswordResetCompleteToLoginView(auth_views.PasswordResetCompleteView):
 def account_mypage(request):
     # 変更完了メッセージ（ユーザーネーム・パスワード変更後）
     changed = request.GET.get('changed')  # 'username' or 'password'
-    return render(request, 'users/mypage.html', {'changed': changed})
+    # "?reset=done" が付いていたら完了モーダルを出す
+    reset_done = request.GET.get("reset") == "done"
+    return render(request, 'users/mypage.html', {
+        'changed': changed,
+        'reset_done': reset_done,
+    })    
 
 
 """"ユーザーネーム変更"""
@@ -161,13 +166,102 @@ def change_password(request):
     return render(request, 'users/mypage_password.html', {'form': form})
 
 
-"""アカウントリセット"""
+#アカウントリセット
 @login_required
-def account_reset(request):
-    # TODO: 後で実装
-    return redirect('users:account_mypage')
+def account_reset_confirm(request):
+    """アカウントデータリセットの確認画面"""
+    return render(request, "users/account_reset_confirm.html")
+
+
+@login_required  
+def account_reset_execute(request):
+    """アカウントデータを実際に削除する"""
+    if request.method == "POST":
+        user = request.user
+        
+        # recordsを先に消す（カテゴリに紐づいているため）
+        Record.objects.filter(user=user).delete()
+        
+        # ユーザー定義カテゴリを消す（system_default=0のもの）
+        RecordCategory.objects.filter(user=user, system_default=0).delete()
+        
+        # ログアウトせず、マイページに「完了フラグ」付きでリダイレクト
+        return redirect("/users/mypage/?reset=done")
+    
+    # GETアクセスは確認画面に戻す
+    return redirect("users:account_reset_confirm")
+
+
 
 def logout_done(request):
     """ログアウト完了画面（GETでアクセス）"""
     logout(request)  # ここでログアウト実行
     return render(request, 'users/logout_done.html')
+
+
+# ==============================
+# カテゴリ管理
+# ==============================
+
+@login_required
+def category_list(request):
+    """マイページのカテゴリ一覧（account_mypageと同じページに統合予定だが今は別ページ）"""
+    success = categories = request.GET.get("success")
+    gain_categories = RecordCategory.objects.filter(user=request.user, type=0).order_by("system_default", "created_at")
+    loss_categories = RecordCategory.objects.filter(user=request.user, type=1).order_by("system_default", "created_at")
+    return render(request, "users/category_list.html", {
+        "gain_categories": gain_categories,
+        "loss_categories": loss_categories,
+        "success": success,
+    })
+
+
+@login_required
+def category_add(request):
+    """カテゴリ追加"""
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        type_ = request.POST.get("type")  # "0" or "1"
+        if name and type_ in ("0", "1"):
+            RecordCategory.objects.create(
+                user=request.user,
+                name=name,
+                type=int(type_),
+                system_default=0,  # ユーザーが作ったカテゴリ
+            )
+        return redirect("/users/categories/?success=added")
+    return render(request, "users/category_form.html", {"mode": "add"})
+
+
+@login_required
+def category_edit(request, pk):
+    """カテゴリ編集"""
+    category = get_object_or_404(RecordCategory, pk=pk, user=request.user)
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        if name:
+            category.name = name
+            category.save()
+        return redirect("/users/categories/?success=edited")
+    return render(request, "users/category_form.html", {"mode": "edit", "category": category})
+
+
+@login_required
+def category_delete(request, pk):
+    category = get_object_or_404(RecordCategory, pk=pk, user=request.user)
+    if request.method == "POST":
+        # 「その他」カテゴリを取得（同じtype・同じユーザー・system_default=1）
+        fallback = RecordCategory.objects.filter(
+            user=request.user,
+            type=category.type,
+            system_default=1,
+            name="その他"
+        ).first()
+        
+        if fallback:
+            # このカテゴリに紐づく記録を「その他」に付け替える
+            Record.objects.filter(user=request.user, category=category).update(category=fallback)
+        
+        category.delete()
+        return redirect("/users/categories/?success=deleted")
+    return redirect("users:category_list")

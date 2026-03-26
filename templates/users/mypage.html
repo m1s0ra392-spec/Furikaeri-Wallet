@@ -27,17 +27,17 @@
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
     <span style="font-size:14px;">カテゴリの設定</span>
-    <button disabled style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#f5f5f5; color:#aaa;">変更する</button>
+     <a href="{% url 'users:category_list' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
   </div>
 
-  <!-- リセットボタン -->
-  <div style="text-align:center; margin-bottom:16px;">
+   <!-- リセットボタン -->
+  <div style="text-align:center;">
     <button onclick="document.getElementById('reset-modal').style.display='flex'"
       style="width:80%; padding:14px; background:#b85c5c; color:white; font-size:15px; border:none; border-radius:8px; cursor:pointer;">
       ふりかえり財布のリセット
     </button>
   </div>
-
+ <br>
 <!-- ログアウト（モーダルを開くだけ） -->
  <div style="text-align:center;">
   <button onclick="document.getElementById('logout-modal').style.display='flex'"
@@ -47,20 +47,61 @@
  </div>
 </div>
 
+
 <!-- リセット確認モーダル -->
-<div id="reset-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:100;">
-  <div style="background:white; padding:24px; border-radius:12px; width:80%; max-width:300px; text-align:center;">
-    <p style="margin-bottom:20px;">これまで入力したデータがすべて消去されますがよろしいですか？</p>
-    <div style="display:flex; gap:12px; justify-content:center;">
-      <form method="post" action="{% url 'users:account_reset' %}">
-        {% csrf_token %}
-        <button type="submit" style="padding:10px 24px; background:#b85c5c; color:white; border:none; border-radius:8px; cursor:pointer;">はい</button>
-      </form>
-      <button onclick="document.getElementById('reset-modal').style.display='none'"
-        style="padding:10px 24px; background:#5a7a5a; color:white; border:none; border-radius:8px; cursor:pointer;">いいえ</button>
-    </div>
+<div id="reset-modal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:100;">
+
+  <div style="background:#fff; border-radius:12px; padding:24px; width:80%; max-width:320px;">
+    
+    <h3 style="margin-top:0;">本当にリセットしますか？</h3>
+    <p style="font-size:14px;">以下のデータが<strong>すべて削除</strong>されます。</p>
+    <ul style="font-size:14px;">
+      <li>得・損の記録（全件）</li>
+      <li>自分で追加したカテゴリ</li>
+    </ul>
+    <p style="font-size:12px; color:#e00;">※この操作は取り消せません。</p>
+
+    <form method="post" action="{% url 'users:account_reset_execute' %}">
+      {% csrf_token %}
+      <button type="submit"
+              style="background:#b85c5c; color:#fff; border:none; border-radius:8px;
+                     padding:10px 16px; width:100%; margin-bottom:8px; font-size:16px; cursor:pointer;">
+        はい、リセットする
+      </button>
+    </form>
+
+    <button type="button"
+            onclick="document.getElementById('reset-modal').style.display='none'"
+            style="background:#5a7a5a; color:#fff; border:none; border-radius:8px;
+                   padding:10px 16px; width:100%; font-size:16px; cursor:pointer;">
+      キャンセル
+    </button>
+
   </div>
 </div>
+
+<!-- リセット完了モーダル -->
+<div id="reset-done-modal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:100;">
+
+  <div style="background:#fff; border-radius:12px; padding:24px; width:80%; max-width:320px; text-align:center;">
+    
+    <p style="font-size:15px; margin-bottom:20px;">
+      ふりかえり財布のデータを<br>リセットしました
+    </p>
+
+    <a href="{% url 'records:home' %}"
+       style="display:block; background:#6ba17c; color:#fff; text-decoration:none;
+              border-radius:8px; padding:10px 16px; font-size:16px;">
+      ホームへ戻る
+    </a>
+
+  </div>
+</div>
+
 
 <!-- ログアウト確認モーダル -->
 <div id="logout-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; z-index:100;">
@@ -109,5 +150,11 @@ function doLogout() {
   document.getElementById('logout-done').style.display = 'block';
 }
 </script>
+
+{% if reset_done %}
+<script>
+  document.getElementById('reset-done-modal').style.display = 'flex';
+</script>
+{% endif %}
 
 {% endblock %}
