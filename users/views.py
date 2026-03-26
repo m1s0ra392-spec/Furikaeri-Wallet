@@ -205,10 +205,13 @@ def logout_done(request):
 
 @login_required
 def category_list(request):
-    """マイページのカテゴリ一覧（account_mypageと同じページに統合予定だが今は別ページ）"""
-    success = categories = request.GET.get("success")
-    gain_categories = RecordCategory.objects.filter(user=request.user, type=0).order_by("system_default", "created_at")
-    loss_categories = RecordCategory.objects.filter(user=request.user, type=1).order_by("system_default", "created_at")
+    success = request.GET.get("success")
+    gain_categories = RecordCategory.objects.filter(
+        user=request.user, type=0
+    ).order_by("system_default", "created_at")  # system_default=1（固定）が後ろに来る
+    loss_categories = RecordCategory.objects.filter(
+        user=request.user, type=1
+    ).order_by("system_default", "created_at")
     return render(request, "users/category_list.html", {
         "gain_categories": gain_categories,
         "loss_categories": loss_categories,

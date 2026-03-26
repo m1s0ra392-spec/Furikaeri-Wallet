@@ -23,18 +23,28 @@
 <div id="panel-gain">
   <ul style="list-style:none; padding:0; margin:0 0 12px;">
     {% for c in gain_categories %}
-      <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
-        {% if c.system_default == 0 %}
-          <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="gain" style="margin-right:8px;">
-        {% else %}
-          <span style="width:20px; margin-right:8px;"></span>
-        {% endif %}
-        <span style="flex:1;">{{ c.name }}</span>
-        <button onclick="openEditModal({{ c.pk }}, '{{ c.name }}')"
-                style="padding:4px 10px; border:1px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px;">
-          編集
-        </button>
-      </li>
+    <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+          {% if c.system_default == 0 and c.name != "その他" %}
+            {# ユーザー定義カテゴリ → チェックボックスあり #}
+            <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="gain" style="margin-right:8px;">
+          {% else %}
+            {# デフォルト or その他 → チェックボックスなし #}
+            <span style="width:20px; margin-right:8px;"></span>
+          {% endif %}
+
+          <span style="flex:1;">{{ c.name }}</span>
+
+          {% if c.name != "その他" %}
+            {# その他以外 → 編集ボタンあり #}
+            <button onclick="openEditModal({{ c.pk }}, '{{ c.name }}')"
+                    style="padding:4px 10px; border:1px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px;">
+              編集
+            </button>
+          {% else %}
+            {# その他 → 何も出さない #}
+            <span style="width:46px;"></span>
+          {% endif %}
+        </li> 
     {% endfor %}
   </ul>
 
@@ -61,18 +71,28 @@
 <div id="panel-loss" style="display:none;">
   <ul style="list-style:none; padding:0; margin:0 0 12px;">
     {% for c in loss_categories %}
-      <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
-        {% if c.system_default == 0 %}
-          <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="loss" style="margin-right:8px;">
-        {% else %}
-          <span style="width:20px; margin-right:8px;"></span>
-        {% endif %}
-        <span style="flex:1;">{{ c.name }}</span>
-        <button onclick="openEditModal({{ c.pk }}, '{{ c.name }}')"
-                style="padding:4px 10px; border:1px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px;">
-          編集
-        </button>
-      </li>
+    <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+          {% if c.system_default == 0 and c.name != "その他" %}
+            {# ユーザー定義カテゴリ → チェックボックスあり #}
+            <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="gain" style="margin-right:8px;">
+          {% else %}
+            {# デフォルト or その他 → チェックボックスなし #}
+            <span style="width:20px; margin-right:8px;"></span>
+          {% endif %}
+
+          <span style="flex:1;">{{ c.name }}</span>
+
+          {% if c.name != "その他" %}
+            {# その他以外 → 編集ボタンあり #}
+            <button onclick="openEditModal({{ c.pk }}, '{{ c.name }}')"
+                    style="padding:4px 10px; border:1px solid #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:13px;">
+              編集
+            </button>
+          {% else %}
+            {# その他 → 何も出さない #}
+            <span style="width:46px;"></span>
+          {% endif %}
+        </li>  
     {% endfor %}
   </ul>
 
