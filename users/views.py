@@ -167,28 +167,41 @@ def change_password(request):
 
 
 #アカウントリセット
+
+# デフォルトカテゴリの定義
+DEFAULT_CATEGORIES = [
+    {"name": "クーポン・割引", "type": 0},
+    {"name": "チラシ",         "type": 0},
+    {"name": "我慢した",       "type": 0},
+    {"name": "捨てずに譲った", "type": 0},
+    {"name": "その他",         "type": 0},
+    {"name": "衝動買い",       "type": 1},
+    {"name": "時間がなかった", "type": 1},
+    {"name": "その他",         "type": 1},
+]
+
 @login_required
-def account_reset_confirm(request):
-    """アカウントデータリセットの確認画面"""
-    return render(request, "users/account_reset_confirm.html")
-
-
-@login_required  
 def account_reset_execute(request):
-    """アカウントデータを実際に削除する"""
     if request.method == "POST":
         user = request.user
-        
-        # recordsを先に消す（カテゴリに紐づいているため）
+
+        # 記録を全削除
         Record.objects.filter(user=user).delete()
-        
-        # ユーザー定義カテゴリを消す（system_default=0のもの）
-        RecordCategory.objects.filter(user=user, system_default=0).delete()
-        
-        # ログアウトせず、マイページに「完了フラグ」付きでリダイレクト
+
+        # カテゴリを全削除（ユーザー定義・デフォルト両方）
+        RecordCategory.objects.filter(user=user).delete()
+
+        # デフォルトカテゴリを再投入
+        for cat in DEFAULT_CATEGORIES:
+            RecordCategory.objects.create(
+                user=user,
+                name=cat["name"],
+                type=cat["type"],
+                system_default=1,
+            )
+
         return redirect("/users/mypage/?reset=done")
-    
-    # GETアクセスは確認画面に戻す
+
     return redirect("users:account_reset_confirm")
 
 
@@ -206,33 +219,37 @@ def logout_done(request):
 @login_required
 def category_list(request):
     success = request.GET.get("success")
-    gain_categories = RecordCategory.objects.filter(
-        user=request.user, type=0
-    ).order_by("system_default", "created_at")  # system_default=1（固定）が後ろに来る
-    loss_categories = RecordCategory.objects.filter(
-        user=request.user, type=1
-    ).order_by("system_default", "created_at")
+
+    def sort_categories(qs):
+        others = [c for c in qs if c.name == "その他"]
+        rest = [c for c in qs if c.name != "その他"]
+        return rest + others  # 「その他」を末尾に
+
+    gain_qs = RecordCategory.objects.filter(user=request.user, type=0).order_by("created_at")
+    loss_qs = RecordCategory.objects.filter(user=request.user, type=1).order_by("created_at")
+
     return render(request, "users/category_list.html", {
-        "gain_categories": gain_categories,
-        "loss_categories": loss_categories,
+        "gain_categories": sort_categories(gain_qs),
+        "loss_categories": sort_categories(loss_qs),
         "success": success,
     })
-
 
 @login_required
 def category_add(request):
     """カテゴリ追加"""
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
-        type_ = request.POST.get("type")  # "0" or "1"
+        type_ = request.POST.get("type")
         if name and type_ in ("0", "1"):
             RecordCategory.objects.create(
                 user=request.user,
                 name=name,
                 type=int(type_),
-                system_default=0,  # ユーザーが作ったカテゴリ
+                system_default=0,
             )
-        return redirect("/users/categories/?success=added")
+        # type_が"1"なら惜しかったタブに戻す
+        tab = "loss" if type_ == "1" else "gain"
+        return redirect(f"/users/categories/?success=added&tab={tab}")
     return render(request, "users/category_form.html", {"mode": "add"})
 
 
@@ -251,6 +268,7 @@ def category_edit(request, pk):
 
 @login_required
 def category_delete(request, pk):
+    """カテゴリ削除"""
     category = get_object_or_404(RecordCategory, pk=pk, user=request.user)
     if request.method == "POST":
         # 「その他」カテゴリを取得（同じtype・同じユーザー・system_default=1）
@@ -266,5 +284,31 @@ def category_delete(request, pk):
             Record.objects.filter(user=request.user, category=category).update(category=fallback)
         
         category.delete()
+        return redirect("/users/categories/?success=deleted")
+    return redirect("users:category_list")
+
+@login_required
+def category_bulk_delete(request):
+    """チェックされた複数カテゴリを一括削除"""
+    if request.method == "POST":
+        pks = request.POST.getlist("pks")  # チェックされたpkのリスト
+        if pks:
+            for pk in pks:
+                category = RecordCategory.objects.filter(
+                    pk=pk, user=request.user, system_default=0
+                ).first()
+                if category:
+                    # 「その他」に記録を移動
+                    fallback = RecordCategory.objects.filter(
+                        user=request.user,
+                        type=category.type,
+                        name="その他"
+                    ).first()
+                    if fallback:
+                        Record.objects.filter(
+                            user=request.user, category=category
+                        ).update(category=fallback)
+                    category.delete()
+
         return redirect("/users/categories/?success=deleted")
     return redirect("users:category_list")

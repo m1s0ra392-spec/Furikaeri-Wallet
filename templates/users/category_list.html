@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h2>カテゴリの設定</h2>
+<br>
+<p style="font-size: 18px; margin-bottom: 16px;">カテゴリの設定</p>
 
 {% if success == "added" %}<p style="color:green;">追加しました</p>{% endif %}
 {% if success == "edited" %}<p style="color:green;">変更しました</p>{% endif %}
@@ -48,11 +48,16 @@
     {% endfor %}
   </ul>
 
-  <!-- 削除ボタン -->
-  <button onclick="openDeleteModal('gain')"
+  <!-- 削除フォーム -->
+  <form method="post" action="{% url 'users:category_bulk_delete' %}" id="delete-form-gain">
+  {% csrf_token %}
+  <input type="hidden" name="tab" value="gain">
+  <div id="hidden-pks-gain"></div>
+  <button type="button" onclick="submitBulkDelete('gain')"
           style="padding:8px 16px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
     削除
   </button>
+</form>
 
   <!-- 追加フォーム -->
   <form method="post" action="{% url 'users:category_add' %}" style="display:flex; gap:8px;">
@@ -74,7 +79,7 @@
     <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
           {% if c.system_default == 0 and c.name != "その他" %}
             {# ユーザー定義カテゴリ → チェックボックスあり #}
-            <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="gain" style="margin-right:8px;">
+            <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="loss" style="margin-right:8px;">
           {% else %}
             {# デフォルト or その他 → チェックボックスなし #}
             <span style="width:20px; margin-right:8px;"></span>
@@ -96,11 +101,18 @@
     {% endfor %}
   </ul>
 
-  <button onclick="openDeleteModal('loss')"
+  <!-- 削除フォーム -->
+  <form method="post" action="{% url 'users:category_bulk_delete' %}" id="delete-form-loss">
+  {% csrf_token %}
+  <input type="hidden" name="tab" value="loss"> 
+  <div id="hidden-pks-loss"></div>
+  <button type="button" onclick="submitBulkDelete('loss')"
           style="padding:8px 16px; background:#c86b51; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-bottom:16px;">
     削除
   </button>
+  </form>
 
+  <!-- 追加フォーム -->
   <form method="post" action="{% url 'users:category_add' %}" style="display:flex; gap:8px;">
     {% csrf_token %}
     <input type="hidden" name="type" value="1">
@@ -178,16 +190,37 @@ function openEditModal(pk, name) {
 }
 
 // 削除モーダルを開く（チェックされたものをまとめて削除）
-function openDeleteModal(type) {
+function submitBulkDelete(type) {
   const checks = document.querySelectorAll('.del-check[data-type="' + type + '"]:checked');
   if (checks.length === 0) {
     alert('削除するカテゴリを選択してください');
     return;
   }
-  // チェックされた最初の1件を削除（複数対応は後で拡張可）
-  const pk = checks[0].dataset.pk;
-  document.getElementById('delete-form').action = '/users/categories/' + pk + '/delete/';
-  document.getElementById('delete-modal').style.display = 'flex';
+
+  // 確認ダイアログ
+  if (!confirm(checks.length + '件削除します。よろしいですか？\n※記録は「その他」に移動します')) {
+    return;
+  }
+
+  // チェックされたpkをhidden inputとしてフォームに追加
+  const container = document.getElementById('hidden-pks-' + type);
+  container.innerHTML = '';  // 一旦クリア
+  checks.forEach(function(checkbox) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'pks';
+    input.value = checkbox.dataset.pk;
+    container.appendChild(input);
+  });
+
+  document.getElementById('delete-form-' + type).submit();
+}
+
+// ページ読み込み時にtabパラメータがあれば切り替える
+const urlParams = new URLSearchParams(window.location.search);
+const tabParam = urlParams.get('tab');
+if (tabParam === 'loss') {
+    switchTab('loss');
 }
 </script>
 
