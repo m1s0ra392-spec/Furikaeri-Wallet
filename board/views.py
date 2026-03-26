@@ -345,8 +345,6 @@ def topic_confirm(request, pk):
                 del request.session["topic_confirm_data"]
                 return redirect("board:topic_detail", pk=topic.pk)
 
-        print("redirect confirm again")
-
         # action不明なら確認に戻す
         return redirect("board:topic_confirm", pk=topic.pk)
 
@@ -442,20 +440,23 @@ def draft_topic_edit(request, pk):
                 form.save_m2m()
                 return redirect("board:mypage_drafts")
 
-            if action == "confirm":
-                obj = form.save(commit=False)      
-                obj.user = request.user            
-                obj.status = Topic.TopicStatus.DRAFT  
-                obj.save()                      
-                form.save_m2m()                    
-                return render(request, "board/topic_confirm.html", {
-                    "form": form,
-                    "topic": obj,            # ← topicをobjに変更
-                    "category_label": obj.get_board_category_display(),  # ← 同上
-                    "tags": form.cleaned_data.get("tags", []),
-                    "mode": "draft_edit",
-                })
-
+        if action == "confirm":
+            obj = form.save(commit=False)      
+            obj.user = request.user            
+            obj.status = Topic.TopicStatus.DRAFT  
+            obj.save()                      
+            form.save_m2m()
+            # sessionにデータを保存してからリダイレクト
+            request.session["topic_confirm_data"] = {
+                "pk": obj.pk,
+                "title": form.cleaned_data["title"],
+                "text": form.cleaned_data["text"],
+                "board_category": form.cleaned_data["board_category"],
+                "tags": [t.pk for t in form.cleaned_data.get("tags", [])],
+            }
+            return redirect("board:topic_confirm", pk=obj.pk)
+            
+            
     else:
         form = TopicForm(instance=topic)
 
@@ -468,6 +469,7 @@ def draft_topic_edit(request, pk):
         "show_delete_request": False,
     })
     
+
 
 # ==============================
 # 下書きトピック削除
