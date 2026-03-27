@@ -1,6 +1,7 @@
 from django.contrib import admin, messages as admin_messages
 from django.shortcuts import render, redirect
 from django.urls import path
+from django.utils import timezone
 from .models import Topic, Comment, Tag, TopicTag
 
 # ==============================
@@ -18,10 +19,32 @@ class TopicTagInline(admin.TabularInline):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "board_category", "status", "user", "created_at")
-    list_filter = ("board_category", "status")
+    list_display = (
+        "id", "title", "board_category", "status",
+        "delete_request_status", "delete_request_reason", "user", "created_at"  
+    )
+    list_filter = ("board_category", "status", "delete_request_status")  
     search_fields = ("title", "text")
     inlines = [TopicTagInline]
+    actions = ["approve_delete", "reject_delete"]  
+
+    def approve_delete(self, request, queryset):
+        count = queryset.filter(
+            delete_request_status=Topic.DeleteRequestStatus.PENDING
+        ).count()
+        queryset.filter(
+            delete_request_status=Topic.DeleteRequestStatus.PENDING
+        ).delete()
+        self.message_user(request, f"{count}件のトピックを削除しました。")
+    approve_delete.short_description = "✅ 削除要請を承認して削除する"
+
+    def reject_delete(self, request, queryset):
+        queryset.update(
+            delete_request_status=Topic.DeleteRequestStatus.REJECTED
+        )
+        self.message_user(request, "削除要請を却下しました。")
+    reject_delete.short_description = "❌ 削除要請を却下する"
+    
 
 # ==============================
  	# Comment

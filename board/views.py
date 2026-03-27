@@ -541,14 +541,19 @@ def topic_delete_request(request, pk):
     if request.method == "POST":
         reason = request.POST.get("reason", "").strip()
 
-        # 仮：理由必須だけチェック（保存はまだしない）
         if not reason:
             return render(request, "board/topic_delete_confirm.html", {
                 "topic": topic,
                 "error": "削除の理由は必須です。",
             })
 
-        # 仮：送信完了ページへ
+        # DBに保存
+        from django.utils import timezone
+        topic.delete_request_status = Topic.DeleteRequestStatus.PENDING
+        topic.delete_request_reason = reason
+        topic.delete_requested_at = timezone.now()
+        topic.save()
+
         return render(request, "board/topic_delete_requested.html", {
             "topic": topic,
         })
