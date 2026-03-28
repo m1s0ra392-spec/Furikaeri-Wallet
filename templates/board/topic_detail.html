@@ -176,7 +176,7 @@
       {# 自分のトピックだけ編集を表示 #}
       {% if topic.user == request.user %}
         <div style="margin-top:8px;">
-          <a href="{% url 'board:topic_edit' topic.id %}" style="font-size:18px; text-decoration:none; margin-right:8px;">✎</a>
+          <a href="{% url 'board:topic_edit' topic.id %}" style="font-size:18px; text-decoration:none; margin-right:8px;">✏️</a>
         </div>
       {% endif %}
       {#　トピックのいいね　#}
@@ -233,7 +233,7 @@
     {# 自分のコメントだけ編集・削除を表示 #}
     {% if c.user == request.user and not c.is_deleted %}
       <div style="margin-top:4px; text-align:right;">
-        <a href="{% url 'board:comment_edit' c.id %}" style="font-size:16px; text-decoration:none; margin-right:8px;">✎</a>
+        <a href="{% url 'board:comment_edit' c.id %}" style="font-size:16px; text-decoration:none; margin-right:8px;">✏️</a>
         <button
           onclick="openDeleteModal({{ c.id }})"
           style="border:none; background:transparent; cursor:pointer; font-size:16px; padding:0;">🗑</button>
