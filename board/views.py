@@ -679,6 +679,16 @@ def comment_save(request, topic_pk, pk=None):
                 if obj.pk is None:
                     obj.status = Comment.CommentStatus.DRAFT
                     obj.save()
+                    
+                        # 元の下書きが別レコードとして残っていれば削除
+                    original_draft_pk = request.session.pop("original_draft_pk", None)
+                    if original_draft_pk and original_draft_pk != obj.pk:
+                        Comment.objects.filter(
+                            pk=original_draft_pk,
+                            user=request.user,
+                            status=Comment.CommentStatus.DRAFT,
+                        ).delete()
+
                 return redirect("board:mypage_drafts")
 
             # ── 確認画面へ ──────────────────────────
@@ -705,6 +715,7 @@ def comment_save(request, topic_pk, pk=None):
                 "text": prefill.get("text", ""),
                 "reply_to": prefill.get("reply_to"),
             })
+            request.session["original_draft_pk"] = prefill.get("original_draft_pk")
         else:
             form = CommentForm()
 
@@ -754,8 +765,17 @@ def comment_confirm(request, pk):
                     status=Comment.CommentStatus.PUBLIC  # 公開済みだけでカウント
                 ).aggregate(Max("sequence"))["sequence__max"]
                 obj.sequence = (max_seq or 0) + 1
-
                 obj.save()
+                
+                # 元の下書きが別レコードとして残っていれば削除
+                original_draft_pk = request.session.pop("original_draft_pk", None)
+                if original_draft_pk and original_draft_pk != obj.pk:
+                    Comment.objects.filter(
+                        pk=original_draft_pk,
+                        user=request.user,
+                        status=Comment.CommentStatus.DRAFT,
+                    ).delete()
+                
                 return redirect("board:topic_detail", pk=topic.pk)
 
     # GET：確認表示
@@ -839,36 +859,18 @@ def comment_delete(request, pk):
 # ==============================
 # 下書きコメント編集
 # ==============================
+
 @login_required
 def draft_comment_edit(request, pk):
     comment = get_object_or_404(
-        Comment,
-        pk=pk,
-        user=request.user,
-        status=Comment.CommentStatus.DRAFT,
+        Comment, pk=pk, user=request.user, status=Comment.CommentStatus.DRAFT
     )
-
-    form = CommentForm(request.POST or None, instance=comment)
-
-    if request.method == "POST":
-        action = request.POST.get("action")
-        if form.is_valid():
-            obj = form.save(commit=False)
-            if action == "draft":
-                obj.status = Comment.CommentStatus.DRAFT
-                obj.save()
-                return redirect("board:mypage_drafts")
-            if action == "confirm":
-                return redirect("board:comment_confirm", pk=comment.pk)
-
-    return render(request, "board/comment_form.html", {
-        "form": form,
-        "comment": comment,
-        "topic": comment.topic,
-        "mode": "edit",
-        "primary_label": "確認画面へ",
-        "show_draft_button": True,
-    })
+    request.session["draft_comment_prefill"] = {
+        "text": comment.text,
+        "reply_to": comment.parent_comment.sequence if comment.parent_comment else None,
+        "original_draft_pk": comment.pk,
+    }
+    return redirect("board:comment_save_new", topic_pk=comment.topic.pk)
     
 
 # ==============================
