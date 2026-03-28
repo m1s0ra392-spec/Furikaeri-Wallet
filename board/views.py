@@ -631,8 +631,6 @@ def tag_search_api(request):
     return JsonResponse(list(qs), safe=False)
 
 
-
-
 # ==============================
 # コメント新規作成（新規・下書き編集のベース）
 # ==============================
@@ -646,15 +644,6 @@ def comment_save(request, topic_pk, pk=None):
     """
     topic = get_object_or_404(Topic, pk=topic_pk)
     comment = None
-
-    if pk is not None:
-        # 下書き編集：本人の下書きだけ取れる
-        comment = get_object_or_404(
-            Comment,
-            pk=pk,
-            user=request.user,
-            status=Comment.CommentStatus.DRAFT,
-        )
 
     if request.method == "POST":
         form = CommentForm(request.POST, instance=comment)
@@ -688,10 +677,8 @@ def comment_save(request, topic_pk, pk=None):
             if action == "draft":
                 # sequence はまだ採番しない（公開時に採番）
                 if obj.pk is None:
-                    obj.sequence = 0  # 仮置き（公開時に上書きされる）
-
-                obj.status = Comment.CommentStatus.DRAFT
-                obj.save()
+                    obj.status = Comment.CommentStatus.DRAFT
+                    obj.save()
                 return redirect("board:mypage_drafts")
 
             # ── 確認画面へ ──────────────────────────
@@ -699,7 +686,6 @@ def comment_save(request, topic_pk, pk=None):
                 # 新規の場合は一旦 DRAFT で保存してから確認画面へ
                 # （トピックの topic_save と同じ方式）
                 if obj.pk is None:
-                    obj.sequence = 0  # 仮置き
                     obj.status = Comment.CommentStatus.DRAFT
                     obj.save()
                 else:
@@ -713,13 +699,20 @@ def comment_save(request, topic_pk, pk=None):
                 })
 
     else:
-        form = CommentForm(instance=comment)
+        prefill = request.session.pop("draft_comment_prefill", None)
+        if prefill:
+            form = CommentForm(initial={
+                "text": prefill.get("text", ""),
+                "reply_to": prefill.get("reply_to"),
+            })
+        else:
+            form = CommentForm()
 
     return render(request, "board/comment_form.html", {
         "form": form,
         "topic": topic,
         "comment": comment,
-        "mode": "create" if pk is None else "draft_edit",
+        "mode": "create",
         "show_draft_button": True,
     })
 

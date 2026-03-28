@@ -30,7 +30,6 @@ urlpatterns = [
   
     # コメント（新規作成・下書き編集は comment_save に統合）
     path("topics/<int:topic_pk>/comments/new/",views.comment_save,name="comment_save_new"),#コメント作成
-    path("topics/<int:topic_pk>/comments/<int:pk>/draft/edit/",views.comment_save,name="comment_save_edit"),#コメント編集（下書き）
     path("comments/<int:pk>/confirm/",views.comment_confirm,name="comment_confirm"),#コメント確認
     path("comments/<int:pk>/edit/",views.comment_edit,name="comment_edit"),#コメント編集（公開済み）
     
