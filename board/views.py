@@ -535,33 +535,28 @@ def topic_edit(request, pk):
 # ==============================
 
 @login_required
+@require_POST
 def topic_delete_request(request, pk):
+    from django.utils import timezone
+    import json
+
     topic = get_object_or_404(Topic, pk=pk, user=request.user)
 
-    if request.method == "POST":
-        reason = request.POST.get("reason", "").strip()
+    # 二重申請チェック
+    if topic.delete_request_status == Topic.DeleteRequestStatus.PENDING:
+        return JsonResponse({"status": "already_requested"})
 
-        if not reason:
-            return render(request, "board/topic_delete_confirm.html", {
-                "topic": topic,
-                "error": "削除の理由は必須です。",
-            })
+    reason = request.POST.get("reason", "").strip()
+    if not reason:
+        return JsonResponse({"status": "error", "message": "削除の理由は必須です。"})
 
-        # DBに保存
-        from django.utils import timezone
-        topic.delete_request_status = Topic.DeleteRequestStatus.PENDING
-        topic.delete_request_reason = reason
-        topic.delete_requested_at = timezone.now()
-        topic.save()
+    # 保存
+    topic.delete_request_status = Topic.DeleteRequestStatus.PENDING
+    topic.delete_request_reason = reason
+    topic.delete_requested_at = timezone.now()
+    topic.save()
 
-        return render(request, "board/topic_delete_requested.html", {
-            "topic": topic,
-        })
-
-    # GET：確認ページ
-    return render(request, "board/topic_delete_confirm.html", {
-        "topic": topic,
-    })
+    return JsonResponse({"status": "ok"})
 
 
 # ==============================

@@ -125,22 +125,33 @@
           （管理人に送信され、承認されると削除されます）
         </div>
 
-        <form method="post" action="{% url 'board:topic_delete_request' topic.id %}">
-          {% csrf_token %}
-          <input type="text" name="reason" placeholder="削除の理由（必須）"
-                 style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
-
+        <!-- 入力エリア（初期表示） -->
+        <div id="deleteModalInput">
+          <input type="text" id="deleteReason" placeholder="削除の理由（必須）"
+                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box;">
+          <div id="deleteReasonError" style="color:#c00; font-size:12px; margin-top:6px; display:none;">
+            削除の理由は必須です。
+          </div>
           <div style="display:flex; gap:10px; margin-top:14px;">
             <button type="button" onclick="closeDeleteRequestModal()"
                     style="flex:1; padding:10px; border:1px solid #bbb; border-radius:8px; background:#eee;">
               いいえ
             </button>
-            <button type="submit"
-                    style="flex:1; padding:10px; border:none; border-radius:8px; background:#b85c5c; color:#fff; font-weight:bold;">
+            <button type="button" onclick="submitDeleteRequest()"
+                    style="flex:1; padding:10px; border:none; border-radius:8px; background:#d66a5e; color:#fff; font-weight:bold;">
               はい
             </button>
           </div>
-        </form>
+        </div>
+
+        <!-- 送信後メッセージ（初期は非表示） -->
+        <div id="deleteModalResult" style="display:none; text-align:center; padding:8px 0;">
+          <div id="deleteModalResultText" style="margin-bottom:14px; color:#333;"></div>
+          <button type="button" onclick="closeDeleteRequestModal()"
+                  style="padding:10px 24px; border:1px solid #bbb; border-radius:8px; background:#eee;">
+            閉じる
+          </button>
+        </div>  
       </div>
 
     </div>
@@ -152,6 +163,51 @@
     }
     function closeDeleteRequestModal() {
       document.getElementById("deleteModal").style.display = "none";
+        if (document.getElementById("deleteModalResult").style.display === "block") {
+          window.location.href = "{% url 'board:mypage_topics' %}";
+        }
+    }
+    async function submitDeleteRequest() {
+      const reason = document.getElementById("deleteReason").value.trim();
+      const errorEl = document.getElementById("deleteReasonError");
+
+      // バリデーション
+      if (!reason) {
+        errorEl.style.display = "block";
+        return;
+      }
+      errorEl.style.display = "none";
+
+      const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+      const res = await fetch("{% url 'board:topic_delete_request' topic.id %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
+        },
+        body: "reason=" + encodeURIComponent(reason),
+      });
+
+      const data = await res.json();
+
+      // 入力エリアを隠してメッセージを表示
+      document.getElementById("deleteModalInput").style.display = "none";
+      document.getElementById("deleteModalResult").style.display = "block";
+
+      if (data.status === "ok") {
+        document.getElementById("deleteModalResultText").textContent =
+          "管理人に削除を要請しました。";
+      } else if (data.status === "already_requested") {
+        document.getElementById("deleteModalResultText").textContent =
+          "削除要請済みです。管理人の対応をお待ちください。";
+      } else {
+        document.getElementById("deleteModalResultText").textContent =
+          data.message || "エラーが発生しました。";
+        // エラーのときは入力に戻す
+        document.getElementById("deleteModalInput").style.display = "block";
+        document.getElementById("deleteModalResult").style.display = "none";
+      }
     }
   </script>
 {% endif %}
