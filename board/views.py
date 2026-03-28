@@ -341,6 +341,8 @@ def topic_confirm(request, pk):
                 topic.board_category = session_data["board_category"]
                 topic.status = Topic.TopicStatus.PUBLIC
                 topic.save()
+                if topic.published_at is None:  # 初回公開のときだけセット
+                    topic.published_at = timezone.now()
                 topic.tags.set(Tag.objects.filter(pk__in=session_data["tags"]))
                 del request.session["topic_confirm_data"]
                 return redirect("board:topic_detail", pk=topic.pk)
@@ -405,6 +407,8 @@ def topic_confirm_session(request):
         topic.text = session_data["text"]
         topic.board_category = session_data["board_category"]
         topic.status = Topic.TopicStatus.PUBLIC
+        if topic.published_at is None:  # 初回公開のときだけセット
+                    topic.published_at = timezone.now()
         topic.save()
         topic.tags.set(Tag.objects.filter(pk__in=session_data["tags"]))
         del request.session["topic_confirm_data"]
@@ -511,6 +515,13 @@ def topic_edit(request, pk):
                 obj = form.save(commit=False)
                 obj.save()
                 form.save_m2m()
+                request.session["topic_confirm_data"] = {
+                    "pk": obj.pk,
+                    "title": obj.title,
+                    "text": obj.text,
+                    "board_category": obj.board_category,
+                    "tags": list(form.cleaned_data.get("tags", []).values_list("id", flat=True)),
+                }
                 return render(request, "board/topic_confirm.html", {
                     "form": form,
                     "topic": obj,

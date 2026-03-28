@@ -35,6 +35,7 @@ class Topic(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
     
     tags = models.ManyToManyField(
     "Tag",
@@ -114,6 +115,7 @@ class Comment(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "comments"
