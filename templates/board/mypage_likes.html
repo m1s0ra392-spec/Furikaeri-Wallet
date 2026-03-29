@@ -7,24 +7,27 @@
 {# ===== いいねしたトピック ===== #}
 {% if liked_topics %}
   {% for t in liked_topics %}
-    <a href="{% url 'board:topic_detail' t.id %}"
-       style="display:block; text-decoration:none; color:inherit;
-              border-bottom:1px solid #e0e0e0; padding:10px 0;">
-
-      {# タイトル #}
-      <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">
-        ○{{ t.title }}
-      </div>
-
-      {# カテゴリ・コメント数・いいね数・日付 #}
-      <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
-        <span>{{ t.get_board_category_display }}</span>
-          <span>💬 {{ t.comment_count }}</span>  
-          <span>❤ {{ t.like_count }}</span> 
-        <span>{{ t.created_at|date:"Y年n月j日" }}</span>
-      </div>
-
-    </a>
+    <div style="display:flex; align-items:center;
+                border-bottom:1px solid #e0e0e0; padding:10px 0;">
+      <a href="{% url 'board:topic_detail' t.id %}"
+        style="flex:1; text-decoration:none; color:inherit;">
+              <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">
+          ○{{ t.title }}
+        </div>
+        <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
+          <span>{{ t.get_board_category_display }}</span>｜
+          <span>
+            {% if t.published_at %}
+              {{ t.published_at|date:"Y年n月j日" }}
+            {% else %}
+              {{ t.created_at|date:"Y年n月j日" }}
+            {% endif %}
+          </span>
+          <span>💬 {{ t.comment_count }}</span>
+          <span>❤ {{ t.like_count }}</span>
+        </div>
+      </a>
+    </div>    
   {% endfor %}
 {% else %}
   <div style="color:#999; font-size:13px; padding:12px 0;">
@@ -37,22 +40,19 @@
   {#　is_deleted のものはスキップ #}
   {% for c in liked_comments %}
     {% if not c.is_deleted %}
-    <a href="{% url 'board:topic_detail' c.topic_id %}"
-       style="display:block; text-decoration:none; color:inherit;
+    <div style="display:flex; align-items:center;
               border-bottom:1px solid #e0e0e0; padding:10px 0;">
-
-      {# コメント本文（30文字で切る） #}
+    <a href="{% url 'board:topic_detail' c.topic_id %}"
+        style="flex:1; text-decoration:none; color:inherit;">
       <div style="font-size:13px; color:#444; margin-bottom:4px;">
         {{ c.text|truncatechars:30 }}
       </div>
-
-      {# 日付・ハート #}
       <div style="font-size:12px; color:#888; display:flex; align-items:center; gap:6px;">
         <span>{{ c.created_at|date:"Y年n月j日" }}</span>
         <span style="color:#e05555;">❤</span>
       </div>
-
     </a>
+  </div> 
     {% endif %}
   {% endfor %}
 {% else %}

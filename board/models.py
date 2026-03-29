@@ -60,7 +60,7 @@ class Topic(models.Model):
 
     class Meta:
         db_table = "topics"  
-        ordering = ["-created_at"]  # とりあえず新着順（人気順は後で）
+        ordering = ["-published_at"]  # 新着順
 
     def __str__(self) -> str:
         return f"{self.title} ({self.get_board_category_display()})"

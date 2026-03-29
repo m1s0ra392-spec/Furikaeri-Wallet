@@ -8,20 +8,27 @@
   {% for topic, comments in grouped_comments %}
 
     {# ===== トピック行（タップでトピック詳細へ） ===== #}
-    <a href="{% url 'board:topic_detail' topic.id %}"
-       style="display:block; text-decoration:none; color:inherit;
+    <div style="display:flex; align-items:center;
               border-bottom:1px solid #e0e0e0; padding:10px 0;">
-
+    <a href="{% url 'board:topic_detail' topic.id %}"
+        style="flex:1; text-decoration:none; color:inherit;">
       <div style="font-size:14px; font-weight:bold; margin-bottom:4px;">
         ○{{ topic.title }}
       </div>
-
       <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
-        <span>{{ topic.get_board_category_display }}</span>
-        <span>{{ topic.created_at|date:"Y年n月j日" }}</span>
+        <span>{{ topic.get_board_category_display }}</span>｜
+        <span>
+          {% if topic.published_at %}
+            {{ topic.published_at|date:"Y年n月j日" }}
+          {% else %}
+            {{ topic.created_at|date:"Y年n月j日" }}
+          {% endif %}
+        </span>
+        <span>💬 {{ topic.comment_count }}</span>
+        <span>❤ {{ topic.like_count }}</span>
       </div>
-
     </a>
+  </div>
 
     {# ===== コメント行（トピックにぶら下がる） ===== #}
 {% for c in comments %}
@@ -43,7 +50,18 @@
          style="flex:1; text-decoration:none; color:inherit; font-size:13px;">
         <span style="color:#888; margin-right:4px;">#{{ c.sequence }}</span>{{ c.text|truncatechars:30 }}
         <div style="font-size:12px; color:#888; text-align:left; margin-top:2px;">
-          {{ c.created_at|date:"Y年n月j日" }}
+          {% if c.published_at %}
+            {{ c.published_at|date:"Y年n月j日" }}
+            {% if c.updated_at|date:"Ymd" > c.published_at|date:"Ymd" %}
+              （更新: {{ c.updated_at|date:"Y年n月j日" }}）
+            {% endif %}
+          {% else %}
+            {{ c.created_at|date:"Y年n月j日" }}
+            {% if c.updated_at|date:"Ymd" > c.created_at|date:"Ymd" %}
+              （更新: {{ c.updated_at|date:"Y年n月j日" }}）
+            {% endif %}
+          {% endif %}  
+          <span style="margin-left:6px;">❤ {{ c.like_count }}</span>
         </div>
       </a>
 

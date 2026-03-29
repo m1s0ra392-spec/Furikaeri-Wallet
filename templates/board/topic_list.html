@@ -161,9 +161,17 @@
           {{ topic.title }}
         </a>
         <div class="topic-meta">
-          {{ topic.get_board_category_display }} ｜ {{ topic.published_at|date:"Y/m/d" }}
-          {% if topic.updated_at|date:"Ymd" > topic.published_at|date:"Ymd" %}
-            <span style="color:#aaa;">（更新: {{ topic.updated_at|date:"Y/m/d" }}）</span>
+          {{ topic.get_board_category_display }} ｜
+          {% if topic.published_at %}
+            {{ topic.published_at|date:"Y/m/d" }}
+            {% if topic.updated_at|date:"Ymd" > topic.published_at|date:"Ymd" %}
+              <span style="color:#aaa;">（更新: {{ topic.updated_at|date:"Y/m/d" }}）</span>
+            {% endif %}
+          {% else %}
+            {{ topic.created_at|date:"Y/m/d" }}
+            {% if topic.updated_at|date:"Ymd" > topic.created_at|date:"Ymd" %}
+              <span style="color:#aaa;">（更新: {{ topic.updated_at|date:"Y/m/d" }}）</span>
+            {% endif %}
           {% endif %}
         </div>
         <div class="topic-footer" style="display:flex; align-items:center; gap:10px; font-size:12px; color:#888;">

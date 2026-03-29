@@ -21,7 +21,7 @@ class TopicTagInline(admin.TabularInline):
 class TopicAdmin(admin.ModelAdmin):
     list_display = (
         "id", "title", "board_category", "status",
-        "delete_request_status", "delete_request_reason", "user", "created_at"  
+        "delete_request_status", "delete_request_reason", "user", "created_at","published_at","updated_at"  
     )
     list_filter = ("board_category", "status", "delete_request_status")  
     search_fields = ("title", "text")

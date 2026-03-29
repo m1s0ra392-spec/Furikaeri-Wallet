@@ -173,12 +173,21 @@
   <div class="topic-footer">
 
     <span>
-      {{ comment_count }}コメント ｜ {{ topic.published_at|date:"Y年m月d日" }}
-      {% if topic.updated_at|date:"Ymd" > topic.published_at|date:"Ymd" %}
-        <span style="color:#aaa; font-size:11px;">（更新: {{ topic.updated_at|date:"Y年m月d日" }}）</span>
+      {{ comment_count }}コメント ｜
+      {% if topic.published_at %}
+        {{ topic.published_at|date:"Y年m月d日" }}
+        {% if topic.updated_at|date:"Ymd" > topic.published_at|date:"Ymd" %}
+          <span style="color:#aaa; font-size:11px;">（更新: {{ topic.updated_at|date:"Y年m月d日" }}）</span>
+        {% endif %}
+      {% else %}
+        {{ topic.created_at|date:"Y年m月d日" }}
+        {% if topic.updated_at|date:"Ymd" > topic.created_at|date:"Ymd" %}
+          <span style="color:#aaa; font-size:11px;">（更新: {{ topic.updated_at|date:"Y年m月d日" }}）</span>
+        {% endif %}
       {% endif %}
     </span>
     <div style="display:flex; align-items:center; gap:4px;">
+
       {# 自分のトピックだけ編集を表示 #}
       {% if topic.user == request.user %}
         <div style="margin-top:8px;">
@@ -255,7 +264,19 @@
       </button>
     </form>
     <span style="font-size:12px; color:#888;">{{ c.like_count }}</span>
-    <span style="font-size:12px; color:#aaa; margin-left:8px;">{{ c.created_at|date:"Y年m月d日" }}</span>
+    <span style="font-size:12px; color:#aaa; margin-left:8px;">
+        {% if c.published_at %}
+          {{ c.published_at|date:"Y年m月d日" }}
+          {% if c.updated_at|date:"Ymd" > c.published_at|date:"Ymd" %}
+            （更新: {{ c.updated_at|date:"Y年m月d日" }}）
+          {% endif %}
+        {% else %}
+          {{ c.created_at|date:"Y年m月d日" }}
+          {% if c.updated_at|date:"Ymd" > c.created_at|date:"Ymd" %}
+            （更新: {{ c.updated_at|date:"Y年m月d日" }}）
+          {% endif %}
+        {% endif %}
+      </span>  
   </div>
 </div>
 {% empty %}

@@ -31,7 +31,7 @@ def board_intro(request):
 @login_required
 def topic_list(request):
     category = request.GET.get("category")
-    sort = request.GET.get("sort", "new")
+    sort = request.GET.get("sort", "popular")
     period = request.GET.get("period", "")
 
     qs = (
@@ -52,7 +52,7 @@ def topic_list(request):
 
     # カテゴリ絞り込み
     if is_category_page:
-        qs = qs.order_by("-like_count", "-comment_like_count", "-created_at")
+        qs = qs.order_by("-like_count", "-comment_like_count", "-updated_at")
 
         # 期間フィルター
         if period:
@@ -66,22 +66,22 @@ def topic_list(request):
             }
             if period in period_map:
                 since = timezone.now() - period_map[period]
-                qs = qs.filter(created_at__gte=since)
+                qs = qs.filter(updated_at__gte=since)
 
         # 並び替え
         if sort == "popular":
-            qs = qs.order_by("-like_count", "-created_at")
+            qs = qs.order_by("-like_count", "-updated_at")
         elif sort == "comments":
-            qs = qs.order_by("-comment_count", "-created_at")
+            qs = qs.order_by("-comment_count", "-updated_at")
         else:
-            qs = qs.order_by("-created_at")
+            qs = qs.order_by("-updated_at")
 
     # トップ（全カテゴリ）
     else:
         if sort == "new":
-            qs = qs.order_by("-created_at")
+            qs = qs.order_by("-updated_at")
         else:
-            qs = qs.order_by("-created_at")
+            qs = qs.order_by("-like_count", "-updated_at")
         qs = qs[:20]
 
     context = {
@@ -160,15 +160,15 @@ def topic_search(request):
         }
         if period in period_map:
             since = timezone.now() - period_map[period]
-            qs = qs.filter(created_at__gte=since)
+            qs = qs.filter(updated_at__gte=since)
 
     # 並び替え
     if sort == "popular":
-        qs = qs.order_by("-like_count", "-created_at")
+        qs = qs.order_by("-like_count", "-updated_at")
     elif sort == "comments":
-        qs = qs.order_by("-comment_count", "-created_at")
+        qs = qs.order_by("-comment_count", "-updated_at")
     else:
-        qs = qs.order_by("-created_at")  # デフォルト：新着順
+        qs = qs.order_by("-updated_at")  # デフォルト：新着順
 
     context = {
         "topics": qs,
@@ -764,6 +764,8 @@ def comment_confirm(request, pk):
             if form.is_valid():
                 obj = form.save(commit=False)
                 obj.status = Comment.CommentStatus.PUBLIC
+                if obj.published_at is None:   # 初回公開のときだけセット
+                    obj.published_at = timezone.now()
 
                 # 公開時に初めて sequence を採番
                 max_seq = Comment.objects.filter(
@@ -965,7 +967,7 @@ def mypage_likes(request):
             like_count=Count("likes", distinct=True),       
             comment_count=Count("comments", distinct=True), 
         )
-        .order_by("-likes__created_at")
+        .order_by("-likes__updated_at")
         .distinct() #重複対策
     )
 
@@ -995,7 +997,7 @@ def mypage_topics(request):
             like_count=Count("likes", distinct=True),        
             comment_count=Count("comments", distinct=True),  
         )
-        .order_by("-created_at")
+        .order_by("-published_at")
     )
 
     return render(request, "board/mypage_topics.html", {
@@ -1015,7 +1017,7 @@ def mypage_comments(request):
         .annotate(
             like_count=Count("likes", distinct=True),  
         )
-        .order_by("topic__id", "-created_at")  # ← トピックでまとまるように並び替え
+        .order_by("topic__id", "-published_at")  # ← トピックでまとまるように並び替え
     )
 
     # トピックごとにグループ化

@@ -21,9 +21,17 @@
 
         <div style="font-size:12px; color:#888; display:flex; gap:10px; flex-wrap:wrap;">
           {{ t.get_board_category_display }} ｜ {{ t.published_at|date:"Y/m/d" }}
-          {% if topic.updated_at|date:"Ymd" > topic.published_at|date:"Ymd" %}
-            <span>（更新: {{ t.updated_at|date:"Y/m/d" }}）</span>
-          {% endif %}
+           {% if topic.published_at %}
+              {{ topic.published_at|date:"Y年m月d日" }}
+              {% if topic.updated_at|date:"Ymd" > topic.published_at|date:"Ymd" %}
+                <span style="color:#aaa; font-size:11px;">（更新: {{ topic.updated_at|date:"Y年m月d日" }}）</span>
+              {% endif %}
+            {% else %}
+              {{ topic.created_at|date:"Y年m月d日" }}
+              {% if topic.updated_at|date:"Ymd" > topic.created_at|date:"Ymd" %}
+                <span style="color:#aaa; font-size:11px;">（更新: {{ topic.updated_at|date:"Y年m月d日" }}）</span>
+              {% endif %}
+            {% endif %} 
           <span>💬 {{ t.comment_count }}</span>
           <span>❤ {{ t.like_count }}</span>
         </div>
