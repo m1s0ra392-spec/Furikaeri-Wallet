@@ -41,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'furikaeri-wallet_project.urls'
+ROOT_URLCONF = 'furikaeri_wallet_project.urls'
 
 TEMPLATES = [
     {
@@ -58,7 +58,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'furikaeri-wallet_project.wsgi.application'
+WSGI_APPLICATION = 'furikaeri_wallet_project.wsgi.application'
 
 
 # Database
