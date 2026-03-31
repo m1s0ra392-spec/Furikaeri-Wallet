@@ -7,7 +7,7 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 
-                           'furikaeri-wallet_project.settings'
+                           'furikaeri_wallet_project.settings'
     )
 
     try:
