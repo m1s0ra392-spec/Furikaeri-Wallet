@@ -115,9 +115,9 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"  # ログアウト後
 LOGIN_URL = "/accounts/login/"
 
 
-# ===== 開発用メール設定（コンソールに出す） =====
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+# ===== 開発用メール設定 =====
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = BASE_DIR / "tmp_emails"
 
 # ↓ これを追加するとBase64にならず日本語で表示される
 EMAIL_CHARSET = 'utf-8'

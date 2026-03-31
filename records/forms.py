@@ -7,7 +7,7 @@ class RecordForm(forms.ModelForm):
         model = Record
         fields = ["category", "amount", "date", "memo"]
         widgets = {
-            "date": forms.DateInput(attrs={"type": "date"}),
+            "date": forms.DateInput(attrs={"type": "date", "class": "form-control" }),
             "memo": forms.Textarea(attrs={
                 "placeholder": "※メモは200文字以内で入力してください\n例：ニュースサイトで獲得した200円クーポンを利用",
                 "rows": 3,

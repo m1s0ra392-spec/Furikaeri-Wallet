@@ -22,18 +22,20 @@
   </div>
 
   <!-- アドバイス＋画像 横並び -->
-  <div class="d-flex align-items-center gap-3 mb-4">
+<div class="d-flex align-items-center gap-3 mb-4">
 
-    {% if advice %}
-      <div class="alert alert-success mb-0" role="alert" style="flex: 1;">
-        {{ advice.message }}
-      </div>
-    {% endif %}
+  {% if advice %}
+    <div class="alert alert-success mb-0" role="alert" style="flex: 1; min-width: 0;">
+      {{ advice.message }}
+    </div>
+  {% else %}
+    <div style="flex: 1;"></div>
+  {% endif %}
 
-    <img src="{% static 'images/wallet.png' %}" alt="お財布"
-         style="height: 120px; width: 120px; object-fit: contain; flex-shrink: 0;">
+  <img src="{% static 'images/wallet.png' %}" alt="お財布"
+       style="height: 120px; width: 120px; object-fit: contain; flex-shrink: 0;">
 
-  </div>
+</div> 
 
   <!-- 記録するボタン -->
   <div class="d-grid">

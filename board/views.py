@@ -52,6 +52,7 @@ def topic_list(request):
 
     # カテゴリ絞り込み
     if is_category_page:
+        qs = qs.filter(board_category=category)
         qs = qs.order_by("-like_count", "-comment_like_count", "-updated_at")
 
         # 期間フィルター
