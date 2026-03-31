@@ -107,10 +107,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 AUTH_USER_MODEL='users.User'
 
-LOGIN_REDIRECT_URL = "/records/"     # ログイン後に飛ばしたい先（仮）ホームができたらホームへ
+LOGIN_REDIRECT_URL = "/records/"     # ログイン後に飛ばしたい先 ホームができたらホームへ
 LOGOUT_REDIRECT_URL = "/accounts/login/"  # ログアウト後
 LOGIN_URL = "/accounts/login/"
 
