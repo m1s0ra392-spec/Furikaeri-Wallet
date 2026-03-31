@@ -852,17 +852,17 @@ def comment_edit(request, pk):
 @require_POST
 @login_required
 def comment_delete(request, pk):
-    """
-    投稿済みコメントの論理削除。
-    他ユーザーの返信が残るため物理削除ではなく is_deleted=True にする。
-    """
     comment = get_object_or_404(Comment, pk=pk, user=request.user)
     from django.utils import timezone
+    from django.http import JsonResponse
     comment.is_deleted = True
     comment.deleted_at = timezone.now()
     comment.deleted_by = request.user
     comment.save()
-    return redirect("board:mypage_comments")  
+    # fetchからの呼び出し（Ajaxリクエスト）にも通常POSTにも対応
+    if request.headers.get("Content-Type") == "application/json":
+        return JsonResponse({"status": "ok"})
+    return redirect("board:mypage_comments") 
 
 
 # ==============================

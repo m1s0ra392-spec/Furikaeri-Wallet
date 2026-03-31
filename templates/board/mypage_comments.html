@@ -65,16 +65,10 @@
         </div>
       </a>
 
-      <form method="post" action="{% url 'board:comment_delete' c.id %}"
-            style="flex-shrink:0;"
-            onsubmit="return confirm('このコメントを削除しますか？');">
-        {% csrf_token %}
-        <button type="submit"
-                style="border:none; background:transparent; cursor:pointer; font-size:16px; color:#aaa;">
-          🗑️
-        </button>
-      </form>
-
+      <button onclick="openDeleteModal({{ c.id }})"
+          style="border:none; background:transparent; cursor:pointer; font-size:16px; color:#aaa; flex-shrink:0;">
+        🗑️
+      </button>
     {% endif %}
 
   </div>
@@ -85,5 +79,71 @@
 {% else %}
   <p style="color:#666; padding:12px 0;">まだコメントはありません。</p>
 {% endif %}
+
+<div id="deleteModal"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.4); z-index:999; justify-content:center; align-items:center;">
+  <div style="background:white; border-radius:12px; padding:24px; max-width:320px; width:90%;">
+    <p style="font-weight:bold; margin-bottom:8px;">このコメントを削除しますか？</p>
+
+    <div id="deleteResult" style="display:none; color:#5a7a5a; margin-bottom:12px;">削除しました</div>
+
+    <div id="modalButtons" style="display:flex; gap:10px;">
+      <button onclick="doDelete()"
+              style="flex:1; padding:10px; background:#b85c5c; color:white;
+                     border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+        はい
+      </button>
+      <button onclick="closeDeleteModal()"
+              style="flex:1; padding:10px; background:white; color:#333;
+                     border:1px solid #ccc; border-radius:10px; cursor:pointer;">
+        いいえ
+      </button>
+    </div>
+
+    <div id="closeAfterDelete" style="display:none; margin-top:12px;">
+      <button onclick="location.reload()"
+              style="width:100%; padding:10px; border:1px solid #ccc;
+                     border-radius:10px; cursor:pointer; background:white;">
+        閉じる
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let targetCommentId = null;
+
+function openDeleteModal(commentId) {
+  targetCommentId = commentId;
+  document.getElementById("deleteResult").style.display = "none";
+  document.getElementById("modalButtons").style.display = "flex";
+  document.getElementById("closeAfterDelete").style.display = "none";
+  document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeleteModal() {
+  document.getElementById("deleteModal").style.display = "none";
+}
+
+function doDelete() {
+  if (!targetCommentId) return;
+  fetch("/board/comments/" + targetCommentId + "/delete/", {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": "{{ csrf_token }}",
+      "Content-Type": "application/json",
+    },
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "ok") {
+      document.getElementById("modalButtons").style.display = "none";
+      document.getElementById("deleteResult").style.display = "block";
+      document.getElementById("closeAfterDelete").style.display = "block";
+    }
+  });
+}
+</script>
 
 {% endblock %}
