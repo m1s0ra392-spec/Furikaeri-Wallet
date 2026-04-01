@@ -12,8 +12,15 @@ from .forms import RecordForm
 from .models import Record, RecordCategory
 from .services import get_home_advice
 
+from django.views.generic import TemplateView
 
 
+
+# ==============================
+# ポートフォリオページ
+# ==============================
+class PortfolioView(TemplateView):
+    template_name = "portfolio.html"
 
 # ==============================
 # 分析画面で使う集計ロジック

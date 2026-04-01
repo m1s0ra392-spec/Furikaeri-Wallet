@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>作品No.1 ふりかえり財布 | 守田ちはる</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #3a7d58;
+    --green-light: #e8f5ee;
+    --green-mid: #6aab85;
+    --accent: #f0c040;
+    --text: #2a2a2a;
+    --text-sub: #666;
+    --border: #d4e8db;
+    --bg: #f7fbf8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 48px 16px 80px;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .work-label {
+    display: inline-block;
+    background: var(--green);
+    color: #fff;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    padding: 4px 16px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .title-ja {
+    font-family: 'Shippori Mincho', serif;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 700;
+    color: var(--green);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+
+  .title-en {
+    font-size: 13px;
+    color: var(--text-sub);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+
+  .author {
+    font-size: 14px;
+    color: var(--text-sub);
+  }
+
+  .screenshot-area {
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 36px;
+    box-shadow: 0 4px 20px rgba(58,125,88,0.08);
+  }
+
+  .screenshot-placeholder {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, var(--green-light) 0%, #d0eada 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--green);
+  }
+
+  .screenshot-placeholder .icon { font-size: 48px; }
+  .screenshot-placeholder p { font-size: 14px; color: var(--green-mid); }
+
+  .section { margin-bottom: 32px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--green-light);
+  }
+
+  .description { font-size: 15px; line-height: 1.85; color: var(--text); }
+
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .link-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(58,125,88,0.05);
+  }
+
+  .link-card:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(58,125,88,0.12);
+  }
+
+  .link-card .link-icon { font-size: 20px; flex-shrink: 0; }
+
+  .cta-area { text-align: center; }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--green);
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 40px;
+    border-radius: 50px;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(58,125,88,0.3);
+  }
+
+  .cta-btn:hover {
+    background: #2d6347;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(58,125,88,0.35);
+  }
+
+  .cta-btn .arrow { font-size: 18px; transition: transform 0.2s; }
+  .cta-btn:hover .arrow { transform: translateX(4px); }
+
+  .divider {
+    text-align: center;
+    color: var(--border);
+    font-size: 20px;
+    margin: 28px 0;
+    letter-spacing: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="title-ja">ふりかえり財布</div>
+    <div class="title-en">Furikaeri Wallet</div>
+    <div class="author">守田　ちはる</div>
+  </div>
+
+  <div class="screenshot-area">
+    <div class="screenshot-placeholder">
+      <div class="icon">📱</div>
+      <p>アプリのスクリーンショットをここに挿入してください</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">アプリ概要</div>
+    <p class="description">
+      日常の「得した工夫」や「ちょっとした損」を気軽に記録できるアプリです。<br>
+      家計簿のような細かい管理は不要で、行動の気づきをシンプルに振り返れます。<br>
+      カレンダーやグラフ表示、軽い自己還元の提案、掲示板機能で前向きなお金の使い方をサポートします。
+    </p>
+  </div>
+
+  <div class="divider">· · ·</div>
+
+  <div class="section">
+    <div class="section-label">資料</div>
+    <div class="links-grid">
+      <a class="link-card" href="https://docs.google.com/document/d/1TZ1Ra3LD3d_1LBmbUBLKkJ1XYvNjWkppIMkh-govQ78/edit?tab=t.0" target="_blank">
+        <span class="link-icon">📄</span>
+        <span>企画書</span>
+      </a>
+      <a class="link-card" href="https://docs.google.com/presentation/d/1agworE4TOjGAfw7zkk-l80nRP0__aAZ8KXzxRuYVZkw/edit?slide=id.g26850c99da4_0_9#slide=id.g26850c99da4_0_9" target="_blank">
+        <span class="link-icon">🖼️</span>
+        <span>画面設計図</span>
+      </a>
+      <a class="link-card" href="https://app.diagrams.net/#G10yDnrrRmvN4jdqQTDXdAv-F0kESKekBm#%7B%22pageId%22%3A%22_UdLt9urnN4Yq2PQmnJB%22%7D" target="_blank">
+        <span class="link-icon">🗺️</span>
+        <span>画面遷移図</span>
+      </a>
+      <a class="link-card" href="https://app.diagrams.net/#G1XJBZqsSSUOQ41P956XupSEIbyXL_Up7-#%7B%22pageId%22%3A%22H_FPHYAX3gzmHUN7RzP6%22%7D" target="_blank">
+        <span class="link-icon">🗄️</span>
+        <span>ER図</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="cta-area">
+    <a class="cta-btn" href="https://m1s0ra392.pythonanywhere.com/records/" target="_blank">
+      アプリへ
+      <span class="arrow">→</span>
+    </a>
+  </div>
+
+</div>
+</body>
+</html>

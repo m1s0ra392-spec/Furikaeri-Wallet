@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from users.views import PasswordResetCompleteToLoginView
+from records.views import PortfolioView
 
 
 urlpatterns = [
@@ -21,4 +22,6 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("records/", include(("records.urls", "records"), namespace="records")),
     path("board/", include("board.urls")),
+    
+    path('', PortfolioView.as_view(), name='portfolio'),#ポートフォリオページ
 ]

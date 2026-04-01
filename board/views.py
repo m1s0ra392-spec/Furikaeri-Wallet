@@ -68,7 +68,12 @@ def topic_list(request):
 
         # 並び替え
         if sort == "popular":
-            qs = qs.order_by("-like_count", "-updated_at")
+            qs = qs.annotate(
+                total_like_count=ExpressionWrapper(
+                    F("like_count") + F("comment_like_count"),
+                    output_field=IntegerField()
+                )
+            ).order_by("-total_like_count", "-updated_at")
         elif sort == "comments":
             qs = qs.order_by("-comment_count", "-updated_at")
         else:
