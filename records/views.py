@@ -13,14 +13,21 @@ from .models import Record, RecordCategory
 from .services import get_home_advice
 
 from django.views.generic import TemplateView
+from django.shortcuts import redirect
 
 
 
 # ==============================
-# ポートフォリオページ
+# ポートフォリオページ用
 # ==============================
 class PortfolioView(TemplateView):
     template_name = "portfolio.html"
+
+def furikaeri_wallet_redirect(request):
+    if request.user.is_authenticated:
+        return redirect('records')  # ホーム画面
+    else:
+        return redirect('login')  # ログイン画面
 
 # ==============================
 # 分析画面で使う集計ロジック

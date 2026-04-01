@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -185,10 +186,11 @@
     <div class="author">守田　ちはる</div>
   </div>
 
-  <div class="screenshot-area">
-    <div class="screenshot-placeholder">
-      <div class="icon">📱</div>
-      <p>アプリのスクリーンショットをここに挿入してください</p>
+   <div class="screenshot-area" style="padding: 20px;">
+    <div style="display: flex; gap: 12px; justify-content: center; align-items: flex-start;">
+      <img src="{% static 'images/portfolio1.jpg' %}" alt="スクリーンショット1" style="width: 32%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+      <img src="{% static 'images/portfolio2.jpg' %}" alt="スクリーンショット2" style="width: 32%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+      <img src="{% static 'images/portfolio3.jpg' %}" alt="スクリーンショット3" style="width: 32%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
     </div>
   </div>
 
@@ -226,7 +228,7 @@
   </div>
 
   <div class="cta-area">
-    <a class="cta-btn" href="https://m1s0ra392.pythonanywhere.com/records/" target="_blank">
+    <a class="cta-btn" href="/furikaeri_wallet/" target="_blank">
       アプリへ
       <span class="arrow">→</span>
     </a>

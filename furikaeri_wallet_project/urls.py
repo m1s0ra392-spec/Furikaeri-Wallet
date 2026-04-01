@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from users.views import PasswordResetCompleteToLoginView
-from records.views import PortfolioView
+from records.views import PortfolioView , furikaeri_wallet_redirect
 
 
 urlpatterns = [
@@ -24,4 +24,5 @@ urlpatterns = [
     path("board/", include("board.urls")),
     
     path('', PortfolioView.as_view(), name='portfolio'),#ポートフォリオページ
+    path('furikaeri_wallet/', furikaeri_wallet_redirect, name='furikaeri_wallet'),#アプリページ
 ]
