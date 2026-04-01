@@ -2,14 +2,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db import models
-from django.db.models import Count, Max, Exists, OuterRef, Q
+from django.db.models import Count, Max, Exists, OuterRef, ExpressionWrapper, F, IntegerField
 from django.http import JsonResponse
-from django.contrib import messages
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from django.core.paginator import Paginator
-
-from collections import defaultdict
 
 from .models import Topic, Comment, TopicLike, CommentLike, Tag
 from .forms import TopicForm, CommentForm
@@ -82,7 +79,12 @@ def topic_list(request):
         if sort == "new":
             qs = qs.order_by("-updated_at")
         else:
-            qs = qs.order_by("-like_count", "-updated_at")
+            qs = qs.annotate(
+                total_like_count=ExpressionWrapper(
+                    F("like_count") + F("comment_like_count"),
+                    output_field=IntegerField()
+                )
+            ).order_by("-total_like_count", "-updated_at")
         qs = qs[:20]
 
     context = {
