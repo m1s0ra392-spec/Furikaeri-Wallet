@@ -1,22 +1,40 @@
 {% extends "base_board.html" %}
 {% block board_content %}
+<br>
+<br>
 <style>
-  .page-title { font-size: 20px; margin: 10px 0 14px; }
-  .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; max-width: 520px; }
-  .section-title { font-weight: 700; margin-bottom: 10px; }
-  .muted { color:#666; font-size:12px; }
-  .box { white-space: pre-wrap; border:1px solid #ccc; border-radius:10px; padding:10px; margin-top:8px; }
-  .btn-row { display:flex; gap:10px; margin-top:12px; }
-  .btn { padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700; }
-  .btn.sub { background:#fff; color:#5a7a5a; }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #5a7a5a;
+    background: #5a7a5a;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .btn.sub {
+    background: #fff;
+    color: #5a7a5a;
+  }
+  .box {
+    white-space: pre-wrap;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 4px;
+  }
 </style>
+<h2 style="font-size:18px; ...">トピック投稿確認</h2>
+<p>こちらの内容でよろしいですか？</p>
 
-<h1 class="page-title">コメント確認画面</h1>
 
-<div class="card">
-  <div class="section-title">この内容で投稿しますか？</div>
-
-  <div class="muted">返信番号（任意）</div>
+  <div style="margin:16px 0;">
+  <div><strong>返信番号（任意）</strong></div>
   <div class="box">{{ form.reply_to.value|default:"（なし）" }}</div>
 
   <div class="muted" style="margin-top:10px;">コメント本文</div>
@@ -30,8 +48,8 @@
     <input type="hidden" name="text" value="{{ form.text.value|default_if_none:'' }}">
 
     <div class="btn-row">
-      <button type="submit" name="action" value="back" class="btn sub">戻る</button>
       <button type="submit" name="action" value="post" class="btn">投稿する</button>
+      <button type="submit" name="action" value="back" class="btn sub">戻る</button>    
     </div>
   </form>
 </div>

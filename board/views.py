@@ -753,12 +753,11 @@ def comment_confirm(request, pk):
             if comment.status == Comment.CommentStatus.DRAFT:
                 # 下書き編集から来た場合
                 if comment.created_at != comment.updated_at:
-                    return redirect("board:comment_save_edit", topic_pk=topic.pk, pk=comment.pk)
+                    return redirect("board:draft_comment_edit", pk=comment.pk)
                 # 新規から来た場合
                 return redirect("board:comment_save_new", topic_pk=topic.pk)
             # 公開済みから来た場合
             return redirect("board:comment_edit", pk=comment.pk)
-
         # ── 投稿 ─────────────────────────────────
         if action == "post":
             form = CommentForm(request.POST, instance=comment)

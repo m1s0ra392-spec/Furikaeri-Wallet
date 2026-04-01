@@ -24,14 +24,11 @@
   <ul style="list-style:none; padding:0; margin:0 0 12px;">
     {% for c in gain_categories %}
     <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
-          {% if c.system_default == 0 and c.name != "その他" %}
-            {# ユーザー定義カテゴリ → チェックボックスあり #}
+          {% if c.name != "その他" %}
             <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="gain" style="margin-right:8px;">
           {% else %}
-            {# デフォルト or その他 → チェックボックスなし #}
             <span style="width:20px; margin-right:8px;"></span>
           {% endif %}
-
           <span style="flex:1;">{{ c.name }}</span>
 
           {% if c.name != "その他" %}
@@ -77,13 +74,11 @@
   <ul style="list-style:none; padding:0; margin:0 0 12px;">
     {% for c in loss_categories %}
     <li style="display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
-          {% if c.system_default == 0 and c.name != "その他" %}
-            {# ユーザー定義カテゴリ → チェックボックスあり #}
+          {% if c.name != "その他" %}
             <input type="checkbox" class="del-check" data-pk="{{ c.pk }}" data-type="loss" style="margin-right:8px;">
           {% else %}
-            {# デフォルト or その他 → チェックボックスなし #}
             <span style="width:20px; margin-right:8px;"></span>
-          {% endif %}
+          {% endif %}      
 
           <span style="flex:1;">{{ c.name }}</span>
 
