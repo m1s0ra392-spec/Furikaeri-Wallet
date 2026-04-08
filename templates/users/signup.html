@@ -10,39 +10,44 @@
     <!-- タイトル -->
     <h1 class="text-center mb-4" style="font-size: 1.3rem; color: #4a4a4a;">新規アカウント登録</h1>
 
-    <!-- エラーメッセージ -->
     {% if form.errors %}
-    <p class="text-center mb-3" style="color: #b85c5c; font-size: 0.85rem;">
-      入力内容に誤りがあります。各項目を確認してください。
-    </p>
+      <p class="error">未入力事項があります。各項目を確認してください。</p>
     {% endif %}
 
-    <!-- フォーム -->
     <form method="post">
       {% csrf_token %}
 
-      <div class="mb-3 d-flex flex-column align-items-center">
-        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">ユーザーネーム</label>
-        {% for error in form.username.errors %}
-          <p style="color: #b85c5c; font-size: 0.85rem; align-self: start;">{{ error }}</p>
-        {% endfor %}
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">ユーザーネーム</label><br>
         {{ form.username }}
+        {% for error in form.username.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
       </div>
 
-      <div class="mb-3 d-flex flex-column align-items-center">
-        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">メールアドレス</label>
+      <div class="field">
+        <label for="{{ form.email.id_for_label }}">メールアドレス</label><br>
         {{ form.email }}
+        {% for error in form.email.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
       </div>
 
-      <div class="mb-3 d-flex flex-column align-items-center">
-        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">パスワード</label>
+      <div class="field">
+        <label for="{{ form.password1.id_for_label }}">パスワード</label><br>
         {{ form.password1 }}
+        {% for error in form.password1.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
       </div>
 
-      <div class="mb-3 d-flex flex-column align-items-center">
-        <label class="form-label d-block align-self-start" style="font-size: 0.9rem;">パスワード再入力</label>
+      <div class="field">
+        <label for="{{ form.password2.id_for_label }}">パスワード再入力</label><br>
         {{ form.password2 }}
-      </div>
+        {% for error in form.password2.errors %}
+          <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>    
 
       <div class="d-grid mt-4">
         <button type="submit" class="btn"

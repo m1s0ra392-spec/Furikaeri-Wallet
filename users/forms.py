@@ -1,23 +1,50 @@
+import re
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User
 
 
 class SignUpForm(UserCreationForm):
-    email = forms.EmailField(required=True) 
-    
+    email = forms.EmailField(required=True)
+
     class Meta:
         model = User
         fields = ("username", "email", "password1", "password2")
-    
-    
+
     def clean_username(self):
-        username = self.cleaned_data["username"]
+        username = self.cleaned_data.get("username", "")
+        if len(username) < 2:
+            raise forms.ValidationError("ユーザーネームは2文字以上で設定してください")
         if User.objects.filter(username=username).exists():
-            raise forms.ValidationError(
-                "このユーザー名はすでに使われています。別の名前を入力してください。"
-            )
+            raise forms.ValidationError("このユーザーネームはすでに使われています")
         return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "")
+        # 全角文字チェック（全角英数字・全角@など）
+        if re.search(r'[^\x00-\x7F]', email):
+            raise forms.ValidationError("メールアドレスの形式が正しくありません")
+        # @の有無チェック（EmailFieldが通過させた場合の念のための確認）
+        if "@" not in email:
+            raise forms.ValidationError("メールアドレスの形式が正しくありません")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("このメールアドレスはすでに使われています")
+        return email
+
+    def clean_password1(self):
+        password = self.cleaned_data.get("password1", "")
+        if len(password) < 8:
+            raise forms.ValidationError("パスワードは8文字以上にしてください")
+        if not re.match(r'^[a-zA-Z0-9]+$', password):
+            raise forms.ValidationError("パスワードは英数字の組み合わせにしてください")
+        return password
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1", "")
+        password2 = self.cleaned_data.get("password2", "")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("パスワードが一致しません")
+        return password2
 
 
 class UsernameChangeForm(forms.ModelForm):
