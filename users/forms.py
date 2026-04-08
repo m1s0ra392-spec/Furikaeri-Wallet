@@ -35,6 +35,10 @@ class SignUpForm(UserCreationForm):
         password = self.cleaned_data.get("password1", "")
         if len(password) < 8:
             raise forms.ValidationError("パスワードは8文字以上にしてください")
+        if not re.search(r'[a-zA-Z]', password):
+            raise forms.ValidationError("パスワードは英字と数字を両方含めてください")
+        if not re.search(r'[0-9]', password):
+            raise forms.ValidationError("パスワードは英字と数字を両方含めてください")
         if not re.match(r'^[a-zA-Z0-9]+$', password):
             raise forms.ValidationError("パスワードは英数字の組み合わせにしてください")
         return password
