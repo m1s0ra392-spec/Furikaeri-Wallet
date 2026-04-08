@@ -49,6 +49,11 @@ class SignUpForm(UserCreationForm):
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("パスワードが一致しません")
         return password2
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.pop("size", None)
 
 
 class UsernameChangeForm(forms.ModelForm):
