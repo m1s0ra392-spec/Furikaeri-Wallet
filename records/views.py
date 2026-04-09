@@ -119,16 +119,17 @@ def record_create(request):
             record = form.save(commit=False)
             record.user = request.user
             record.save()
+            form = RecordForm()
             # 「続けて入力」ボタンが押された場合
             if request.POST.get("continue"):
-                form = RecordForm()   # フォームをリセット
-                saved = True          # モーダルを出す
+                saved = True
+                return_to_calendar = False  # ← カレンダーには戻らない
             else:
-                form = RecordForm()
-                saved = True  # モーダルを出す
-                return_to_calendar = True  # カレンダーへ戻るフラグ
+                saved = True
+                return_to_calendar = True
+         # バリデーションエラーの場合はformをそのまま使う
     else:
-        form = RecordForm()
+        form = RecordForm()        
     
     # タブ用にカテゴリを2種類に分けて渡す
     success_categories = RecordCategory.objects.filter(user=request.user, type=0)
@@ -213,22 +214,28 @@ def record_list(request):
 @login_required
 def record_update(request, pk):
     record = get_object_or_404(Record, pk=pk, user=request.user)
+    saved = False
+    return_to_calendar = False
 
     if request.method == "POST":
         form = RecordForm(request.POST, instance=record)
         if form.is_valid():
             form.save()
-            return redirect("records:record_list")
+            form = RecordForm(instance=record)
+            saved = True
+            return_to_calendar = True
     else:
         form = RecordForm(instance=record)
 
     return render(request, "records/record_form.html", {
         "form": form,
+        "saved": saved,
+        "return_to_calendar": return_to_calendar,
         "edit_category_type": record.category.type,
         "edit_category_id":   record.category.id,
         "success_categories": RecordCategory.objects.filter(user=request.user, type=0),
         "regret_categories":  RecordCategory.objects.filter(user=request.user, type=1),
-    })      
+    })
 
 
 #記録の削除

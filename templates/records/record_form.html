@@ -4,9 +4,13 @@
 <style>
   .page-title {
     font-size: 18px;
-    text-align: right;
-    margin: 10px 0 16px;
-    color: #333;
+    font-weight: bold;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .card {
@@ -111,23 +115,23 @@
     cursor: pointer;
   }
 </style>
-
-<h1 class="page-title">記録を追加</h1>
+<br>
+<div class="page-title">記録を追加</div>
 
 <!-- 保存完了モーダル -->
 {% if saved %}
   <div class="modal-overlay show" id="savedModal">
   <div class="modal-box">
     <p>記録を保存しました</p>
-    {% if return_to_calendar %}
-      <button onclick="location.href='{% url 'records:record_list' %}'">
-        閉じる
-      </button>
-    {% else %}
-      <button onclick="document.getElementById('savedModal').classList.remove('show')">
-        閉じる
-      </button>
-    {% endif %}
+  {% if return_to_calendar %}
+    <button onclick="location.href='{% url 'records:record_list' %}'">
+      閉じる
+    </button>
+  {% else %}
+    <button onclick="location.href='{% url 'records:record_create' %}'">
+      閉じる
+    </button>
+  {% endif %}  
   </div>
 </div>
 {% endif %}
@@ -191,15 +195,20 @@
       {% endfor %}
     </div>
 
-    <div class="btn-row">
-      <button class="btn" type="submit">保存</button>
+  <div class="btn-row">
+    <button class="btn" type="submit">保存</button>
+    {% if edit_category_id %}
+      <a class="btn sub" href="{% url 'records:record_list' %}" style="text-align:center; text-decoration:none;">戻る</a>
+    {% else %}
       <button class="btn sub" type="submit" name="continue" value="1">続けて入力</button>
-    </div>
+    {% endif %}
+  </div>
   </form>
 </div>
 
 <!--タブ切替時のカテゴリ表示分け-->
 <script>
+  // カテゴリデータ
   const categoryData = {
     0: [
       {% for cat in success_categories %}
@@ -246,6 +255,7 @@
   const initialCategoryId = {{ edit_category_id|default:"null" }};
 
   document.addEventListener("DOMContentLoaded", () => {
+    // タブ初期化
     switchTab(initialType);
 
     // 編集時：正しいカテゴリIDを選択状態にする
@@ -255,9 +265,7 @@
     }
   });
 
-</script>
-
-<script>
+    // メモのバリデーション
   document.addEventListener('DOMContentLoaded', () => {
     const memoEl = document.querySelector('[name="memo"]');
     if (!memoEl) return;
@@ -268,6 +276,17 @@
     memoEl.addEventListener('input', () => {
       memoEl.setCustomValidity('');
     });
+  });
+
+    // 二重送信防止
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const clicked = document.activeElement;
+    // 少し遅らせてdisabledにする（POSTデータが送られた後）
+    setTimeout(() => {
+      this.querySelectorAll('button[type="submit"]').forEach(btn => {
+        btn.disabled = true;
+      });
+    }, 0);
   });
 </script>
 
