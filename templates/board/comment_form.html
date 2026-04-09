@@ -9,8 +9,8 @@
   .crumbs a:hover { text-decoration: underline; }
 
     .card {
-    padding: 14px;
-    border: none;
+      padding: 14px;
+      border: none;
   }
 
   .section-title { font-weight: 700; margin-bottom: 10px; }
@@ -46,6 +46,16 @@
     resize: vertical;
     box-sizing: border-box;
   }
+  
+  textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  resize: vertical;
+  box-sizing: border-box;
+}
 
   .error { color: #c00; font-size: 12px; margin-top: 6px; }
 
@@ -56,7 +66,8 @@
   }
 
   .btn {
-    padding: 10px 14px;
+    flex: 1;
+    padding: 10px 14px;  
     border-radius: 10px;
     border: 1px solid #5a7a5a;
     background: #5a7a5a;
@@ -83,9 +94,9 @@
 </div>
 
 <div class="card">
-  <div class="section-title">
+  <h2 style="font-size:18px; font-weight:bold; color:#544739; margin-bottom:4px;">
     {% if mode == "edit" %}コメント編集{% else %}コメント投稿{% endif %}
-  </div>
+  </h2>
 
   <form method="post" id="commentForm"
   action="{% if mode == 'edit' %}
