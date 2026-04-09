@@ -108,10 +108,21 @@ class PasswordChangeForm(forms.Form):
             raise forms.ValidationError("現在のパスワードが正しくありません。")
         return pw
 
-    def clean(self):
-        cleaned = super().clean()
-        pw1 = cleaned.get('new_password1')
-        pw2 = cleaned.get('new_password2')
+    def clean_new_password1(self):
+        password = self.cleaned_data.get("new_password1", "")
+        if len(password) < 8:
+            raise forms.ValidationError("パスワードは8文字以上にしてください")
+        if not re.search(r'[a-zA-Z]', password):
+            raise forms.ValidationError("パスワードは英字と数字を両方含めてください")
+        if not re.search(r'[0-9]', password):
+            raise forms.ValidationError("パスワードは英字と数字を両方含めてください")
+        if not re.match(r'^[a-zA-Z0-9]+$', password):
+            raise forms.ValidationError("パスワードは英数字の組み合わせにしてください")
+        return password
+
+    def clean_new_password2(self):
+        pw1 = self.cleaned_data.get('new_password1')
+        pw2 = self.cleaned_data.get('new_password2', '')
         if pw1 and pw2 and pw1 != pw2:
-            raise forms.ValidationError("新しいパスワードが一致しません。")
-        return cleaned
+            raise forms.ValidationError("新しいパスワードが一致しません")
+        return pw2

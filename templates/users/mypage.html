@@ -12,22 +12,22 @@
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
     <span style="font-size:14px;">ユーザーネーム：{{ request.user.username }}</span>
-    <a href="{% url 'users:change_username' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+    <a href="{% url 'users:change_username' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333; white-space:nowrap;">変更する</a>
   </div>
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
     <span style="font-size:14px;">メールアドレス：{{ request.user.email }}</span>
-    <a href="{% url 'users:change_email' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+    <a href="{% url 'users:change_email' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333; white-space:nowrap;">変更する</a>
   </div>
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
     <span style="font-size:14px;">パスワード：••••••••</span>
-    <a href="{% url 'users:change_password' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+    <a href="{% url 'users:change_password' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333; white-space:nowrap;">変更する</a>
   </div>
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
     <span style="font-size:14px;">カテゴリの設定</span>
-     <a href="{% url 'users:category_list' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333;">変更する</a>
+     <a href="{% url 'users:category_list' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333; white-space:nowrap;">変更する</a>
   </div>
 
    <!-- リセットボタン -->
