@@ -121,7 +121,7 @@
     {% if mode == "edit" %}
       <button type="submit" name="action" value="confirm"
               style="flex:1; padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
-        コメントを更新する
+        確認画面へ
       </button>
       <button type="button"
               onclick="openDeleteModal({{ comment.id }}, '{{ comment.text|truncatechars:20|escapejs }}')"

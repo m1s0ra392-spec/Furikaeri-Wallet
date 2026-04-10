@@ -765,6 +765,9 @@ def comment_confirm(request, topic_pk):
         # ── 戻る ─────────────────────────────────
         if action == "back":
             pk = session_data.get("pk")
+            mode = session_data.get("mode")
+            if mode == "edit":
+                return redirect("board:comment_edit", pk=pk)
             if pk:
                 return redirect("board:draft_comment_edit", pk=pk)
             return redirect("board:comment_save_new", topic_pk=topic_pk)
@@ -772,15 +775,13 @@ def comment_confirm(request, topic_pk):
         # ── 投稿 ─────────────────────────────────
         if action == "post":
             pk = session_data.get("pk")
+            mode = session_data.get("mode")
             if pk:
                 obj = get_object_or_404(Comment, pk=pk, user=request.user)
             else:
                 obj = Comment(topic=topic, user=request.user)
 
             obj.text = session_data["text"]
-            obj.status = Comment.CommentStatus.PUBLIC
-            if obj.published_at is None:
-                obj.published_at = timezone.now()
 
             # 返信番号 → parent_comment に変換
             reply_to_seq = session_data.get("reply_to")
@@ -791,13 +792,19 @@ def comment_confirm(request, topic_pk):
                 if parent:
                     obj.parent_comment = parent
 
-            # 公開時に sequence を採番
-            max_seq = Comment.objects.filter(
-                topic=topic,
-                status=Comment.CommentStatus.PUBLIC
-            ).aggregate(Max("sequence"))["sequence__max"]
-            obj.sequence = (max_seq or 0) + 1
-            obj.save()
+            if mode == "edit":
+                # 編集時はsequence採番しない
+                obj.save()
+            else:
+                obj.status = Comment.CommentStatus.PUBLIC
+                if obj.published_at is None:
+                    obj.published_at = timezone.now()
+                max_seq = Comment.objects.filter(
+                    topic=topic,
+                    status=Comment.CommentStatus.PUBLIC
+                ).aggregate(Max("sequence"))["sequence__max"]
+                obj.sequence = (max_seq or 0) + 1
+                obj.save()
 
             del request.session["comment_confirm_data"]
             return redirect("board:topic_detail", pk=topic.pk)
@@ -811,6 +818,7 @@ def comment_confirm(request, topic_pk):
         "form": form,
         "topic": topic,
         "comment": None,
+        "mode": session_data.get("mode", "create"),
     })
 
 
@@ -841,16 +849,25 @@ def comment_edit(request, pk):
 
             # ── 確認画面へ ──────────────────────────
             if action == "confirm":
-                obj.save()
+                request.session["comment_confirm_data"] = {
+                    "topic_pk": topic.pk,
+                    "text": form.cleaned_data.get("text", ""),
+                    "reply_to": form.cleaned_data.get("reply_to"),
+                    "pk": comment.pk,
+                    "mode": "edit",
+                }
                 return render(request, "board/comment_confirm.html", {
                     "form": form,
                     "topic": topic,
                     "comment": obj,
                     "mode": "edit",
                 })
-
+                
     else:
-        form = CommentForm(instance=comment)
+        initial = {}
+        if comment.parent_comment:
+            initial["reply_to"] = comment.parent_comment.sequence
+        form = CommentForm(instance=comment, initial=initial)
 
     return render(request, "board/comment_form.html", {
         "form": form,
