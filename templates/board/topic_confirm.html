@@ -48,7 +48,7 @@
     {% endfor %}
 
     <button type="submit"
-      style="padding:10px 16px; background:#5a7a5a; color:#fff; border:none;">
+      style="padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
       {% if mode == "edit" %}トピックを更新する{% else %}投稿する{% endif %}
     </button>
   </form>
@@ -58,7 +58,7 @@
     {% csrf_token %}
     <input type="hidden" name="action" value="back">
     <button type="submit"
-      style="padding:10px 16px; background:#ddd; border:none;">
+      style="padding:10px 14px; border-radius:10px; border:2px solid #5a7a5a; background:#fff; color:#5a7a5a; cursor:pointer; font-weight:700;">
       戻る
     </button>
   </form>
