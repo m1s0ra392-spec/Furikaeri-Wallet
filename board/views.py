@@ -707,31 +707,36 @@ def comment_save(request, topic_pk, pk=None):
 
             # ── 確認画面へ ──────────────────────────
             if action == "confirm":
-                # 新規の場合は一旦 DRAFT で保存してから確認画面へ
-                # （トピックの topic_save と同じ方式）
-                if obj.pk is None:
-                    obj.status = Comment.CommentStatus.DRAFT
-                    obj.save()
-                else:
-                    obj.save()
-
-                return render(request, "board/comment_confirm.html", {
+                request.session["comment_confirm_data"] = {
+                    "topic_pk": topic_pk,
+                    "text": form.cleaned_data.get("text", ""),
+                    "reply_to": form.cleaned_data.get("reply_to"),
+                    "pk": pk,  # 下書き編集時はpkあり、新規はNone
+                }
+            return render(request, "board/comment_confirm.html", {
                     "form": form,
                     "topic": topic,
-                    "comment": obj,
+                    "comment": None,
                     "mode": "create" if pk is None else "draft_edit",
-                })
-
+                 })
+    
     else:
-        prefill = request.session.pop("draft_comment_prefill", None)
-        if prefill:
+        session_data = request.session.pop("comment_confirm_data", None)
+        if session_data:
             form = CommentForm(initial={
-                "text": prefill.get("text", ""),
-                "reply_to": prefill.get("reply_to"),
+                "text": session_data.get("text", ""),
+                "reply_to": session_data.get("reply_to"),
             })
-            request.session["original_draft_pk"] = prefill.get("original_draft_pk")
         else:
-            form = CommentForm()
+            prefill = request.session.pop("draft_comment_prefill", None)
+            if prefill:
+                form = CommentForm(initial={
+                    "text": prefill.get("text", ""),
+                    "reply_to": prefill.get("reply_to"),
+                })
+                request.session["original_draft_pk"] = prefill.get("original_draft_pk")
+            else:
+                form = CommentForm()
 
     return render(request, "board/comment_form.html", {
         "form": form,
@@ -747,58 +752,65 @@ def comment_save(request, topic_pk, pk=None):
 # ==============================
 
 @login_required
-def comment_confirm(request, pk):
-   
-    comment = get_object_or_404(Comment, pk=pk, user=request.user)
-    topic = comment.topic
+def comment_confirm(request, topic_pk):
+    topic = get_object_or_404(Topic, pk=topic_pk)
+    session_data = request.session.get("comment_confirm_data")
+
+    if not session_data:
+        return redirect("board:comment_save_new", topic_pk=topic_pk)
 
     if request.method == "POST":
         action = request.POST.get("action")
 
         # ── 戻る ─────────────────────────────────
         if action == "back":
-            if comment.status == Comment.CommentStatus.DRAFT:
-                # 下書き編集から来た場合
-                if comment.created_at != comment.updated_at:
-                    return redirect("board:draft_comment_edit", pk=comment.pk)
-                # 新規から来た場合
-                return redirect("board:comment_save_new", topic_pk=topic.pk)
-            # 公開済みから来た場合
-            return redirect("board:comment_edit", pk=comment.pk)
+            pk = session_data.get("pk")
+            if pk:
+                return redirect("board:draft_comment_edit", pk=pk)
+            return redirect("board:comment_save_new", topic_pk=topic_pk)
+
         # ── 投稿 ─────────────────────────────────
         if action == "post":
-            form = CommentForm(request.POST, instance=comment)
-            if form.is_valid():
-                obj = form.save(commit=False)
-                obj.status = Comment.CommentStatus.PUBLIC
-                if obj.published_at is None:   # 初回公開のときだけセット
-                    obj.published_at = timezone.now()
+            pk = session_data.get("pk")
+            if pk:
+                obj = get_object_or_404(Comment, pk=pk, user=request.user)
+            else:
+                obj = Comment(topic=topic, user=request.user)
 
-                # 公開時に初めて sequence を採番
-                max_seq = Comment.objects.filter(
-                    topic=topic,
-                    status=Comment.CommentStatus.PUBLIC  # 公開済みだけでカウント
-                ).aggregate(Max("sequence"))["sequence__max"]
-                obj.sequence = (max_seq or 0) + 1
-                obj.save()
-                
-                # 元の下書きが別レコードとして残っていれば削除
-                original_draft_pk = request.session.pop("original_draft_pk", None)
-                if original_draft_pk and original_draft_pk != obj.pk:
-                    Comment.objects.filter(
-                        pk=original_draft_pk,
-                        user=request.user,
-                        status=Comment.CommentStatus.DRAFT,
-                    ).delete()
-                
-                return redirect("board:topic_detail", pk=topic.pk)
+            obj.text = session_data["text"]
+            obj.status = Comment.CommentStatus.PUBLIC
+            if obj.published_at is None:
+                obj.published_at = timezone.now()
+
+            # 返信番号 → parent_comment に変換
+            reply_to_seq = session_data.get("reply_to")
+            if reply_to_seq:
+                parent = Comment.objects.filter(
+                    topic=topic, sequence=reply_to_seq
+                ).first()
+                if parent:
+                    obj.parent_comment = parent
+
+            # 公開時に sequence を採番
+            max_seq = Comment.objects.filter(
+                topic=topic,
+                status=Comment.CommentStatus.PUBLIC
+            ).aggregate(Max("sequence"))["sequence__max"]
+            obj.sequence = (max_seq or 0) + 1
+            obj.save()
+
+            del request.session["comment_confirm_data"]
+            return redirect("board:topic_detail", pk=topic.pk)
 
     # GET：確認表示
-    form = CommentForm(instance=comment)
+    form = CommentForm(initial={
+        "text": session_data.get("text", ""),
+        "reply_to": session_data.get("reply_to"),
+    })
     return render(request, "board/comment_confirm.html", {
         "form": form,
         "topic": topic,
-        "comment": comment,
+        "comment": None,
     })
 
 
