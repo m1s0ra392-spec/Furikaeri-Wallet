@@ -65,21 +65,6 @@
     margin-top: 12px;
   }
 
-  .btn {
-    flex: 1;
-    padding: 10px 14px;  
-    border-radius: 10px;
-    border: 1px solid #5a7a5a;
-    background: #5a7a5a;
-    color: #fff;
-    cursor: pointer;
-    font-weight: 700;
-  }
-
-  .btn.sub {
-    background: #fff;
-    color: #5a7a5a;
-  }
 
   .note { font-size: 12px; color: #666; margin-top: 8px; }
 </style>
@@ -133,25 +118,26 @@
     <div class="note">※コメントは1000文字以内で入力してください</div>
 
     <div class="btn-row">
-  {% if mode == "edit" %}
-    {# 編集モード：更新ボタン + 削除を要請ボタン #}
-    <button class="btn" type="submit" name="action" value="confirm">
-      コメントを更新する
-    </button>
-    <button class="btn" type="button"
-            onclick="openDeleteModal({{ comment.id }}, '{{ comment.text|truncatechars:20|escapejs }}')"
-            style="background:#b85c5c; border-color:#b85c5c;">
-      削除する
-    </button>
-  {% else %}
-    {# 新規作成モード：今まで通り #}
-    <button class="btn" type="submit" name="action" value="confirm">
-      確認画面へ
-    </button>
-    <button class="btn sub" type="submit" name="action" value="draft">
-      下書き保存
-    </button>
-  {% endif %}
+    {% if mode == "edit" %}
+      <button type="submit" name="action" value="confirm"
+              style="flex:1; padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
+        コメントを更新する
+      </button>
+      <button type="button"
+              onclick="openDeleteModal({{ comment.id }}, '{{ comment.text|truncatechars:20|escapejs }}')"
+              style="flex:1; padding:10px 14px; border-radius:10px; border:none; background:#b85c5c; color:#fff; cursor:pointer; font-weight:700;">
+        削除する
+      </button>
+    {% else %}
+      <button type="submit" name="action" value="confirm"
+              style="flex:1; padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
+        確認画面へ
+      </button>
+      <button type="submit" name="action" value="draft"
+              style="flex:1; padding:10px 14px; border-radius:10px; border:2px solid #5a7a5a; background:#fff; color:#5a7a5a; cursor:pointer; font-weight:700;">
+        下書き保存
+      </button>
+    {% endif %}  
       </div>{# btn-row #}
   </form>
 </div>{# card #}

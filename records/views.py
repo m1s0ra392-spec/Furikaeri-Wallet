@@ -25,7 +25,7 @@ class PortfolioView(TemplateView):
 
 def furikaeri_wallet_redirect(request):
     if request.user.is_authenticated:
-        return redirect('records')  # ホーム画面
+        return redirect('records:home')  # ホーム画面
     else:
         return redirect('login')  # ログイン画面
 

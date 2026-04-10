@@ -8,19 +8,7 @@
     gap: 10px;
     margin-top: 12px;
   }
-  .btn {
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid #5a7a5a;
-    background: #5a7a5a;
-    color: #fff;
-    cursor: pointer;
-    font-weight: 700;
-  }
-  .btn.sub {
-    background: #fff;
-    color: #5a7a5a;
-  }
+  
   .box {
     white-space: pre-wrap;
     border: 1px solid #ccc;
@@ -48,8 +36,14 @@
     <input type="hidden" name="text" value="{{ form.text.value|default_if_none:'' }}">
 
     <div class="btn-row">
-      <button type="submit" name="action" value="post" class="btn">投稿する</button>
-      <button type="submit" name="action" value="back" class="btn sub">戻る</button>    
+      <button type="submit" name="action" value="post"
+              style="padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
+        投稿する
+      </button>
+      <button type="submit" name="action" value="back"
+              style="padding:10px 14px; border-radius:10px; border:2px solid #5a7a5a; background:#fff; color:#5a7a5a; cursor:pointer; font-weight:700;">
+        戻る
+      </button>    
     </div>
   </form>
 </div>
