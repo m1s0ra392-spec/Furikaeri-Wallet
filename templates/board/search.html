@@ -35,11 +35,10 @@
   .search-box {
     display: flex;
     align-items: center;
-    border: 1px solid #aaa;
     border-radius: 24px;
     padding: 6px 12px;
     background: #fff;
-    margin-bottom: 10px;
+    gap: 8px;
   }
   .search-box input[type="text"] {
     border: none;
@@ -48,14 +47,7 @@
     font-size: 14px;
     background: transparent;
   }
-  .search-box button[type="submit"] {
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 0;
-    line-height: 1;
-  }
+ 
 
   /* 選択中タグエリア */
   .selected-tag-area {
@@ -130,14 +122,15 @@
   {% endfor %}
 </div>
 
-  {# 検索ボックス #}
-  <div class="search-box">
-    <input type="text" name="q" placeholder="検索ワード">
+{# 検索ボックス #}
+<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+  <div class="search-box" style="flex:1; border:1px solid #aaa;">
     {% load static %}
-<button type="submit" style="line-height:1; padding:0; border:none; background:transparent; cursor:pointer;">
-  <img src="{% static 'images/サーチアイコン.png' %}" style="width:18px; height:18px; object-fit:contain;" alt="検索">
-</button>
+    <img src="{% static 'images/サーチアイコン.png' %}" style="width:18px; height:18px; object-fit:contain; margin-right:8px;" alt="検索">
+    <input type="text" name="q" placeholder="検索ワード" style="border:none; outline:none; flex:1; font-size:14px; background:transparent;">
   </div>
+  <button type="submit" style="padding:6px 18px; background:#5a7a5a; color:#fff; border:none; border-radius:24px; font-size:14px; cursor:pointer; white-space:nowrap;">検索</button>
+</div>
 
   {# 選択中タグ表示エリア #}
   <div class="selected-tag-area" id="selected-tags"></div>
