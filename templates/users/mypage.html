@@ -16,7 +16,7 @@
   </div>
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <span style="font-size:14px;">メールアドレス：{{ request.user.email }}</span>
+    <span style="font-size:14px; pointer-events:none;">メールアドレス：{{ request.user.email }}</span>
     <a href="{% url 'users:change_email' %}" style="padding:4px 10px; font-size:12px; border:1px solid #ccc; border-radius:6px; background:#fff; text-decoration:none; color:#333; white-space:nowrap;">変更する</a>
   </div>
 
