@@ -1,6 +1,6 @@
 import re
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 from .models import User
 
 
@@ -57,9 +57,32 @@ class SignUpForm(UserCreationForm):
             
         self.fields['username'].widget.attrs['placeholder'] = '6文字以上で入力してください'
         self.fields['email'].widget.attrs['placeholder'] = 'example@email.com'
-        self.fields['password1'].widget.attrs['placeholder'] = '半角英数字を含む8文字以上'
+        self.fields['password1'].widget.attrs['placeholder'] = '半角英数字を含む8文字以上・20字以内'
         self.fields['password2'].widget.attrs['placeholder'] = 'パスワードを再入力してください'
 
+
+
+class CustomSetPasswordForm(SetPasswordForm):
+    """パスワード再設定フォーム（メールリンクからのリセット用）"""
+
+    def clean_new_password1(self):
+        password = self.cleaned_data.get("new_password1", "")
+        if len(password) < 8:
+            raise forms.ValidationError("パスワードは8文字以上にしてください")
+        if not re.search(r'[a-zA-Z]', password):
+            raise forms.ValidationError("パスワードは英字と数字を両方含めてください")
+        if not re.search(r'[0-9]', password):
+            raise forms.ValidationError("パスワードは英字と数字を両方含めてください")
+        if not re.match(r'^[a-zA-Z0-9]+$', password):
+            raise forms.ValidationError("パスワードは英数字の組み合わせにしてください")
+        return password
+
+    def clean_new_password2(self):
+        pw1 = self.cleaned_data.get('new_password1')
+        pw2 = self.cleaned_data.get('new_password2', '')
+        if pw1 and pw2 and pw1 != pw2:
+            raise forms.ValidationError("パスワードが一致しません")
+        return pw2
 
 
 class UsernameChangeForm(forms.ModelForm):

@@ -2,16 +2,21 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from users.views import PasswordResetCompleteToLoginView
+from users.views import PasswordResetCompleteToLoginView, CustomPasswordResetConfirmView
 from records.views import PortfolioView , furikaeri_wallet_redirect
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("accounts/reset/<uidb64>/<token>/",
+        CustomPasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",        
+    ),
+    #パスワード変更フォーム
     path("accounts/", include("django.contrib.auth.urls")),  
     # Django標準の認証URL（password_resetなど一式）
     
-    # ★ 完了画面は login.html を再利用して赤字表示
+    # ★ 完了画面は login.html を再利用して緑表示
     path(
         "accounts/password_reset/complete/",
         PasswordResetCompleteToLoginView.as_view(),

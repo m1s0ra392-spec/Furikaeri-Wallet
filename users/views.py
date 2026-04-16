@@ -7,7 +7,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.urls import reverse
 from django.conf import settings
-from .forms import SignUpForm, UsernameChangeForm, EmailChangeForm, PasswordChangeForm
+from .forms import SignUpForm, UsernameChangeForm, EmailChangeForm, PasswordChangeForm, CustomSetPasswordForm
 from .models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from records.models import Record, RecordCategory
@@ -53,6 +53,11 @@ def signup(request):
     
     return render(request, 'users/signup.html', {'form': form})
         
+
+class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    form_class = CustomSetPasswordForm
+    template_name = 'registration/password_reset_confirm.html'
+
         
 class PasswordResetCompleteToLoginView(auth_views.PasswordResetCompleteView):
     template_name = "registration/login.html"
