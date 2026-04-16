@@ -2,7 +2,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db import models
-from django.db.models import Count, Max, Exists, OuterRef, ExpressionWrapper, F, IntegerField
+from django.db.models import Count, Max, Exists, OuterRef, ExpressionWrapper, F, IntegerField, Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
@@ -37,7 +37,11 @@ def topic_list(request):
         .select_related("user")
         .annotate(
         like_count=Count("likes", distinct=True),
-        comment_count=Count("comments", distinct=True),
+        comment_count=Count(
+            "comments",
+            filter=Q(comments__status=Comment.CommentStatus.PUBLIC),
+            distinct=True,
+        ),
         comment_like_count=Count("comments__likes", distinct=True),  
         is_liked=Exists(
             TopicLike.objects.filter(topic=OuterRef("pk"), user=request.user)
