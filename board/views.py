@@ -672,7 +672,7 @@ def comment_save(request, topic_pk, pk=None):
             reply_to_seq = form.cleaned_data.get("reply_to")
             if reply_to_seq:
                 parent = Comment.objects.filter(
-                    topic=topic, sequence=reply_to_seq
+                    topic=topic, sequence=reply_to_seq, is_deleted=False
                 ).first()
                 if not parent:
                     form.add_error(
@@ -792,7 +792,7 @@ def comment_confirm(request, topic_pk):
             reply_to_seq = session_data.get("reply_to")
             if reply_to_seq:
                 parent = Comment.objects.filter(
-                    topic=topic, sequence=reply_to_seq
+                    topic=topic, sequence=reply_to_seq, is_deleted=False
                 ).first()
                 if parent:
                     obj.parent_comment = parent
