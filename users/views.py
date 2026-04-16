@@ -1,5 +1,5 @@
 
-from django.contrib.auth import update_session_auth_hash, logout
+from django.contrib.auth import update_session_auth_hash, logout, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -46,6 +46,7 @@ def signup(request):
                     system_default=system_default,
                 )
 
+            login(request, user)
             return redirect('records:home')
     else:
         form = SignUpForm()
