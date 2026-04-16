@@ -62,7 +62,7 @@
     {% csrf_token %}
     <input type="hidden" name="type" value="0">
     <input type="text" name="name" placeholder="新規で追加" maxlength="20"
-           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px;">
+           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; min-width:0;">
     <button type="submit"
             style="padding:8px 14px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
       ＋
@@ -113,7 +113,7 @@
     {% csrf_token %}
     <input type="hidden" name="type" value="1">
     <input type="text" name="name" placeholder="新規で追加" maxlength="20"
-           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px;">
+           style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; min-width:0;">
     <button type="submit"
             style="padding:8px 14px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
       ＋
