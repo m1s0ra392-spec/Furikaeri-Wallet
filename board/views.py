@@ -689,20 +689,24 @@ def comment_save(request, topic_pk, pk=None):
 
             # ── 下書き保存 ──────────────────────────
             if action == "draft":
-                # sequence はまだ採番しない（公開時に採番）
-                if obj.pk is None:
-                    obj.status = Comment.CommentStatus.DRAFT
-                    obj.save()
-                    
-                        # 元の下書きが別レコードとして残っていれば削除
-                    original_draft_pk = request.session.pop("original_draft_pk", None)
-                    if original_draft_pk and original_draft_pk != obj.pk:
-                        Comment.objects.filter(
-                            pk=original_draft_pk,
-                            user=request.user,
-                            status=Comment.CommentStatus.DRAFT,
-                        ).delete()
+                original_draft_pk = request.session.pop("original_draft_pk", None)
 
+                if original_draft_pk:
+                    # 既存の下書きを上書き保存
+                    existing = Comment.objects.filter(
+                        pk=original_draft_pk,
+                        user=request.user,
+                        status=Comment.CommentStatus.DRAFT,
+                    ).first()
+                    if existing:
+                        existing.text = obj.text
+                        existing.parent_comment = obj.parent_comment
+                        existing.save()
+                        return redirect("board:mypage_drafts")
+
+                # 新規下書き
+                obj.status = Comment.CommentStatus.DRAFT
+                obj.save()
                 return redirect("board:mypage_drafts")
 
             # ── 確認画面へ ──────────────────────────
@@ -735,6 +739,7 @@ def comment_save(request, topic_pk, pk=None):
                     "reply_to": prefill.get("reply_to"),
                 })
                 request.session["original_draft_pk"] = prefill.get("original_draft_pk")
+                request.session.modified = True
             else:
                 form = CommentForm()
 
