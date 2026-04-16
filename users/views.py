@@ -46,7 +46,7 @@ def signup(request):
                     system_default=system_default,
                 )
 
-            return redirect('login')
+            return redirect('records:home')
     else:
         form = SignUpForm()
     
