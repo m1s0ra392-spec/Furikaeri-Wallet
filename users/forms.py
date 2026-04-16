@@ -13,8 +13,8 @@ class SignUpForm(UserCreationForm):
 
     def clean_username(self):
         username = self.cleaned_data.get("username", "")
-        if len(username) < 4:
-            raise forms.ValidationError("ユーザーネームは4文字以上で設定してください")
+        if len(username) < 6:
+            raise forms.ValidationError("ユーザーネームは6文字以上で設定してください")
         if User.objects.filter(username=username).exists():
             raise forms.ValidationError("このユーザーネームはすでに使われています")
         return username
