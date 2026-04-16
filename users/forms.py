@@ -55,7 +55,7 @@ class SignUpForm(UserCreationForm):
         for field in self.fields.values():
             field.widget.attrs.pop("size", None)
             
-        self.fields['username'].widget.attrs['placeholder'] = '4文字以上で入力してください'
+        self.fields['username'].widget.attrs['placeholder'] = '6文字以上で入力してください'
         self.fields['email'].widget.attrs['placeholder'] = 'example@email.com'
         self.fields['password1'].widget.attrs['placeholder'] = '半角英数字を含む8文字以上'
         self.fields['password2'].widget.attrs['placeholder'] = 'パスワードを再入力してください'
