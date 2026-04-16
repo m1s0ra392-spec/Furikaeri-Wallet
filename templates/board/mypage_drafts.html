@@ -103,20 +103,20 @@
     <div style="font-size:15px; margin-bottom:20px;">本当に削除しますか？</div>
 
     <div style="display:flex; gap:12px; justify-content:center;">
-      
       <form id="deleteForm" method="post" style="flex:1;">
         {% csrf_token %}
-        <button onclick="doDelete()"
-              style="flex:1; padding:10px; background:#b85c5c; color:white;
-                     border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
-        はい
-      </button>
-      <button onclick="closeDeleteModal()"
+        <button type="submit"
+                style="width:100%; padding:10px; background:#b85c5c; color:white;
+                       border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+          はい
+        </button>
+      </form>
+
+      <button type="button" onclick="closeDeleteModal()"
               style="flex:1; padding:10px; background:white; color:#333;
                      border:1px solid #ccc; border-radius:10px; cursor:pointer;">
         いいえ
       </button>
-      </form>
     </div>
 
   </div>
