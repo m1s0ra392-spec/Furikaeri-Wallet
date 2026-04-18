@@ -744,6 +744,7 @@ def comment_save(request, topic_pk, pk=None):
                     "text": form.cleaned_data.get("text", ""),
                     "reply_to": form.cleaned_data.get("reply_to"),
                     "pk": pk,  # 下書き編集時はpkあり、新規はNone
+                    "original_draft_pk": request.session.get("original_draft_pk"), 
                 }
             return render(request, "board/comment_confirm.html", {
                     "form": form,
@@ -808,6 +809,7 @@ def comment_confirm(request, topic_pk):
         # ── 投稿 ─────────────────────────────────
         if action == "post":
             pk = session_data.get("pk")
+            original_draft_pk = session_data.get("original_draft_pk")
             mode = session_data.get("mode")
             if pk:
                 obj = get_object_or_404(Comment, pk=pk, user=request.user)
@@ -828,6 +830,18 @@ def comment_confirm(request, topic_pk):
             if mode == "edit":
                 # 編集時はsequence採番しない
                 obj.save()
+                
+                # ★元の下書きを削除
+                original_draft_pk = session_data.get("original_draft_pk")
+                if original_draft_pk:
+                    Comment.objects.filter(
+                        pk=original_draft_pk,
+                        user=request.user,
+                        status=Comment.CommentStatus.DRAFT,
+                    ).delete()
+
+                del request.session["comment_confirm_data"]
+                return redirect("board:topic_detail", pk=topic.pk)
             else:
                 obj.status = Comment.CommentStatus.PUBLIC
                 if obj.published_at is None:
@@ -838,6 +852,14 @@ def comment_confirm(request, topic_pk):
                 ).aggregate(Max("sequence"))["sequence__max"]
                 obj.sequence = (max_seq or 0) + 1
                 obj.save()
+                
+                # ★元の下書きを削除（下書きから投稿した場合）
+                if original_draft_pk:
+                    Comment.objects.filter(
+                        pk=original_draft_pk,
+                        user=request.user,
+                        status=Comment.CommentStatus.DRAFT,
+                    ).delete()
 
             del request.session["comment_confirm_data"]
             return redirect("board:topic_detail", pk=topic.pk)
