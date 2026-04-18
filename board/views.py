@@ -149,11 +149,15 @@ def topic_search(request):
     if category in {"0", "1", "2"}:
         qs = qs.filter(board_category=int(category))
 
-    # キーワード絞り込み（タイトルまたは本文に含まれる）
+    # キーワード絞り込み（トピックのタイトル・本文・コメント本文から）
     if query:
         qs = qs.filter(
-            models.Q(title__icontains=query) | models.Q(text__icontains=query)
-        )
+            models.Q(title__icontains=query)
+            | models.Q(text__icontains=query)
+            | models.Q(comments__text__icontains=query,
+                    comments__status=Comment.CommentStatus.PUBLIC,
+                    comments__is_deleted=False)
+        ).distinct()
         
     # タグ絞り込み（複数タグはAND検索）
     tag_names = request.GET.getlist("tag")
