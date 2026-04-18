@@ -94,6 +94,10 @@ class UsernameChangeForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data['username']
+        
+         # ★追加：6文字以上チェック
+        if len(username) < 6:
+            raise forms.ValidationError("ユーザーネームは6文字以上で入力してください。")
         # 自分以外で同じ名前がいたらエラー
         if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("このユーザーネームはすでに使われています。")
