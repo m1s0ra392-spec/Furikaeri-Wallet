@@ -6,7 +6,7 @@
 
 {% if success == "added" %}<p style="color:green;">追加しました</p>{% endif %}
 {% if success == "edited" %}<p style="color:green;">変更しました</p>{% endif %}
-{% if success == "deleted" %}<p style="color:green;">削除しました（記録は「その他」に移動しました）</p>{% endif %}
+{% if success == "deleted" %}<p style="color:green;">削除しました（紐づく記録は「その他」に移動しました）</p>{% endif %}
 
 <!-- タブ切替 -->
 <div style="display:flex; margin-bottom:16px;">
@@ -57,18 +57,22 @@
   </button>
 </form>
 
-  <!-- 追加フォーム -->
-  <form method="post" action="{% url 'users:category_add' %}" style="display:flex; gap:8px;">
-    {% csrf_token %}
-    <input type="hidden" name="type" value="0">
+  {# gainの追加フォーム（form全体） #}
+<form method="post" action="{% url 'users:category_add' %}"
+      style="display:flex; gap:8px; flex-direction:column;"
+      onsubmit="return handleAddSubmit(this)">
+  {% csrf_token %}
+  <input type="hidden" name="type" value="0">
+  <p id="add-error-gain" style="color:red; font-size:13px; margin:0; display:none;"></p>
+  <div style="display:flex; gap:8px;">
     <input type="text" name="name" placeholder="新規で追加" maxlength="20"
            style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; min-width:0;">
     <button type="submit"
             style="padding:8px 14px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
       ＋
     </button>
-  </form>
-</div>
+  </div>
+</form>
 
 <!-- 惜しかったリスト -->
 <div id="panel-loss" style="display:none;">
@@ -108,18 +112,22 @@
   </button>
   </form>
 
-  <!-- 追加フォーム -->
-  <form method="post" action="{% url 'users:category_add' %}" style="display:flex; gap:8px;">
-    {% csrf_token %}
-    <input type="hidden" name="type" value="1">
+{# lossの追加フォーム（form全体） #}
+<form method="post" action="{% url 'users:category_add' %}"
+      style="display:flex; gap:8px; flex-direction:column;"
+      onsubmit="return handleAddSubmit(this)">
+  {% csrf_token %}
+  <input type="hidden" name="type" value="1">
+  <p id="add-error-loss" style="color:red; font-size:13px; margin:0; display:none;"></p>
+  <div style="display:flex; gap:8px;">
     <input type="text" name="name" placeholder="新規で追加" maxlength="20"
            style="flex:1; padding:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; min-width:0;">
     <button type="submit"
             style="padding:8px 14px; background:#5a7a5a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:18px;">
       ＋
     </button>
-  </form>
-</div>
+  </div>
+</form>
 
 <br>
 <a href="{% url 'users:account_mypage' %}">マイページへ戻る</a>
@@ -151,7 +159,7 @@
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:100;">
   <div style="background:#fff; border-radius:12px; padding:24px; width:80%; max-width:320px;">
-    <p style="margin-top:0;">本当に削除しますか？<br>（このカテゴリを削除すると、紐づく投稿は自動的に『その他』へ移動します）</p>
+    <p style="margin-top:0;">本当に削除しますか？<br>（このカテゴリを削除すると、紐づく記録は自動的に『その他』へ移動します）</p>
     <div style="display:flex; gap:12px; justify-content:center;">
       <button id="delete-modal-submit"
               style="padding:10px 24px; background:#b85c5c; color:#fff; border:none; border-radius:8px; cursor:pointer;">
@@ -207,6 +215,29 @@ function submitBulkDelete(type) {
   };
 
   document.getElementById('delete-modal').style.display = 'flex';
+}
+
+// エラーをフォームの近くに表示
+const errorParam = urlParams.get('error');
+if (errorParam === 'empty' || errorParam === 'duplicate') {
+  const msg = errorParam === 'empty'
+    ? '新規カテゴリ名が未入力です'
+    : 'このカテゴリ名は既に存在しています';
+  const activeTab = tabParam === 'loss' ? 'loss' : 'gain';
+  const el = document.getElementById('add-error-' + activeTab);
+  if (el) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+}
+
+// ── 追加フォーム用：2重送信防止 ──
+function handleAddSubmit(form) {
+  const btn = form.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  // 0.8秒後に再度有効化（バリデーションエラーで戻ってくる場合のため）
+  setTimeout(() => { btn.disabled = false; }, 800);
+  return true;
 }
 
 // ページ読み込み時にtabパラメータがあれば切り替える

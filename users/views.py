@@ -246,18 +246,28 @@ def category_add(request):
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
         type_ = request.POST.get("type")
-        if name and type_ in ("0", "1"):
+        tab = "loss" if type_ == "1" else "gain"
+
+        # ── バリデーション ──
+        if not name:
+            return redirect(f"/users/categories/?error=empty&tab={tab}")
+
+        if type_ in ("0", "1"):
+            exists = RecordCategory.objects.filter(
+                user=request.user, name=name, type=int(type_)
+            ).exists()
+            if exists:
+                return redirect(f"/users/categories/?error=duplicate&tab={tab}")
+
             RecordCategory.objects.create(
                 user=request.user,
                 name=name,
                 type=int(type_),
                 system_default=0,
             )
-        # type_が"1"なら惜しかったタブに戻す
-        tab = "loss" if type_ == "1" else "gain"
+
         return redirect(f"/users/categories/?success=added&tab={tab}")
     return render(request, "users/category_form.html", {"mode": "add"})
-
 
 @login_required
 def category_edit(request, pk):
