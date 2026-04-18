@@ -15,8 +15,7 @@
 <form id="topic-form" method="post" novalidate
       action="{% if mode == 'draft_edit' %}{% url 'board:draft_topic_edit' topic.pk %}
       {% elif topic %}{% url 'board:topic_edit' topic.pk %}
-      {% else %}{% url 'board:topic_new' %}{% endif %}"
-      onsubmit="return handleFormSubmit(this)>
+      {% else %}{% url 'board:topic_new' %}{% endif %}">
   {% csrf_token %}
 
 
@@ -86,6 +85,7 @@
     {# ✅ name/value を外して data-action にする #}
     <button type="submit"
             name="action" value="confirm"
+            onclick="handleTopicSubmit(this)"
             style="flex:1; padding:12px; border:none; border-radius:6px; background:#5a7a5a; color:#fff; font-weight:bold;">
       {{ primary_label }}
     </button>
@@ -93,6 +93,7 @@
     {% if show_draft_button %}
       <button type="submit"
               name="action" value="draft"
+              onclick="handleTopicSubmit(this)"
               style="flex:1; padding:12px; border:2px solid #5a7a5a; border-radius:6px; background:#fff; color:#5a7a5a; font-weight:bold;">
         下書き保存
       </button>
@@ -553,14 +554,8 @@
 })();
 
 // 二重送信防止
-function handleFormSubmit(form) {
-  const clicked = form.querySelector('button[type="submit"]:focus') 
-               || form.querySelector('button[type="submit"]');
-  if (clicked) {
-    clicked.disabled = true;
-    setTimeout(() => { clicked.disabled = false; }, 3000);
-  }
-  return true;
+function handleTopicSubmit(btn) {
+  setTimeout(() => { btn.disabled = true; }, 0);
 }
 </script>
 
