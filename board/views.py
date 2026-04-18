@@ -263,9 +263,16 @@ def topic_save(request, pk=None):
             obj.user = request.user
 
             if action == "draft":
+                    # 二重送信防止
+                if request.session.get("draft_topic_submitting"):
+                    return redirect("board:mypage_drafts")
+                request.session["draft_topic_submitting"] = True
+                
                 obj.status = Topic.TopicStatus.DRAFT
                 obj.save()
                 form.save_m2m()
+                
+                request.session.pop("draft_topic_submitting", None)
                 return redirect("board:mypage_drafts")
 
             if action == "confirm":
@@ -693,10 +700,14 @@ def comment_save(request, topic_pk, pk=None):
 
             # ── 下書き保存 ──────────────────────────
             if action == "draft":
+                # 二重送信防止
+                if request.session.get("draft_comment_submitting"):
+                    return redirect("board:mypage_drafts")
+                request.session["draft_comment_submitting"] = True
+
                 original_draft_pk = request.session.pop("original_draft_pk", None)
 
                 if original_draft_pk:
-                    # 既存の下書きを上書き保存
                     existing = Comment.objects.filter(
                         pk=original_draft_pk,
                         user=request.user,
@@ -706,11 +717,12 @@ def comment_save(request, topic_pk, pk=None):
                         existing.text = obj.text
                         existing.parent_comment = obj.parent_comment
                         existing.save()
+                        request.session.pop("draft_comment_submitting", None)
                         return redirect("board:mypage_drafts")
 
-                # 新規下書き
                 obj.status = Comment.CommentStatus.DRAFT
                 obj.save()
+                request.session.pop("draft_comment_submitting", None)
                 return redirect("board:mypage_drafts")
 
             # ── 確認画面へ ──────────────────────────
