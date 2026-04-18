@@ -6,6 +6,7 @@ from django.db.models import Count, Max, Exists, OuterRef, ExpressionWrapper, F,
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
+from datetime import timedelta
 from django.core.paginator import Paginator
 
 from .models import Topic, Comment, TopicLike, CommentLike, Tag
@@ -263,17 +264,22 @@ def topic_save(request, pk=None):
             obj.user = request.user
 
             if action == "draft":
-                    # 二重送信防止
-                if request.session.get("draft_topic_submitting"):
+                # 直近3秒以内に同じユーザー・同じタイトル・同じ内容の下書きがあれば弾く※二重送信防止
+                cutoff = timezone.now() - timedelta(seconds=3)
+                duplicate = Topic.objects.filter(
+                    user=request.user,
+                    title=obj.title,
+                    text=obj.text,
+                    status=Topic.TopicStatus.DRAFT,
+                    created_at__gte=cutoff,
+                ).exists()
+                if duplicate:
                     return redirect("board:mypage_drafts")
-                request.session["draft_topic_submitting"] = True
-                
+
                 obj.status = Topic.TopicStatus.DRAFT
                 obj.save()
                 form.save_m2m()
-                
-                request.session.pop("draft_topic_submitting", None)
-                return redirect("board:mypage_drafts")
+                return redirect("board:mypage_drafts")     
 
             if action == "confirm":
             # sessionに一時保存（DBには保存しない）
@@ -700,30 +706,21 @@ def comment_save(request, topic_pk, pk=None):
 
             # ── 下書き保存 ──────────────────────────
             if action == "draft":
-                # 二重送信防止
-                if request.session.get("draft_comment_submitting"):
+                # 直近3秒以内に同じユーザー・同じ内容の下書きがあれば弾く
+                cutoff = timezone.now() - timedelta(seconds=3)
+                duplicate = Comment.objects.filter(
+                    user=request.user,
+                    topic=topic,
+                    text=obj.text,
+                    status=Comment.CommentStatus.DRAFT,
+                    created_at__gte=cutoff,
+                ).exists()
+                if duplicate:
                     return redirect("board:mypage_drafts")
-                request.session["draft_comment_submitting"] = True
-
-                original_draft_pk = request.session.pop("original_draft_pk", None)
-
-                if original_draft_pk:
-                    existing = Comment.objects.filter(
-                        pk=original_draft_pk,
-                        user=request.user,
-                        status=Comment.CommentStatus.DRAFT,
-                    ).first()
-                    if existing:
-                        existing.text = obj.text
-                        existing.parent_comment = obj.parent_comment
-                        existing.save()
-                        request.session.pop("draft_comment_submitting", None)
-                        return redirect("board:mypage_drafts")
 
                 obj.status = Comment.CommentStatus.DRAFT
                 obj.save()
-                request.session.pop("draft_comment_submitting", None)
-                return redirect("board:mypage_drafts")
+                return redirect("board:mypage_drafts")    
 
             # ── 確認画面へ ──────────────────────────
             if action == "confirm":
