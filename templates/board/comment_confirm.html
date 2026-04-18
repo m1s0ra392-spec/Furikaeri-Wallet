@@ -37,6 +37,7 @@
 
     <div class="btn-row">
       <button type="submit" name="action" value="post"
+              onclick="this.disabled=true; this.form.submit();"
               style="padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
         {% if mode == "edit" %}コメントを更新する{% else %}投稿する{% endif %}
       </button>

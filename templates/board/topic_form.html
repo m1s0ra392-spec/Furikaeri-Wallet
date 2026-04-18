@@ -15,7 +15,8 @@
 <form id="topic-form" method="post" novalidate
       action="{% if mode == 'draft_edit' %}{% url 'board:draft_topic_edit' topic.pk %}
       {% elif topic %}{% url 'board:topic_edit' topic.pk %}
-      {% else %}{% url 'board:topic_new' %}{% endif %}">
+      {% else %}{% url 'board:topic_new' %}{% endif %}"
+      onsubmit="return handleFormSubmit(this)>
   {% csrf_token %}
 
 
@@ -550,6 +551,17 @@
   }
 
 })();
+
+// 二重送信防止
+function handleFormSubmit(form) {
+  const clicked = form.querySelector('button[type="submit"]:focus') 
+               || form.querySelector('button[type="submit"]');
+  if (clicked) {
+    clicked.disabled = true;
+    setTimeout(() => { clicked.disabled = false; }, 3000);
+  }
+  return true;
+}
 </script>
 
 {% endblock %}
