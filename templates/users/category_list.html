@@ -217,6 +217,13 @@ function submitBulkDelete(type) {
   document.getElementById('delete-modal').style.display = 'flex';
 }
 
+// ページ読み込み時にtabパラメータがあれば切り替える
+const urlParams = new URLSearchParams(window.location.search);
+const tabParam = urlParams.get('tab');
+if (tabParam === 'loss') {
+    switchTab('loss');
+}
+
 // エラーをフォームの近くに表示
 const errorParam = urlParams.get('error');
 if (errorParam === 'empty' || errorParam === 'duplicate') {
@@ -235,17 +242,10 @@ if (errorParam === 'empty' || errorParam === 'duplicate') {
 function handleAddSubmit(form) {
   const btn = form.querySelector('button[type="submit"]');
   btn.disabled = true;
-  // 0.8秒後に再度有効化（バリデーションエラーで戻ってくる場合のため）
   setTimeout(() => { btn.disabled = false; }, 800);
   return true;
 }
 
-// ページ読み込み時にtabパラメータがあれば切り替える
-const urlParams = new URLSearchParams(window.location.search);
-const tabParam = urlParams.get('tab');
-if (tabParam === 'loss') {
-    switchTab('loss');
-}
 </script>
 
 {% endblock %}
