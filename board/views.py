@@ -780,6 +780,7 @@ def comment_save(request, topic_pk, pk=None):
                 request.session["original_draft_pk"] = prefill.get("original_draft_pk")
                 request.session.modified = True
             else:
+                request.session.pop("original_draft_pk", None)
                 form = CommentForm()
 
     return render(request, "board/comment_form.html", {
