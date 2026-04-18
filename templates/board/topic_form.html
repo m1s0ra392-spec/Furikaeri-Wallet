@@ -436,10 +436,14 @@
 
   // ── ＋ボタン → 新規タグ追加 ──────────────────
  newTagAdd.addEventListener("click", async () => {
+    if (newTagAdd.disabled) return;
+    newTagAdd.disabled = true;
+
     const name = newTagInput.value.trim();
 
     if (!name) {
       alert("タグ名を入力してください");
+      newTagAdd.disabled = false;
       return;
     }
 
@@ -453,6 +457,7 @@
       renderTagList("");
       renderSelectedOnForm();
       renderHidden();
+      newTagAdd.disabled = false;
       return;
     }
 
@@ -461,6 +466,7 @@
     if (exactNew) {
       dupMsg.style.display = "block";
       dupMsg.textContent = `既存あります #${exactNew.name}`;
+      newTagAdd.disabled = false;
       return;
     }
 
@@ -479,11 +485,13 @@
       if (!res.ok) {
         const err = await res.json();
         alert(err.error || "タグの作成に失敗しました");
+        newTagAdd.disabled = false;
         return;
       }
       tag = await res.json();  // { id: 5, name: "節電" }
     } catch {
       alert("通信エラーが発生しました");
+      newTagAdd.disabled = false;
       return;
     }
 
@@ -495,6 +503,7 @@
     renderTagList("");
     renderSelectedOnForm();
     renderHidden();
+    newTagAdd.disabled = false;
   });
 
   // ── 「トピック内容に入力」ボタン ──────────────────
