@@ -424,7 +424,7 @@ def topic_confirm_session(request):
             "topic": topic,
             "mode": "create" if not original_pk else "edit",
             "primary_label": "確認画面へ",
-            "show_draft_button": True,
+            "show_draft_button": True if not original_pk else False,
             "show_delete_request": True if original_pk else False,
         })
 
