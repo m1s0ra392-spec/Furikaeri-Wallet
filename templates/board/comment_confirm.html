@@ -28,7 +28,8 @@
   <div class="muted" style="margin-top:10px;">コメント本文</div>
   <div class="box">{{ form.text.value }}</div>
 
-  <form method="post" action="{% url 'board:comment_confirm' topic_pk=topic.id %}">
+  <form method="post" action="{% url 'board:comment_confirm' topic_pk=topic.id %}"
+      onsubmit="if(this.dataset.submitted){return false;} this.dataset.submitted='true';">
     {% csrf_token %}
 
     {# 入力値を次のPOSTに持ち越す（超重要） #}
@@ -37,7 +38,6 @@
 
     <div class="btn-row">
       <button type="submit" name="action" value="post"
-              onclick="this.disabled=true; this.form.submit();"
               style="padding:10px 14px; border-radius:10px; border:1px solid #5a7a5a; background:#5a7a5a; color:#fff; cursor:pointer; font-weight:700;">
         {% if mode == "edit" %}コメントを更新する{% else %}投稿する{% endif %}
       </button>
