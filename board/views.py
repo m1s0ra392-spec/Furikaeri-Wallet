@@ -413,13 +413,19 @@ def topic_confirm_session(request):
             "tags": Tag.objects.filter(pk__in=session_data["tags"]),
         }
         form = TopicForm(initial=initial)
+
+        # 編集時はtopicオブジェクトを渡す（削除要請ボタンを表示するため）
+        topic = None
+        if original_pk:
+            topic = get_object_or_404(Topic, pk=original_pk, user=request.user)
+
         return render(request, "board/topic_form.html", {
             "form": form,
-            "topic": None,
+            "topic": topic,
             "mode": "create" if not original_pk else "edit",
             "primary_label": "確認画面へ",
             "show_draft_button": True,
-            "show_delete_request": False,
+            "show_delete_request": True if original_pk else False,
         })
 
     if action == "post":
