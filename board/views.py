@@ -516,7 +516,7 @@ def draft_topic_delete(request, pk):
 
     if request.method == "POST":
         topic.delete()
-        return redirect("board:mypage_drafts")
+        return JsonResponse({"status": "ok"})
 
     # GETで来た場合はそのまま下書き一覧へ（モーダルで確認するのでGETは使わない）
     return redirect("board:mypage_drafts")
@@ -991,7 +991,7 @@ def draft_comment_delete(request, pk):
 
     if request.method == "POST":
         comment.delete()
-        return redirect("board:mypage_drafts")
+        return JsonResponse({"status": "ok"})
 
     return redirect("board:mypage_drafts")
 

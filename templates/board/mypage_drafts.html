@@ -102,16 +102,12 @@
 
     <div style="font-size:15px; margin-bottom:20px;">本当に削除しますか？</div>
 
-    <div style="display:flex; gap:12px; justify-content:center;">
-      <form id="deleteForm" method="post" style="margin:0; padding:0;">
-        {% csrf_token %}
-        <button type="submit"
-                style="padding:10px 20px; background:#b85c5c; color:white;
-                       border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
-          はい
-        </button>
-      </form>
-
+    <div id="modalButtons" style="display:flex; gap:12px; justify-content:center;">
+      <button type="button" onclick="doDelete()"
+              style="padding:10px 20px; background:#b85c5c; color:white;
+                     border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
+        はい
+      </button>
       <button type="button" onclick="closeDeleteModal()"
               style="padding:10px 20px; background:white; color:#333;
                      border:1px solid #ccc; border-radius:10px; cursor:pointer;">
@@ -119,19 +115,51 @@
       </button>
     </div>
 
+    <div id="deleteResult" style="display:none; color:#5a7a5a; margin-bottom:12px;">削除しました</div>
+
+    <div id="closeAfterDelete" style="display:none; margin-top:12px;">
+      <button onclick="location.reload()"
+              style="width:100%; padding:10px; border:1px solid #ccc;
+                     border-radius:10px; cursor:pointer; background:white;">
+        閉じる
+      </button>
+    </div>
+
   </div>
 </div>
 
 <script>
+  let deleteUrl = null;
+
   function openDeleteModal(btn) {
-    const action = btn.dataset.action;
-    document.getElementById("deleteForm").action = action;
-    const modal = document.getElementById("deleteModal");
-    modal.style.display = "flex";
+    deleteUrl = btn.dataset.action;
+    document.getElementById("modalButtons").style.display = "flex";
+    document.getElementById("deleteResult").style.display = "none";
+    document.getElementById("closeAfterDelete").style.display = "none";
+    document.getElementById("deleteModal").style.display = "flex";
   }
 
   function closeDeleteModal() {
     document.getElementById("deleteModal").style.display = "none";
+  }
+
+  function doDelete() {
+    if (!deleteUrl) return;
+    fetch(deleteUrl, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}",
+        "Content-Type": "application/json",
+      },
+    })
+    .then(res => {
+      // 通常のPOSTはリダイレクトを返すのでステータスで判断
+      if (res.ok) {
+        document.getElementById("modalButtons").style.display = "none";
+        document.getElementById("deleteResult").style.display = "block";
+        document.getElementById("closeAfterDelete").style.display = "block";
+      }
+    });
   }
 </script>
 
