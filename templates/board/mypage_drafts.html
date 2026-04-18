@@ -98,24 +98,23 @@
 <div id="deleteModal"
      style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9999;
             justify-content:center; align-items:center;">
-  <div style="background:#fff; border-radius:12px; padding:24px; width:min(80vw, 300px); text-align:center;">
+  <div style="background:white; border-radius:12px; padding:24px; max-width:320px; width:90%;">
+    <p style="font-weight:bold; margin-bottom:8px;">本当に削除しますか？</p>
 
-    <div style="font-size:15px; margin-bottom:20px;">本当に削除しますか？</div>
+    <div id="deleteResult" style="display:none; color:#5a7a5a; margin-bottom:12px;">削除しました</div>
 
-    <div id="modalButtons" style="display:flex; gap:12px; justify-content:center;">
+    <div id="modalButtons" style="display:flex; gap:10px;">
       <button type="button" onclick="doDelete()"
-              style="padding:10px 20px; background:#b85c5c; color:white;
+              style="flex:1; padding:10px; background:#b85c5c; color:white;
                      border:none; border-radius:10px; cursor:pointer; font-weight:bold;">
         はい
       </button>
       <button type="button" onclick="closeDeleteModal()"
-              style="padding:10px 20px; background:white; color:#333;
+              style="flex:1; padding:10px; background:white; color:#333;
                      border:1px solid #ccc; border-radius:10px; cursor:pointer;">
         いいえ
       </button>
     </div>
-
-    <div id="deleteResult" style="display:none; color:#5a7a5a; margin-bottom:12px;">削除しました</div>
 
     <div id="closeAfterDelete" style="display:none; margin-top:12px;">
       <button onclick="location.reload()"
@@ -158,6 +157,7 @@
         document.getElementById("modalButtons").style.display = "none";
         document.getElementById("deleteResult").style.display = "block";
         document.getElementById("closeAfterDelete").style.display = "block";
+        document.querySelector("#deleteModal p").style.display = "none";
       }
     });
   }
