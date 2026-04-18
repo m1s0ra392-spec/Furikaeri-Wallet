@@ -15,7 +15,8 @@
 <form id="topic-form" method="post" novalidate
       action="{% if mode == 'draft_edit' %}{% url 'board:draft_topic_edit' topic.pk %}
       {% elif topic %}{% url 'board:topic_edit' topic.pk %}
-      {% else %}{% url 'board:topic_new' %}{% endif %}">
+      {% else %}{% url 'board:topic_new' %}{% endif %}"
+      onsubmit="if(this.dataset.submitted){return false;} this.dataset.submitted='true';">
   {% csrf_token %}
 
 

@@ -91,7 +91,7 @@
         {% else %}
           {% url 'board:comment_save_new' topic_pk=topic.pk %}
         {% endif %}"
-        onsubmit="return handleFormSubmit(this)">
+        onsubmit="if(this.dataset.submitted){return false;} this.dataset.submitted='true';">
 
     {% csrf_token %}
 
@@ -212,16 +212,6 @@
     });
   }
 
-// 二重送信防止
-function handleFormSubmit(form) {
-  const clicked = form.querySelector('button[type="submit"]:focus')
-               || form.querySelector('button[type="submit"]');
-  if (clicked) {
-    clicked.disabled = true;
-    setTimeout(() => { clicked.disabled = false; }, 3000);
-  }
-  return true;
-}
 </script>
 {% endif %}
 
