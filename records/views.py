@@ -294,7 +294,7 @@ def analysis_year(request):
 
     import json
     # アプリ開始からの累計合計
-    all_records = Record.objects.filter(user=request.user)
+    all_records = Record.objects.filter(user=request.user, date__gte=request.user.date_joined.date())
     
     total_ever = all_records.aggregate(
         plus=Sum("amount", filter=models.Q(category__type=0)),
@@ -305,8 +305,30 @@ def analysis_year(request):
     total_net   = total_plus - total_minus
 
     # 最初の記録の年月を取得
-    first_record = all_records.order_by("date").first()
-    first_label  = f"{first_record.date.year}年{first_record.date.month}月" if first_record else None
+    first_record_this_year = (
+            Record.objects
+            .filter(user=request.user, date__year=year)
+            .order_by("date")
+            .first()
+        )
+    if first_record_this_year:
+        first_month = first_record_this_year.date.month
+        first_label = f"{year}年{first_month}月"
+
+        # 今年の最初の記録月以降の累計を計算
+        first_month_records = Record.objects.filter(
+            user=request.user,
+            date__year=year,
+            date__month__gte=first_month,
+        )
+        first_month_total = first_month_records.aggregate(
+            plus=Sum("amount", filter=models.Q(category__type=0)),
+            minus=Sum("amount", filter=models.Q(category__type=1)),
+        )
+        net_from_first = (first_month_total["plus"] or 0) - (first_month_total["minus"] or 0)
+    else:
+        first_label = None
+        net_from_first = 0
 
     import json
     context = {
@@ -316,6 +338,7 @@ def analysis_year(request):
         "cumulative_net_json": json.dumps(cumulative_net),
         "total_net": total_net,
         "first_label": first_label,
+        "net_from_first": net_from_first,
     }
 
     return render(request, "records/analysis.html", context)
