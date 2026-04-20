@@ -132,9 +132,14 @@ def record_create(request):
         form = RecordForm()        
     
     # タブ用にカテゴリを2種類に分けて渡す
-    success_categories = RecordCategory.objects.filter(user=request.user, type=0)
-    regret_categories  = RecordCategory.objects.filter(user=request.user, type=1)
+    def sort_categories(qs):
+        others = [c for c in qs if c.name == "その他"]
+        rest   = [c for c in qs if c.name != "その他"]
+        return rest + others
 
+    success_categories = sort_categories(RecordCategory.objects.filter(user=request.user, type=0).order_by("created_at"))
+    regret_categories  = sort_categories(RecordCategory.objects.filter(user=request.user, type=1).order_by("created_at"))
+    
     return render(request, "records/record_form.html", {
         "form": form,
         "saved": saved,
@@ -227,14 +232,19 @@ def record_update(request, pk):
     else:
         form = RecordForm(instance=record)
 
+    def sort_categories(qs):
+        others = [c for c in qs if c.name == "その他"]
+        rest   = [c for c in qs if c.name != "その他"]
+        return rest + others
+
     return render(request, "records/record_form.html", {
         "form": form,
         "saved": saved,
         "return_to_calendar": return_to_calendar,
         "edit_category_type": record.category.type,
         "edit_category_id":   record.category.id,
-        "success_categories": RecordCategory.objects.filter(user=request.user, type=0),
-        "regret_categories":  RecordCategory.objects.filter(user=request.user, type=1),
+        "success_categories": sort_categories(RecordCategory.objects.filter(user=request.user, type=0).order_by("created_at")),
+        "regret_categories":  sort_categories(RecordCategory.objects.filter(user=request.user, type=1).order_by("created_at")),
     })
 
 
